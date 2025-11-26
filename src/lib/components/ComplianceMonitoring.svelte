@@ -1,8 +1,37 @@
 <script lang="ts">
   import Chart from './Chart.svelte';
-  import type { ComplianceMetric } from '../types';
+  import type { ComplianceMetric, AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let complianceData: ComplianceMetric[];
+  export let records: AssetRecord[] = [];
+
+  function handleComplianceClick(category: string, status: 'compliant' | 'non-compliant') {
+    let matchingAssets: AssetRecord[];
+    let title: string;
+
+    if (category === 'Asset Review') {
+      if (status === 'compliant') {
+        matchingAssets = records.filter(r => r.reviewed);
+        title = 'Reviewed Assets';
+      } else {
+        matchingAssets = records.filter(r => !r.reviewed);
+        title = 'Pending Review Assets';
+      }
+    } else if (category === 'Processing Status') {
+      if (status === 'compliant') {
+        matchingAssets = records.filter(r => r.processed === 'Yes');
+        title = 'Processed Assets';
+      } else {
+        matchingAssets = records.filter(r => r.processed === 'No');
+        title = 'Unprocessed Assets';
+      }
+    } else {
+      return;
+    }
+
+    assetModalStore.openAssetList(title, matchingAssets);
+  }
 
   $: chartData = {
     labels: complianceData.map(c => c.category),
@@ -85,11 +114,23 @@
           {metric.complianceRate.toFixed(1)}%
         </div>
         <div class="compliance-details">
-          <div class="detail-row">
+          <div
+            class="detail-row clickable"
+            on:click={() => handleComplianceClick(metric.category, 'compliant')}
+            on:keydown={(e) => e.key === 'Enter' && handleComplianceClick(metric.category, 'compliant')}
+            role="button"
+            tabindex="0"
+          >
             <span class="detail-label">Compliant:</span>
             <span class="detail-value compliant">{metric.compliant}</span>
           </div>
-          <div class="detail-row">
+          <div
+            class="detail-row clickable"
+            on:click={() => handleComplianceClick(metric.category, 'non-compliant')}
+            on:keydown={(e) => e.key === 'Enter' && handleComplianceClick(metric.category, 'non-compliant')}
+            role="button"
+            tabindex="0"
+          >
             <span class="detail-label">Non-Compliant:</span>
             <span class="detail-value non-compliant">{metric.nonCompliant}</span>
           </div>
@@ -184,6 +225,23 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.875rem;
+  }
+
+  .detail-row.clickable {
+    cursor: pointer;
+    padding: 0.375rem;
+    margin: -0.375rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+  }
+
+  .detail-row.clickable:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .detail-row.clickable:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: 2px;
   }
 
   .detail-label {

@@ -1,9 +1,38 @@
 <script lang="ts">
   import Chart from './Chart.svelte';
   import MetricCard from './MetricCard.svelte';
-  import type { ReviewPerformanceData } from '../types';
+  import type { ReviewPerformanceData, AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let reviewData: ReviewPerformanceData;
+  export let records: AssetRecord[] = [];
+
+  function handleReviewerClick(reviewerName: string) {
+    const reviewerAssets = records.filter(r => r.reviewedBy === reviewerName);
+    assetModalStore.openAssetList(`Assets Reviewed by: ${reviewerName}`, reviewerAssets);
+  }
+
+  function handleTurnaroundClick(range: string) {
+    const rangeMap: Record<string, { min: number; max: number }> = {
+      'Same day': { min: 0, max: 1 },
+      '1-3 days': { min: 1, max: 3 },
+      '3-7 days': { min: 3, max: 7 },
+      '1-2 weeks': { min: 7, max: 14 },
+      '2-4 weeks': { min: 14, max: 28 },
+      '1+ month': { min: 28, max: Infinity }
+    };
+    const bucket = rangeMap[range];
+    if (!bucket) return;
+
+    const matchingAssets = records.filter(r => {
+      if (!r.reviewed || !r.reviewedDate || !r.uploadDate) return false;
+      const reviewDate = new Date(r.reviewedDate.replace(' UTC', ''));
+      const uploadDate = r.uploadDate;
+      const days = (reviewDate.getTime() - uploadDate.getTime()) / (1000 * 60 * 60 * 24);
+      return days >= bucket.min && days < bucket.max;
+    });
+    assetModalStore.openAssetList(`Assets with ${range} Turnaround`, matchingAssets);
+  }
 
   $: turnaroundChartData = {
     labels: reviewData.turnaroundDistribution.map(t => t.range),
@@ -104,7 +133,13 @@
       }} />
       <div class="distribution-summary">
         {#each reviewData.turnaroundDistribution as bucket}
-          <div class="summary-row">
+          <div
+            class="summary-row clickable"
+            on:click={() => handleTurnaroundClick(bucket.range)}
+            on:keydown={(e) => e.key === 'Enter' && handleTurnaroundClick(bucket.range)}
+            role="button"
+            tabindex="0"
+          >
             <span class="range-label">{bucket.range}</span>
             <div class="bar-container">
               <div
@@ -176,7 +211,13 @@
       </thead>
       <tbody>
         {#each reviewData.reviewerStats as reviewer}
-          <tr>
+          <tr
+            class="clickable-row"
+            on:click={() => handleReviewerClick(reviewer.reviewer)}
+            on:keydown={(e) => e.key === 'Enter' && handleReviewerClick(reviewer.reviewer)}
+            role="button"
+            tabindex="0"
+          >
             <td class="reviewer-name">{reviewer.reviewer}</td>
             <td>{reviewer.reviewCount}</td>
             <td>{reviewer.avgTurnaroundDays.toFixed(1)} days</td>
@@ -250,6 +291,37 @@
     grid-template-columns: 100px 1fr 50px;
     align-items: center;
     gap: 0.75rem;
+  }
+
+  .summary-row.clickable {
+    cursor: pointer;
+    padding: 0.375rem;
+    margin: -0.375rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+  }
+
+  .summary-row.clickable:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .summary-row.clickable:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: 2px;
+  }
+
+  .clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .clickable-row:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .clickable-row:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: -2px;
   }
 
   .range-label {

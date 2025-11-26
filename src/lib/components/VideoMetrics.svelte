@@ -1,9 +1,72 @@
 <script lang="ts">
   import Chart from './Chart.svelte';
   import MetricCard from './MetricCard.svelte';
-  import type { VideoMetricsData } from '../types';
+  import type { VideoMetricsData, AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let videoMetrics: VideoMetricsData;
+  export let records: AssetRecord[] = [];
+
+  function parseDurationToSeconds(duration: string): number {
+    if (!duration || typeof duration !== 'string') return 0;
+    const parts = duration.split(':');
+    if (parts.length === 3) {
+      return parseInt(parts[0]) * 3600 + parseInt(parts[1]) * 60 + parseInt(parts[2]);
+    } else if (parts.length === 2) {
+      return parseInt(parts[0]) * 60 + parseInt(parts[1]);
+    }
+    return parseInt(duration) || 0;
+  }
+
+  function parseFileSizeToBytes(size: string): number {
+    if (!size || typeof size !== 'string') return 0;
+    const match = size.match(/^([\d.]+)\s*(KB|MB|GB|B)?$/i);
+    if (!match) return parseFloat(size) || 0;
+    const value = parseFloat(match[1]);
+    const unit = (match[2] || 'B').toUpperCase();
+    const multipliers: Record<string, number> = { B: 1, KB: 1024, MB: 1024 * 1024, GB: 1024 * 1024 * 1024 };
+    return value * (multipliers[unit] || 1);
+  }
+
+  const durationBuckets: Record<string, { min: number; max: number }> = {
+    '0-30s': { min: 0, max: 30 },
+    '30s-1m': { min: 30, max: 60 },
+    '1-2m': { min: 60, max: 120 },
+    '2-5m': { min: 120, max: 300 },
+    '5-10m': { min: 300, max: 600 },
+    '10m+': { min: 600, max: Infinity }
+  };
+
+  const sizeBuckets: Record<string, { min: number; max: number }> = {
+    '0-1MB': { min: 0, max: 1024 * 1024 },
+    '1-5MB': { min: 1024 * 1024, max: 5 * 1024 * 1024 },
+    '5-10MB': { min: 5 * 1024 * 1024, max: 10 * 1024 * 1024 },
+    '10-50MB': { min: 10 * 1024 * 1024, max: 50 * 1024 * 1024 },
+    '50-100MB': { min: 50 * 1024 * 1024, max: 100 * 1024 * 1024 },
+    '100MB+': { min: 100 * 1024 * 1024, max: Infinity }
+  };
+
+  function handleDurationClick(range: string) {
+    const bucket = durationBuckets[range];
+    if (!bucket) return;
+
+    const matchingAssets = records.filter(r => {
+      const seconds = parseDurationToSeconds(r.assetDuration);
+      return seconds >= bucket.min && seconds < bucket.max;
+    });
+    assetModalStore.openAssetList(`Videos: ${range} Duration`, matchingAssets);
+  }
+
+  function handleSizeClick(range: string) {
+    const bucket = sizeBuckets[range];
+    if (!bucket) return;
+
+    const matchingAssets = records.filter(r => {
+      const bytes = parseFileSizeToBytes(r.fileSize);
+      return bytes >= bucket.min && bytes < bucket.max;
+    });
+    assetModalStore.openAssetList(`Videos: ${range} Size`, matchingAssets);
+  }
 
   $: durationChartData = {
     labels: videoMetrics.durationDistribution.map(d => d.range),
@@ -102,7 +165,13 @@
           </thead>
           <tbody>
             {#each videoMetrics.durationDistribution as bucket}
-              <tr>
+              <tr
+                class="clickable-row"
+                on:click={() => handleDurationClick(bucket.range)}
+                on:keydown={(e) => e.key === 'Enter' && handleDurationClick(bucket.range)}
+                role="button"
+                tabindex="0"
+              >
                 <td>{bucket.range}</td>
                 <td>{bucket.count}</td>
                 <td>{totalVideos > 0 ? ((bucket.count / totalVideos) * 100).toFixed(1) : 0}%</td>
@@ -141,7 +210,13 @@
           </thead>
           <tbody>
             {#each videoMetrics.sizeDistribution as bucket}
-              <tr>
+              <tr
+                class="clickable-row"
+                on:click={() => handleSizeClick(bucket.range)}
+                on:keydown={(e) => e.key === 'Enter' && handleSizeClick(bucket.range)}
+                role="button"
+                tabindex="0"
+              >
                 <td>{bucket.range}</td>
                 <td>{bucket.count}</td>
                 <td>{totalVideos > 0 ? ((bucket.count / totalVideos) * 100).toFixed(1) : 0}%</td>
@@ -257,6 +332,20 @@
 
   td {
     color: var(--neutral-700);
+  }
+
+  .clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .clickable-row:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .clickable-row:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: -2px;
   }
 
   .insights-card {

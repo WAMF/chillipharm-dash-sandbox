@@ -1,12 +1,47 @@
 <script lang="ts">
   import Chart from './Chart.svelte';
-  import type { StudyArmData, StudyEventData, StudyProcedureData, ProcedureLagData, CommentStats } from '../types';
+  import type { StudyArmData, StudyEventData, StudyProcedureData, ProcedureLagData, CommentStats, AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let studyArms: StudyArmData[];
   export let studyEvents: StudyEventData[];
   export let studyProcedures: StudyProcedureData[];
   export let procedureLag: ProcedureLagData[];
   export let commentStats: CommentStats;
+  export let records: AssetRecord[] = [];
+
+  function handleArmClick(armName: string) {
+    const armAssets = records.filter(r => {
+      const arm = r.studyArm?.trim() || 'Unassigned';
+      return arm === armName;
+    });
+    assetModalStore.openAssetList(`Assets in Study Arm: ${armName}`, armAssets);
+  }
+
+  function handleEventClick(eventName: string) {
+    const eventAssets = records.filter(r => {
+      const event = r.studyEvent?.trim() || 'Unknown';
+      return event === eventName;
+    });
+    assetModalStore.openAssetList(`Assets for Event: ${eventName}`, eventAssets);
+  }
+
+  function handleProcedureClick(procedureName: string) {
+    const procedureAssets = records.filter(r => {
+      const procedure = r.studyProcedure?.trim() || 'Unknown';
+      return procedure === procedureName;
+    });
+    assetModalStore.openAssetList(`Assets for Procedure: ${procedureName}`, procedureAssets);
+  }
+
+  function handleCommenterClick(commenterName: string) {
+    const commenterAssets = records.filter(r => {
+      if (!r.comments || !r.comments.trim()) return false;
+      const commenter = r.reviewedBy?.trim() || r.uploadedBy?.trim() || 'Unknown';
+      return commenter === commenterName;
+    });
+    assetModalStore.openAssetList(`Assets Commented by: ${commenterName}`, commenterAssets);
+  }
 
   $: armChartData = {
     labels: studyArms.map(a => a.arm),
@@ -78,7 +113,13 @@
       }} />
       <div class="arm-legend">
         {#each studyArms as arm}
-          <div class="legend-item">
+          <div
+            class="legend-item clickable"
+            on:click={() => handleArmClick(arm.arm)}
+            on:keydown={(e) => e.key === 'Enter' && handleArmClick(arm.arm)}
+            role="button"
+            tabindex="0"
+          >
             <span class="arm-name">{arm.arm}</span>
             <span class="arm-stats">{arm.count} ({arm.percentage.toFixed(1)}%)</span>
           </div>
@@ -123,7 +164,13 @@
           </thead>
           <tbody>
             {#each studyProcedures.slice(0, 6) as proc}
-              <tr>
+              <tr
+                class="clickable-row"
+                on:click={() => handleProcedureClick(proc.procedure)}
+                on:keydown={(e) => e.key === 'Enter' && handleProcedureClick(proc.procedure)}
+                role="button"
+                tabindex="0"
+              >
                 <td>{proc.procedure}</td>
                 <td>{proc.count}</td>
                 <td>{proc.sites}</td>
@@ -176,7 +223,13 @@
       <div class="top-commenters">
         <h4>Top Commenters</h4>
         {#each commentStats.topCommenters.slice(0, 5) as commenter}
-          <div class="commenter-row">
+          <div
+            class="commenter-row clickable"
+            on:click={() => handleCommenterClick(commenter.name)}
+            on:keydown={(e) => e.key === 'Enter' && handleCommenterClick(commenter.name)}
+            role="button"
+            tabindex="0"
+          >
             <span class="commenter-name">{commenter.name}</span>
             <span class="commenter-count">{commenter.commentCount}</span>
           </div>
@@ -238,6 +291,54 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.875rem;
+  }
+
+  .legend-item.clickable {
+    cursor: pointer;
+    padding: 0.375rem;
+    margin: -0.375rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+  }
+
+  .legend-item.clickable:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .legend-item.clickable:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: 2px;
+  }
+
+  .clickable-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .clickable-row:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .clickable-row:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: -2px;
+  }
+
+  .commenter-row.clickable {
+    cursor: pointer;
+    padding: 0.375rem;
+    margin: -0.375rem 0;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease;
+  }
+
+  .commenter-row.clickable:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .commenter-row.clickable:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: 2px;
   }
 
   .arm-name {

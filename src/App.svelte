@@ -157,13 +157,13 @@
           {:else if activeTab === 'sites'}
             <SitePerformance siteData={sitePerformance} records={filteredRecords} />
           {:else if activeTab === 'study' && commentStats}
-            <StudyAnalytics {studyArms} {studyEvents} {studyProcedures} {procedureLag} {commentStats} />
+            <StudyAnalytics {studyArms} {studyEvents} {studyProcedures} {procedureLag} {commentStats} records={filteredRecords} />
           {:else if activeTab === 'video' && videoMetrics}
-            <VideoMetrics {videoMetrics} />
+            <VideoMetrics {videoMetrics} records={filteredRecords} />
           {:else if activeTab === 'reviews' && reviewPerformance}
-            <ReviewPerformance reviewData={reviewPerformance} />
+            <ReviewPerformance reviewData={reviewPerformance} records={filteredRecords} />
           {:else if activeTab === 'compliance'}
-            <ComplianceMonitoring complianceData={complianceMetrics} />
+            <ComplianceMonitoring complianceData={complianceMetrics} records={filteredRecords} />
           {:else if activeTab === 'integration'}
             <IntegrationHealth records={filteredRecords} {evaluatorStats} {countryDistribution} />
           {/if}
@@ -181,24 +181,24 @@
           {#if commentStats}
             <div class="print-tab-section">
               <h2 class="print-section-title">Study Analytics</h2>
-              <StudyAnalytics {studyArms} {studyEvents} {studyProcedures} {procedureLag} {commentStats} />
+              <StudyAnalytics {studyArms} {studyEvents} {studyProcedures} {procedureLag} {commentStats} records={filteredRecords} />
             </div>
           {/if}
           {#if videoMetrics}
             <div class="print-tab-section">
               <h2 class="print-section-title">Video Metrics</h2>
-              <VideoMetrics {videoMetrics} />
+              <VideoMetrics {videoMetrics} records={filteredRecords} />
             </div>
           {/if}
           {#if reviewPerformance}
             <div class="print-tab-section">
               <h2 class="print-section-title">Review Performance</h2>
-              <ReviewPerformance reviewData={reviewPerformance} />
+              <ReviewPerformance reviewData={reviewPerformance} records={filteredRecords} />
             </div>
           {/if}
           <div class="print-tab-section">
             <h2 class="print-section-title">Compliance Monitoring</h2>
-            <ComplianceMonitoring complianceData={complianceMetrics} />
+            <ComplianceMonitoring complianceData={complianceMetrics} records={filteredRecords} />
           </div>
           <div class="print-tab-section">
             <h2 class="print-section-title">Integration Health</h2>
