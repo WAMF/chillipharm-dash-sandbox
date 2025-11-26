@@ -40,27 +40,26 @@ export async function loadData(): Promise<AssetRecord[]> {
 
 export function calculateDashboardMetrics(records: AssetRecord[]): DashboardMetrics {
   const totalAssets = records.length;
-  const uniqueSites = new Set(records.map(r => r.siteName)).size;
-  const uniqueSubjects = new Set(records.map(r => r.subjectNumber)).size;
+  const uniqueSites = new Set(records.map(r => r.siteName).filter(Boolean)).size;
+  const uniqueSubjects = new Set(records.map(r => r.subjectNumber).filter(Boolean)).size;
+  const uniqueTrials = new Set(records.map(r => r.trialName).filter(Boolean)).size;
   const processedCount = records.filter(r => r.processed === 'Yes').length;
   const reviewedCount = records.filter(r => r.reviewed).length;
-  const piiDetectedCount = records.filter(r => r.containsPII === 'Yes').length;
 
-  const processingRate = (processedCount / totalAssets) * 100;
-  const reviewRate = (reviewedCount / totalAssets) * 100;
+  const processingRate = totalAssets > 0 ? (processedCount / totalAssets) * 100 : 0;
+  const reviewRate = totalAssets > 0 ? (reviewedCount / totalAssets) * 100 : 0;
   const complianceRate = calculateComplianceRate(records);
 
   return {
     totalAssets,
     totalSites: uniqueSites,
     totalSubjects: uniqueSubjects,
+    totalTrials: uniqueTrials,
     processedCount,
     reviewedCount,
-    piiDetectedCount,
     processingRate,
     reviewRate,
-    complianceRate,
-    avgProcessingTime: 2.3
+    complianceRate
   };
 }
 
@@ -131,27 +130,23 @@ export function calculateTimeSeriesData(records: AssetRecord[]): TimeSeriesData[
 }
 
 export function calculateComplianceMetrics(records: AssetRecord[]): ComplianceMetric[] {
+  const totalRecords = records.length;
+  if (totalRecords === 0) return [];
+
   return [
-    {
-      category: 'PII Detection',
-      compliant: records.filter(r => r.containsPII !== 'Unknown').length,
-      nonCompliant: 0,
-      unknown: records.filter(r => r.containsPII === 'Unknown').length,
-      complianceRate: (records.filter(r => r.containsPII !== 'Unknown').length / records.length) * 100
-    },
     {
       category: 'Asset Review',
       compliant: records.filter(r => r.reviewed).length,
       nonCompliant: records.filter(r => !r.reviewed).length,
       unknown: 0,
-      complianceRate: (records.filter(r => r.reviewed).length / records.length) * 100
+      complianceRate: (records.filter(r => r.reviewed).length / totalRecords) * 100
     },
     {
       category: 'Processing Status',
       compliant: records.filter(r => r.processed === 'Yes').length,
       nonCompliant: records.filter(r => r.processed === 'No').length,
       unknown: 0,
-      complianceRate: (records.filter(r => r.processed === 'Yes').length / records.length) * 100
+      complianceRate: (records.filter(r => r.processed === 'Yes').length / totalRecords) * 100
     }
   ];
 }
@@ -481,6 +476,10 @@ export function getCommentStats(records: AssetRecord[]): CommentStats {
 
 export function filterRecords(records: AssetRecord[], filters: FilterState): AssetRecord[] {
   return records.filter(record => {
+    if (filters.selectedTrials.length > 0 && !filters.selectedTrials.includes(record.trialName)) {
+      return false;
+    }
+
     if (filters.selectedSites.length > 0 && !filters.selectedSites.includes(record.siteName)) {
       return false;
     }
@@ -605,6 +604,7 @@ export function getUniqueValues(records: AssetRecord[], field: keyof AssetRecord
 
 export function getFilterOptions(records: AssetRecord[]) {
   return {
+    trials: getUniqueValues(records, 'trialName'),
     sites: getUniqueValues(records, 'siteName'),
     countries: getUniqueValues(records, 'siteCountry'),
     studyArms: [...getUniqueValues(records, 'studyArm'), 'Unassigned'].filter((v, i, a) => a.indexOf(v) === i),

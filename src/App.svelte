@@ -129,6 +129,7 @@
   {:else}
     <div class="content container">
       <FilterPanel
+        trials={filterOptions.trials}
         sites={filterOptions.sites}
         countries={filterOptions.countries}
         studyArms={filterOptions.studyArms}

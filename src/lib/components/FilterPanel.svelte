@@ -2,6 +2,7 @@
   import { filterStore, presetsStore, defaultFilterState } from '../stores/filterStore';
   import type { FilterPreset } from '../types';
 
+  export let trials: string[] = [];
   export let sites: string[] = [];
   export let countries: string[] = [];
   export let studyArms: string[] = [];
@@ -20,6 +21,7 @@
 
   function getActiveFilterCount(filters: typeof $filterStore): number {
     let count = 0;
+    if (filters.selectedTrials.length > 0) count++;
     if (filters.selectedSites.length > 0) count++;
     if (filters.selectedCountries.length > 0) count++;
     if (filters.selectedStudyArms.length > 0) count++;
@@ -60,11 +62,11 @@
     presetsStore.removePreset(id);
   }
 
-  function toggleArrayValue(key: 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', value: string) {
+  function toggleArrayValue(key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', value: string) {
     filterStore.toggleArrayFilter(key, value);
   }
 
-  function handleSelectChange(key: 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', event: Event) {
+  function handleSelectChange(key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', event: Event) {
     const target = event.target as HTMLSelectElement;
     if (target.value) {
       toggleArrayValue(key, target.value);
@@ -151,6 +153,26 @@
             on:input={handleSearchInput}
             class="search-input"
           />
+        </div>
+
+        <div class="filter-group">
+          <label>Trial</label>
+          <div class="multi-select">
+            <div class="selected-tags">
+              {#each $filterStore.selectedTrials as trial}
+                <span class="tag">
+                  {trial}
+                  <button on:click={() => toggleArrayValue('selectedTrials', trial)}>×</button>
+                </span>
+              {/each}
+            </div>
+            <select on:change={(e) => handleSelectChange('selectedTrials', e)}>
+              <option value="">Select trial...</option>
+              {#each trials.filter(t => !$filterStore.selectedTrials.includes(t)) as trial}
+                <option value={trial}>{trial}</option>
+              {/each}
+            </select>
+          </div>
         </div>
 
         <div class="filter-group">
@@ -309,6 +331,12 @@
             <span class="filter-pill">
               Search: "{$filterStore.searchTerm}"
               <button on:click={() => { filterStore.setFilter('searchTerm', ''); searchInput = ''; }}>×</button>
+            </span>
+          {/if}
+          {#if $filterStore.selectedTrials.length > 0}
+            <span class="filter-pill">
+              Trials: {$filterStore.selectedTrials.length}
+              <button on:click={() => filterStore.clearArrayFilter('selectedTrials')}>×</button>
             </span>
           {/if}
           {#if $filterStore.selectedSites.length > 0}

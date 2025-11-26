@@ -16,7 +16,6 @@ export const availableColumns: ExportColumn[] = [
   { key: 'evaluator', label: 'Evaluator', selected: false },
   { key: 'uploadDate', label: 'Upload Date', selected: true },
   { key: 'uploadedBy', label: 'Uploaded By', selected: false },
-  { key: 'containsPII', label: 'Contains PII', selected: false },
   { key: 'processed', label: 'Processed', selected: true },
   { key: 'assetDuration', label: 'Duration', selected: true },
   { key: 'reviewed', label: 'Reviewed', selected: true },

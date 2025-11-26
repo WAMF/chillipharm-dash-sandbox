@@ -7,6 +7,11 @@
   export let activeTab: string;
   export let records: AssetRecord[] = [];
 
+  $: uniqueTrials = [...new Set(records.map(r => r.trialName).filter(Boolean))];
+  $: trialBadgeText = uniqueTrials.length === 1
+    ? uniqueTrials[0]
+    : `${uniqueTrials.length} Trials`;
+
   const tabs = [
     { id: 'overview', label: 'Executive Overview', icon: '📊' },
     { id: 'sites', label: 'Site Performance', icon: '🏥' },
@@ -38,7 +43,7 @@
       </div>
       <div class="header-info">
         <div class="trial-badge">
-          <span class="badge badge-info">Suzy's Trial - Instance 17</span>
+          <span class="badge badge-info">{trialBadgeText}</span>
         </div>
         <ExportButtons {records} {activeTab} />
         <FeedbackButton {activeTab} />

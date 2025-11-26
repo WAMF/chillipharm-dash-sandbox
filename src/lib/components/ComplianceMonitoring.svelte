@@ -115,13 +115,12 @@
   </div>
 
   <div class="card info-card">
-    <h3>🛡️ Compliance Overview</h3>
+    <h3>Compliance Overview</h3>
     <div class="info-content">
       <p>
         ChilliPharm ensures regulatory compliance through automated checks and comprehensive monitoring:
       </p>
       <ul>
-        <li><strong>PII Detection:</strong> Automated identification of personally identifiable information in video assets</li>
         <li><strong>Asset Review:</strong> Systematic review process ensuring data quality and protocol adherence</li>
         <li><strong>Processing Status:</strong> Tracking of de-identification and processing workflows</li>
       </ul>

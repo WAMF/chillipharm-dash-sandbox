@@ -14,7 +14,6 @@ export interface AssetRecord {
   assetTitle: string;
   uploadDate: Date;
   uploadedBy: string;
-  containsPII: string;
   processed: string;
   assetDuration: string;
   reviewed: boolean;
@@ -29,13 +28,12 @@ export interface DashboardMetrics {
   totalAssets: number;
   totalSites: number;
   totalSubjects: number;
+  totalTrials: number;
   processedCount: number;
   reviewedCount: number;
-  piiDetectedCount: number;
   processingRate: number;
   reviewRate: number;
   complianceRate: number;
-  avgProcessingTime: number;
 }
 
 export interface SitePerformance {
@@ -145,6 +143,7 @@ export interface CommenterStat {
 }
 
 export interface FilterState {
+  selectedTrials: string[];
   selectedSites: string[];
   selectedCountries: string[];
   selectedStudyArms: string[];

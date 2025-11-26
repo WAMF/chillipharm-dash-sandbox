@@ -4,7 +4,7 @@ import type { FilterState, FilterPreset } from '../types';
 const STORAGE_KEY = 'chillipharm-filters';
 const PRESETS_KEY = 'chillipharm-filter-presets';
 const VERSION_KEY = 'chillipharm-version';
-const CURRENT_VERSION = '2';
+const CURRENT_VERSION = '3';
 
 function checkAndClearStaleData(): void {
   if (typeof window === 'undefined') return;
@@ -23,6 +23,7 @@ function checkAndClearStaleData(): void {
 checkAndClearStaleData();
 
 const defaultFilterState: FilterState = {
+  selectedTrials: [],
   selectedSites: [],
   selectedCountries: [],
   selectedStudyArms: [],
@@ -87,7 +88,7 @@ function createFilterStore() {
         return newState;
       });
     },
-    toggleArrayFilter: (key: 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', value: string) => {
+    toggleArrayFilter: (key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', value: string) => {
       update(state => {
         const current = state[key];
         const newArray = current.includes(value)
@@ -98,7 +99,7 @@ function createFilterStore() {
         return newState;
       });
     },
-    clearArrayFilter: (key: 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures') => {
+    clearArrayFilter: (key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures') => {
       update(state => {
         const newState = { ...state, [key]: [] };
         saveToStorage(newState);
@@ -108,6 +109,7 @@ function createFilterStore() {
     getActiveFilterCount: (): number => {
       const state = get(filterStore);
       let count = 0;
+      if (state.selectedTrials.length > 0) count++;
       if (state.selectedSites.length > 0) count++;
       if (state.selectedCountries.length > 0) count++;
       if (state.selectedStudyArms.length > 0) count++;

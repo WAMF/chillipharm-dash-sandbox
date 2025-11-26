@@ -46,7 +46,9 @@ const COUNTRY_CODES = {
   'GB': 'United Kingdom', 'US': 'United States', 'UY': 'Uruguay', 'UZ': 'Uzbekistan', 'VU': 'Vanuatu',
   'VA': 'Vatican City', 'VE': 'Venezuela', 'VN': 'Vietnam', 'YE': 'Yemen', 'ZM': 'Zambia',
   'ZW': 'Zimbabwe', 'GG': 'Guernsey', 'JE': 'Jersey', 'IM': 'Isle of Man', 'PR': 'Puerto Rico',
-  'VI': 'US Virgin Islands', 'GU': 'Guam', 'AS': 'American Samoa'
+  'VI': 'US Virgin Islands', 'GU': 'Guam', 'AS': 'American Samoa',
+  'AQ': 'Antarctica', 'BQ': 'Caribbean Netherlands', 'GF': 'French Guiana',
+  'RE': 'Reunion', 'TC': 'Turks and Caicos'
 };
 
 function getCountryName(code) {
@@ -174,7 +176,6 @@ export const getAssets = onRequest(
             assetTitle: row.asset_title || '',
             uploadDate: row.upload_date ? new Date(row.upload_date).toISOString() : '',
             uploadedBy: [row.uploader_first_name, row.uploader_last_name].filter(Boolean).join(' ') || row.uploader_email || '',
-            containsPII: '',
             processed: row.processed ? 'Yes' : 'No',
             assetDuration: duration,
             reviewed: row.reviewed || false,
@@ -210,5 +211,87 @@ export const healthCheck = onRequest(
   { cors: true, region: 'europe-west2' },
   async (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  }
+);
+
+const geocodeCache = new Map();
+
+export const geocodeCountry = onRequest(
+  {
+    cors: true,
+    region: 'europe-west2',
+    timeoutSeconds: 30,
+    memory: '128MiB'
+  },
+  async (req, res) => {
+    corsHandler(req, res, async () => {
+      if (req.method === 'OPTIONS') {
+        res.status(204).send('');
+        return;
+      }
+
+      const country = req.query.country || req.body?.country;
+
+      if (!country) {
+        res.status(400).json({
+          success: false,
+          error: 'Country parameter is required'
+        });
+        return;
+      }
+
+      if (geocodeCache.has(country)) {
+        res.status(200).json({
+          success: true,
+          data: geocodeCache.get(country),
+          cached: true
+        });
+        return;
+      }
+
+      try {
+        const encodedCountry = encodeURIComponent(country);
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodedCountry}&format=json&limit=1`;
+
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'ChilliPharm-Dashboard/1.0'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Nominatim API error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+          const result = {
+            lat: parseFloat(data[0].lat),
+            lng: parseFloat(data[0].lon),
+            displayName: data[0].display_name
+          };
+
+          geocodeCache.set(country, result);
+
+          res.status(200).json({
+            success: true,
+            data: result
+          });
+        } else {
+          res.status(404).json({
+            success: false,
+            error: 'Country not found'
+          });
+        }
+      } catch (error) {
+        console.error('Geocoding error:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to geocode country',
+          message: error.message
+        });
+      }
+    });
   }
 );

@@ -102,10 +102,10 @@
       icon="🛡️"
     />
     <MetricCard
-      title="Avg Processing Time"
-      value="{metrics.avgProcessingTime}h"
-      subtitle="Per video asset"
-      icon="⏱️"
+      title="Active Trials"
+      value={metrics.totalTrials}
+      subtitle="Clinical trials with data"
+      icon="🔬"
     />
   </div>
 

@@ -2,19 +2,25 @@
   import { onMount, onDestroy } from 'svelte';
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
-  import { getCountryCoordinates } from '../utils/countryCoordinates';
+  import { resolveAllCoordinates, getCountryCoordinates } from '../utils/countryCoordinates';
 
   export let countryData: Array<{ country: string; count: number }> = [];
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = null;
   let markersLayer: L.LayerGroup | null = null;
+  let coordinatesResolved = false;
+  let isLoading = true;
 
   $: maxCount = Math.max(...countryData.map(c => c.count), 1);
   $: totalRecords = countryData.reduce((sum, c) => sum + c.count, 0);
   $: activeCountries = countryData.length;
-  $: mappedCountries = countryData.filter(c => getCountryCoordinates(c.country) !== null);
-  $: unmappedCountries = countryData.filter(c => getCountryCoordinates(c.country) === null);
+  $: mappedCountries = coordinatesResolved
+    ? countryData.filter(c => getCountryCoordinates(c.country) !== null)
+    : [];
+  $: unmappedCountries = coordinatesResolved
+    ? countryData.filter(c => getCountryCoordinates(c.country) === null)
+    : [];
 
   function getMarkerSize(count: number): number {
     const minSize = 24;
@@ -56,7 +62,7 @@
   }
 
   function updateMarkers() {
-    if (!map || !markersLayer) return;
+    if (!map || !markersLayer || !coordinatesResolved) return;
 
     markersLayer.clearLayers();
 
@@ -88,6 +94,18 @@
         markersLayer.addLayer(marker);
       }
     });
+
+    const mappedData = countryData.filter(c => getCountryCoordinates(c.country) !== null);
+    if (mappedData.length > 0 && map) {
+      const bounds = mappedData
+        .map(c => getCountryCoordinates(c.country))
+        .filter((c): c is { lat: number; lng: number } => c !== null)
+        .map(c => [c.lat, c.lng] as L.LatLngTuple);
+
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 4 });
+      }
+    }
   }
 
   function handleResize() {
@@ -96,6 +114,19 @@
         map?.invalidateSize();
       }, 100);
     }
+  }
+
+  async function loadCoordinates() {
+    if (countryData.length === 0) {
+      isLoading = false;
+      return;
+    }
+
+    const countries = countryData.map(c => c.country);
+    await resolveAllCoordinates(countries);
+    coordinatesResolved = true;
+    isLoading = false;
+    updateMarkers();
   }
 
   onMount(() => {
@@ -118,19 +149,7 @@
 
     markersLayer = L.layerGroup().addTo(map);
 
-    updateMarkers();
-
-    const mappedData = countryData.filter(c => getCountryCoordinates(c.country) !== null);
-    if (mappedData.length > 0) {
-      const bounds = mappedData
-        .map(c => getCountryCoordinates(c.country))
-        .filter((c): c is { lat: number; lng: number } => c !== null)
-        .map(c => [c.lat, c.lng] as L.LatLngTuple);
-
-      if (bounds.length > 0) {
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 4 });
-      }
-    }
+    loadCoordinates();
 
     window.addEventListener('resize', handleResize);
   });
@@ -143,8 +162,10 @@
     }
   });
 
-  $: if (map && markersLayer && countryData) {
-    updateMarkers();
+  $: if (map && markersLayer && countryData && countryData.length > 0) {
+    coordinatesResolved = false;
+    isLoading = true;
+    loadCoordinates();
   }
 </script>
 
@@ -162,14 +183,21 @@
     </div>
   </div>
 
-  <div class="map-container" bind:this={mapContainer}></div>
+  <div class="map-container" bind:this={mapContainer}>
+    {#if isLoading}
+      <div class="map-loading">
+        <span class="loading-spinner"></span>
+        <span>Loading locations...</span>
+      </div>
+    {/if}
+  </div>
 
   <div class="country-list">
     {#each countryData as { country, count }}
-      <div class="country-item" class:unmapped={!getCountryCoordinates(country)}>
+      <div class="country-item" class:unmapped={coordinatesResolved && !getCountryCoordinates(country)}>
         <span class="country-name">
           {country}
-          {#if !getCountryCoordinates(country)}
+          {#if coordinatesResolved && !getCountryCoordinates(country)}
             <span class="unmapped-indicator" title="Location not mapped">*</span>
           {/if}
         </span>
@@ -184,7 +212,7 @@
     {/each}
   </div>
 
-  {#if unmappedCountries.length > 0}
+  {#if coordinatesResolved && unmappedCountries.length > 0}
     <div class="unmapped-note">
       * {unmappedCountries.length} location{unmappedCountries.length > 1 ? 's' : ''} not shown on map
     </div>
@@ -236,6 +264,37 @@
     border-radius: 0.5rem;
     overflow: hidden;
     border: 1px solid var(--neutral-200);
+    position: relative;
+  }
+
+  .map-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    z-index: 1000;
+    gap: 0.5rem;
+    color: var(--neutral-600);
+    font-size: 0.875rem;
+  }
+
+  .loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--neutral-200);
+    border-top-color: var(--chilli-red);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .country-list {
