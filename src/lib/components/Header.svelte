@@ -75,7 +75,7 @@
     box-shadow: var(--shadow-lg);
     position: sticky;
     top: 0;
-    z-index: 100;
+    z-index: 1001;
   }
 
   .header-content {
