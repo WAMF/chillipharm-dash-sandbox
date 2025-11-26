@@ -2,6 +2,7 @@
   import Chart from './Chart.svelte';
   import WorldMap from './WorldMap.svelte';
   import type { AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let records: AssetRecord[];
   export let evaluatorStats: Array<{ name: string; count: number }>;
@@ -44,6 +45,27 @@
   function truncate(text: string, length: number): string {
     return text.length > length ? text.substring(0, length) + '...' : text;
   }
+
+  function handleActivityClick(asset: AssetRecord) {
+    assetModalStore.openAssetDetail(asset);
+  }
+
+  function handleViewAsset(event: MouseEvent, asset: AssetRecord) {
+    event.stopPropagation();
+    if (asset.assetLink) {
+      window.open(asset.assetLink, '_blank', 'noopener,noreferrer');
+    }
+  }
+
+  function handleEvaluatorClick(evaluatorName: string) {
+    const evaluatorAssets = records.filter(r => r.evaluator === evaluatorName);
+    assetModalStore.openAssetList(`Assets Evaluated by: ${evaluatorName}`, evaluatorAssets);
+  }
+
+  function handleCountryClick(country: string) {
+    const countryAssets = records.filter(r => r.siteCountry === country);
+    assetModalStore.openAssetList(`Assets from: ${country}`, countryAssets);
+  }
 </script>
 
 <div class="integration-health">
@@ -54,24 +76,29 @@
 
   <div class="card">
     <h3>Geographic Distribution</h3>
-    <WorldMap countryData={countryDistribution} />
+    <WorldMap countryData={countryDistribution} on:countryClick={(e) => handleCountryClick(e.detail)} />
   </div>
 
   <div class="card">
     <h3>Top Evaluators</h3>
-    <Chart type="bar" data={evaluatorChartData} options={{
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false }
-      }
-    }} height="300px" />
+    <div class="evaluator-list">
+      {#each evaluatorStats.slice(0, 10) as evaluator}
+        <div class="evaluator-item clickable" on:click={() => handleEvaluatorClick(evaluator.name)} on:keydown={(e) => e.key === 'Enter' && handleEvaluatorClick(evaluator.name)} role="button" tabindex="0">
+          <span class="evaluator-name">{evaluator.name}</span>
+          <div class="evaluator-bar-container">
+            <div class="evaluator-bar" style="width: {(evaluator.count / evaluatorStats[0].count) * 100}%"></div>
+          </div>
+          <span class="evaluator-count">{evaluator.count}</span>
+        </div>
+      {/each}
+    </div>
   </div>
 
   <div class="card">
     <h3>Recent Upload Activity</h3>
     <div class="activity-list">
       {#each recentActivity as activity}
-        <div class="activity-item">
+        <div class="activity-item clickable" on:click={() => handleActivityClick(activity)} on:keydown={(e) => e.key === 'Enter' && handleActivityClick(activity)} role="button" tabindex="0">
           <div class="activity-icon">📹</div>
           <div class="activity-content">
             <div class="activity-title">
@@ -99,6 +126,11 @@
               <span class="badge badge-warning">Pending</span>
             {/if}
           </div>
+          {#if activity.assetLink}
+            <button class="view-asset-btn" on:click={(e) => handleViewAsset(e, activity)} title="View Asset">
+              &#8599;
+            </button>
+          {/if}
         </div>
       {/each}
     </div>
@@ -174,6 +206,89 @@
     background-color: var(--neutral-50);
     border-radius: 0.375rem;
     border: 1px solid var(--neutral-200);
+  }
+
+  .activity-item.clickable {
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .activity-item.clickable:hover {
+    background-color: var(--neutral-100);
+    border-color: var(--chilli-red);
+  }
+
+  .view-asset-btn {
+    background: var(--chilli-red);
+    color: white;
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .view-asset-btn:hover {
+    background: var(--chilli-red-dark);
+  }
+
+  .evaluator-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .evaluator-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    background-color: var(--neutral-50);
+    border-radius: 0.375rem;
+    border: 1px solid var(--neutral-200);
+  }
+
+  .evaluator-item.clickable {
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .evaluator-item.clickable:hover {
+    background-color: var(--neutral-100);
+    border-color: var(--chilli-red);
+  }
+
+  .evaluator-name {
+    font-size: 0.875rem;
+    color: var(--neutral-700);
+    min-width: 150px;
+    flex-shrink: 0;
+  }
+
+  .evaluator-bar-container {
+    flex: 1;
+    height: 8px;
+    background: var(--neutral-200);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .evaluator-bar {
+    height: 100%;
+    background: var(--chilli-red);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .evaluator-count {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--neutral-600);
+    min-width: 40px;
+    text-align: right;
   }
 
   .activity-icon {

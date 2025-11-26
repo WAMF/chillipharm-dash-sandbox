@@ -1,8 +1,10 @@
 <script lang="ts">
   import Chart from './Chart.svelte';
-  import type { SitePerformance } from '../types';
+  import type { SitePerformance, AssetRecord } from '../types';
+  import { assetModalStore } from '../stores/assetModalStore';
 
   export let siteData: SitePerformance[];
+  export let records: AssetRecord[] = [];
 
   $: topSites = siteData.slice(0, 10);
 
@@ -52,6 +54,11 @@
     if (trend < 0) return '↓';
     return '→';
   }
+
+  function handleSiteClick(siteName: string) {
+    const siteAssets = records.filter(r => r.siteName === siteName);
+    assetModalStore.openAssetList(`Assets for Site: ${siteName}`, siteAssets);
+  }
 </script>
 
 <div class="site-performance">
@@ -79,7 +86,7 @@
           </thead>
           <tbody>
             {#each topSites as site, index}
-              <tr>
+              <tr class="clickable-row" on:click={() => handleSiteClick(site.siteName)} on:keydown={(e) => e.key === 'Enter' && handleSiteClick(site.siteName)} role="button" tabindex="0">
                 <td class="site-name">
                   <span class="rank">{index + 1}</span>
                   {site.siteName}
@@ -155,6 +162,20 @@
 
   .performance-table tbody tr:hover {
     background-color: var(--neutral-50);
+  }
+
+  .clickable-row {
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .clickable-row:hover {
+    background-color: var(--neutral-100);
+  }
+
+  .clickable-row:focus {
+    outline: 2px solid var(--chilli-red);
+    outline-offset: -2px;
   }
 
   .site-name {

@@ -10,8 +10,11 @@
   import VideoMetrics from './lib/components/VideoMetrics.svelte';
   import ReviewPerformance from './lib/components/ReviewPerformance.svelte';
   import FilterPanel from './lib/components/FilterPanel.svelte';
+  import AssetDetailModal from './lib/components/AssetDetailModal.svelte';
+  import AssetListModal from './lib/components/AssetListModal.svelte';
   import { authStore } from './lib/stores/authStore';
   import { filterStore } from './lib/stores/filterStore';
+  import { assetModalStore } from './lib/stores/assetModalStore';
   import {
     loadData,
     calculateDashboardMetrics,
@@ -152,7 +155,7 @@
           {#if activeTab === 'overview'}
             <ExecutiveOverview {metrics} {timeSeriesData} />
           {:else if activeTab === 'sites'}
-            <SitePerformance siteData={sitePerformance} />
+            <SitePerformance siteData={sitePerformance} records={filteredRecords} />
           {:else if activeTab === 'study' && commentStats}
             <StudyAnalytics {studyArms} {studyEvents} {studyProcedures} {procedureLag} {commentStats} />
           {:else if activeTab === 'video' && videoMetrics}
@@ -173,7 +176,7 @@
           </div>
           <div class="print-tab-section">
             <h2 class="print-section-title">Site Performance</h2>
-            <SitePerformance siteData={sitePerformance} />
+            <SitePerformance siteData={sitePerformance} records={filteredRecords} />
           </div>
           {#if commentStats}
             <div class="print-tab-section">
@@ -231,6 +234,17 @@
   {/if}
   {/if}
 </main>
+
+{#if $assetModalStore.showList}
+  <AssetListModal
+    title={$assetModalStore.listTitle}
+    assets={$assetModalStore.listAssets}
+  />
+{/if}
+
+{#if $assetModalStore.showDetail && $assetModalStore.selectedAsset}
+  <AssetDetailModal asset={$assetModalStore.selectedAsset} />
+{/if}
 
 <style>
   .app {

@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import L from 'leaflet';
   import 'leaflet/dist/leaflet.css';
   import { resolveAllCoordinates, getCountryCoordinates } from '../utils/countryCoordinates';
 
   export let countryData: Array<{ country: string; count: number }> = [];
+
+  const dispatch = createEventDispatcher<{ countryClick: string }>();
 
   let mapContainer: HTMLDivElement;
   let map: L.Map | null = null;
@@ -89,6 +91,9 @@
         });
         marker.on('mouseout', function() {
           this.closePopup();
+        });
+        marker.on('click', function() {
+          dispatch('countryClick', country);
         });
 
         markersLayer.addLayer(marker);
