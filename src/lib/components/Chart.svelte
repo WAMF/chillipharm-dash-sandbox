@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, createEventDispatcher } from 'svelte';
   import {
     Chart,
     CategoryScale,
@@ -41,6 +41,9 @@
   export let data: any;
   export let options: any = {};
   export let height: string = '300px';
+  export let clickable: boolean = false;
+
+  const dispatch = createEventDispatcher<{ barClick: { label: string; index: number; value: number } }>();
 
   let canvas: HTMLCanvasElement;
   let chart: Chart;
@@ -60,6 +63,18 @@
       }
     }
   };
+
+  function handleCanvasClick(event: MouseEvent) {
+    if (!clickable || !chart) return;
+
+    const elements = chart.getElementsAtEventForMode(event, 'nearest', { intersect: true }, false);
+    if (elements.length > 0) {
+      const element = elements[0];
+      const label = chart.data.labels?.[element.index] as string;
+      const value = chart.data.datasets[element.datasetIndex].data[element.index] as number;
+      dispatch('barClick', { label, index: element.index, value });
+    }
+  }
 
   onMount(() => {
     if (canvas) {
@@ -83,13 +98,17 @@
   }
 </script>
 
-<div class="chart-container" style="height: {height}">
-  <canvas bind:this={canvas}></canvas>
+<div class="chart-container" class:clickable style="height: {height}">
+  <canvas bind:this={canvas} on:click={handleCanvasClick}></canvas>
 </div>
 
 <style>
   .chart-container {
     position: relative;
     width: 100%;
+  }
+
+  .chart-container.clickable canvas {
+    cursor: pointer;
   }
 </style>

@@ -34,6 +34,20 @@
     assetModalStore.openAssetList(`Assets with ${range} Turnaround`, matchingAssets);
   }
 
+  function handleTurnaroundChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const bucket = reviewData.turnaroundDistribution[event.detail.index];
+    if (bucket) {
+      handleTurnaroundClick(bucket.range);
+    }
+  }
+
+  function handleReviewerChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const reviewer = reviewData.reviewerStats[event.detail.index];
+    if (reviewer) {
+      handleReviewerClick(reviewer.reviewer);
+    }
+  }
+
   $: turnaroundChartData = {
     labels: reviewData.turnaroundDistribution.map(t => t.range),
     datasets: [{
@@ -126,7 +140,7 @@
     <div class="card">
       <h3>Turnaround Distribution</h3>
       <p class="card-subtitle">Time from upload to review completion</p>
-      <Chart type="doughnut" data={turnaroundChartData} height="280px" options={{
+      <Chart type="doughnut" data={turnaroundChartData} height="280px" clickable={true} on:barClick={handleTurnaroundChartClick} options={{
         plugins: {
           legend: { position: 'right' }
         }
@@ -156,7 +170,7 @@
     <div class="card">
       <h3>Top Reviewers</h3>
       <p class="card-subtitle">Review volume by team member</p>
-      <Chart type="bar" data={reviewerChartData} height="280px" options={{
+      <Chart type="bar" data={reviewerChartData} height="280px" clickable={true} on:barClick={handleReviewerChartClick} options={{
         indexAxis: 'y',
         plugins: {
           legend: { display: false }

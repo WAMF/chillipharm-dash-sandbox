@@ -59,6 +59,13 @@
     const siteAssets = records.filter(r => r.siteName === siteName);
     assetModalStore.openAssetList(`Assets for Site: ${siteName}`, siteAssets);
   }
+
+  function handleChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const site = topSites[event.detail.index];
+    if (site) {
+      handleSiteClick(site.siteName);
+    }
+  }
 </script>
 
 <div class="site-performance">
@@ -69,7 +76,7 @@
 
   <div class="grid grid-cols-2">
     <div class="card">
-      <Chart type="bar" data={chartData} options={chartOptions} height="450px" />
+      <Chart type="bar" data={chartData} options={chartOptions} height="450px" clickable={true} on:barClick={handleChartClick} />
     </div>
 
     <div class="card">

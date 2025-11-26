@@ -93,6 +93,13 @@
     if (rate >= 70) return 'Good';
     return 'Needs Attention';
   }
+
+  function handleChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const category = complianceData[event.detail.index]?.category;
+    if (category) {
+      handleComplianceClick(category, 'non-compliant');
+    }
+  }
 </script>
 
 <div class="compliance-monitoring">
@@ -152,7 +159,7 @@
   </div>
 
   <div class="card">
-    <Chart type="bar" data={chartData} options={chartOptions} height="350px" />
+    <Chart type="bar" data={chartData} options={chartOptions} height="350px" clickable={true} on:barClick={handleChartClick} />
   </div>
 
   <div class="card info-card">

@@ -1,11 +1,17 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import { authStore } from '../stores/authStore';
-  import ExportButtons from './ExportButtons.svelte';
   import FeedbackButton from './FeedbackButton.svelte';
   import type { AssetRecord } from '../types';
 
   export let activeTab: string;
   export let records: AssetRecord[] = [];
+
+  const dispatch = createEventDispatcher<{ openReportWizard: void }>();
+
+  function openReportWizard() {
+    dispatch('openReportWizard');
+  }
 
   $: uniqueTrials = [...new Set(records.map(r => r.trialName).filter(Boolean))];
   $: trialBadgeText = uniqueTrials.length === 1
@@ -45,7 +51,10 @@
         <div class="trial-badge">
           <span class="badge badge-info">{trialBadgeText}</span>
         </div>
-        <ExportButtons {records} {activeTab} />
+        <button class="report-btn" on:click={openReportWizard}>
+          <span class="report-icon">📋</span>
+          Generate Report
+        </button>
         <FeedbackButton {activeTab} />
         <button class="logout-btn" on:click={handleLogout}>
           <span class="logout-icon">🚪</span>
@@ -120,6 +129,30 @@
     color: var(--white);
     font-weight: 600;
     padding: 0.5rem 1rem;
+  }
+
+  .report-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: var(--white);
+    color: var(--chilli-red);
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .report-btn:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+  }
+
+  .report-icon {
+    font-size: 1rem;
   }
 
   .logout-btn {

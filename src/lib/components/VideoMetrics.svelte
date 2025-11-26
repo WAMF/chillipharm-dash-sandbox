@@ -100,7 +100,16 @@
     }]
   };
 
-  $: totalVideos = videoMetrics.durationDistribution.reduce((sum, d) => sum + d.count, 0);
+  $: totalDurationVideos = videoMetrics.durationDistribution.reduce((sum, d) => sum + d.count, 0);
+  $: totalSizeVideos = videoMetrics.sizeDistribution.reduce((sum, s) => sum + s.count, 0);
+
+  function handleDurationChartClick(event: CustomEvent<{ label: string }>) {
+    handleDurationClick(event.detail.label);
+  }
+
+  function handleSizeChartClick(event: CustomEvent<{ label: string }>) {
+    handleSizeClick(event.detail.label);
+  }
 </script>
 
 <div class="video-metrics">
@@ -140,7 +149,7 @@
     <div class="card">
       <h3>Duration Distribution</h3>
       <p class="card-subtitle">Number of videos by duration range</p>
-      <Chart type="bar" data={durationChartData} height="300px" options={{
+      <Chart type="bar" data={durationChartData} height="300px" clickable={true} on:barClick={handleDurationChartClick} options={{
         plugins: {
           legend: { display: false }
         },
@@ -174,7 +183,7 @@
               >
                 <td>{bucket.range}</td>
                 <td>{bucket.count}</td>
-                <td>{totalVideos > 0 ? ((bucket.count / totalVideos) * 100).toFixed(1) : 0}%</td>
+                <td>{totalDurationVideos > 0 ? ((bucket.count / totalDurationVideos) * 100).toFixed(1) : 0}%</td>
               </tr>
             {/each}
           </tbody>
@@ -185,7 +194,7 @@
     <div class="card">
       <h3>File Size Distribution</h3>
       <p class="card-subtitle">Number of videos by file size range</p>
-      <Chart type="bar" data={sizeChartData} height="300px" options={{
+      <Chart type="bar" data={sizeChartData} height="300px" clickable={true} on:barClick={handleSizeChartClick} options={{
         plugins: {
           legend: { display: false }
         },
@@ -219,7 +228,7 @@
               >
                 <td>{bucket.range}</td>
                 <td>{bucket.count}</td>
-                <td>{totalVideos > 0 ? ((bucket.count / totalVideos) * 100).toFixed(1) : 0}%</td>
+                <td>{totalSizeVideos > 0 ? ((bucket.count / totalSizeVideos) * 100).toFixed(1) : 0}%</td>
               </tr>
             {/each}
           </tbody>
@@ -235,7 +244,7 @@
         <div class="insight-icon">📹</div>
         <div class="insight-content">
           <div class="insight-title">Video Count</div>
-          <div class="insight-value">{totalVideos.toLocaleString()} videos</div>
+          <div class="insight-value">{totalDurationVideos.toLocaleString()} videos</div>
         </div>
       </div>
       <div class="insight">

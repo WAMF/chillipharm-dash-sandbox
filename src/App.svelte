@@ -12,6 +12,7 @@
   import FilterPanel from './lib/components/FilterPanel.svelte';
   import AssetDetailModal from './lib/components/AssetDetailModal.svelte';
   import AssetListModal from './lib/components/AssetListModal.svelte';
+  import ReportWizard from './lib/components/ReportWizard.svelte';
   import { authStore } from './lib/stores/authStore';
   import { filterStore } from './lib/stores/filterStore';
   import { assetModalStore } from './lib/stores/assetModalStore';
@@ -52,10 +53,12 @@
   let activeTab = 'overview';
   let loading = true;
   let error = '';
+  let showReportWizard = false;
 
   let allRecords: AssetRecord[] = [];
   let filteredRecords: AssetRecord[] = [];
   let filterOptions = {
+    trials: [] as string[],
     sites: [] as string[],
     countries: [] as string[],
     studyArms: [] as string[],
@@ -116,7 +119,7 @@
   {:else if !isAuthenticated}
     <Login />
   {:else}
-    <Header bind:activeTab records={filteredRecords} />
+    <Header bind:activeTab records={filteredRecords} on:openReportWizard={() => showReportWizard = true} />
 
     {#if loading}
     <div class="loading">
@@ -244,6 +247,16 @@
 
 {#if $assetModalStore.showDetail && $assetModalStore.selectedAsset}
   <AssetDetailModal asset={$assetModalStore.selectedAsset} />
+{/if}
+
+{#if showReportWizard}
+  <ReportWizard
+    records={filteredRecords}
+    sites={filterOptions.sites}
+    trials={filterOptions.trials}
+    countries={filterOptions.countries}
+    on:close={() => showReportWizard = false}
+  />
 {/if}
 
 <style>

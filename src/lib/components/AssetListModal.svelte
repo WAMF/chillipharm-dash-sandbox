@@ -99,6 +99,67 @@
       currentPage = page;
     }
   }
+
+  function exportToCsv() {
+    const headers = [
+      'Asset Title',
+      'Site Name',
+      'Site Country',
+      'Subject Number',
+      'Study Arm',
+      'Study Event',
+      'Study Procedure',
+      'Procedure Date',
+      'Upload Date',
+      'Uploaded By',
+      'Duration',
+      'File Size',
+      'Processed',
+      'Reviewed',
+      'Reviewed By',
+      'Review Date',
+      'Comments'
+    ];
+
+    const rows = sortedAssets.map(asset => [
+      asset.assetTitle || '',
+      asset.siteName || '',
+      asset.siteCountry || '',
+      asset.subjectNumber || '',
+      asset.studyArm || '',
+      asset.studyEvent || '',
+      asset.studyProcedure || '',
+      asset.studyProcedureDate || '',
+      asset.uploadDate ? format(asset.uploadDate, 'yyyy-MM-dd HH:mm:ss') : '',
+      asset.uploadedBy || '',
+      asset.assetDuration || '',
+      asset.fileSize || '',
+      asset.processed || '',
+      asset.reviewed ? 'Yes' : 'No',
+      asset.reviewedBy || '',
+      asset.reviewedDate || '',
+      (asset.comments || '').replace(/"/g, '""')
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+
+    const sanitizedTitle = title.replace(/[^a-zA-Z0-9]/g, '_').substring(0, 50);
+    const timestamp = format(new Date(), 'yyyy-MM-dd');
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${sanitizedTitle}_${timestamp}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -129,6 +190,9 @@
           </button>
         {/if}
       </div>
+      <button class="btn-export" on:click={exportToCsv} disabled={sortedAssets.length === 0}>
+        Export CSV
+      </button>
     </div>
 
     <div class="modal-body">
@@ -306,11 +370,38 @@
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--neutral-100);
     background: var(--white);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
   }
 
   .search-box {
     position: relative;
     max-width: 300px;
+    flex: 1;
+  }
+
+  .btn-export {
+    padding: 0.5rem 1rem;
+    background: var(--chilli-red);
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-export:hover:not(:disabled) {
+    background: var(--chilli-red-dark);
+  }
+
+  .btn-export:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .search-input {

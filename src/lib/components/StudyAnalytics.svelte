@@ -43,6 +43,34 @@
     assetModalStore.openAssetList(`Assets Commented by: ${commenterName}`, commenterAssets);
   }
 
+  function handleArmChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const arm = studyArms[event.detail.index];
+    if (arm) {
+      handleArmClick(arm.arm);
+    }
+  }
+
+  function handleEventChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const studyEvent = studyEvents.slice(0, 10)[event.detail.index];
+    if (studyEvent) {
+      handleEventClick(studyEvent.event);
+    }
+  }
+
+  function handleProcedureChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const procedure = studyProcedures.slice(0, 8)[event.detail.index];
+    if (procedure) {
+      handleProcedureClick(procedure.procedure);
+    }
+  }
+
+  function handleLagChartClick(event: CustomEvent<{ label: string; index: number }>) {
+    const lag = procedureLag[event.detail.index];
+    if (lag) {
+      handleProcedureClick(lag.procedure);
+    }
+  }
+
   $: armChartData = {
     labels: studyArms.map(a => a.arm),
     datasets: [{
@@ -106,7 +134,7 @@
   <div class="grid grid-cols-2">
     <div class="card">
       <h3>Treatment Arm Distribution</h3>
-      <Chart type="doughnut" data={armChartData} height="300px" options={{
+      <Chart type="doughnut" data={armChartData} height="300px" clickable={true} on:barClick={handleArmChartClick} options={{
         plugins: {
           legend: { position: 'bottom' }
         }
@@ -129,7 +157,7 @@
 
     <div class="card">
       <h3>Assets by Study Event</h3>
-      <Chart type="bar" data={eventChartData} height="300px" options={{
+      <Chart type="bar" data={eventChartData} height="300px" clickable={true} on:barClick={handleEventChartClick} options={{
         indexAxis: 'y',
         plugins: {
           legend: { position: 'bottom' }
@@ -144,7 +172,7 @@
   <div class="grid grid-cols-2">
     <div class="card">
       <h3>Procedure Breakdown</h3>
-      <Chart type="bar" data={procedureChartData} height="280px" options={{
+      <Chart type="bar" data={procedureChartData} height="280px" clickable={true} on:barClick={handleProcedureChartClick} options={{
         plugins: {
           legend: { display: false }
         },
@@ -185,7 +213,7 @@
     <div class="card">
       <h3>Upload Lag Analysis</h3>
       <p class="card-subtitle">Days between procedure date and video upload</p>
-      <Chart type="bar" data={lagChartData} height="250px" options={{
+      <Chart type="bar" data={lagChartData} height="250px" clickable={true} on:barClick={handleLagChartClick} options={{
         indexAxis: 'y',
         plugins: {
           legend: { display: false }
