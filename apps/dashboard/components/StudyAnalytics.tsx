@@ -58,6 +58,18 @@ export function StudyAnalytics() {
     }]
   }), [studyProcedureData]);
 
+  const lagChartData = useMemo(() => ({
+    labels: procedureLagData.slice(0, 8).map(l => l.procedure),
+    datasets: [{
+      label: 'Avg Days',
+      data: procedureLagData.slice(0, 8).map(l => l.avgLagDays),
+      backgroundColor: procedureLagData.slice(0, 8).map(l =>
+        l.avgLagDays <= 1 ? 'rgba(16, 185, 129, 0.8)' :
+        l.avgLagDays <= 7 ? 'rgba(237, 118, 33, 0.8)' : 'rgba(200, 16, 46, 0.8)'
+      )
+    }]
+  }), [procedureLagData]);
+
   const handleArmClick = useCallback((armName: string) => {
     const armAssets = filteredRecords.filter(r => {
       const arm = r.studyArm?.trim() || 'Unassigned';
@@ -179,23 +191,44 @@ export function StudyAnalytics() {
           <h3 className="text-lg font-semibold text-neutral-800 mb-1">Upload Lag Analysis</h3>
           <p className="text-xs text-neutral-500 mb-4">Days between procedure date and video upload</p>
           {procedureLagData.length > 0 ? (
-            <div className="space-y-2">
-              {procedureLagData.slice(0, 8).map((lag) => (
-                <div key={lag.procedure} className="flex items-center gap-2">
-                  <span className="text-sm text-neutral-700 w-32 truncate">{lag.procedure}</span>
-                  <div className="flex-1 h-4 bg-neutral-100 rounded overflow-hidden">
-                    <div
-                      className={`h-full ${
-                        lag.avgLagDays <= 1 ? 'bg-green-500' :
-                        lag.avgLagDays <= 7 ? 'bg-orange-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${Math.min(lag.avgLagDays * 5, 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-neutral-500 w-16 text-right">{lag.avgLagDays.toFixed(1)} days</span>
-                </div>
-              ))}
-            </div>
+            <>
+              <Chart
+                type="bar"
+                data={lagChartData}
+                height="280px"
+                options={{
+                  indexAxis: 'y' as const,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => `${ctx.parsed.x.toFixed(1)} days avg lag`
+                      }
+                    }
+                  },
+                  scales: {
+                    x: {
+                      beginAtZero: true,
+                      title: { display: true, text: 'Days' }
+                    }
+                  }
+                }}
+              />
+              <div className="mt-3 flex items-center justify-center gap-4 text-xs">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-green-500 rounded"></span>
+                  ≤1 day
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-orange-500 rounded"></span>
+                  2-7 days
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-3 bg-red-500 rounded"></span>
+                  &gt;7 days
+                </span>
+              </div>
+            </>
           ) : (
             <p className="text-neutral-500 text-sm">No lag data available</p>
           )}
