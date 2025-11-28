@@ -3,6 +3,7 @@ const { composePlugins, withNx } = require('@nx/next');
 const nextConfig = {
     output: 'export',
     distDir: 'out',
+    trailingSlash: true,
     nx: {
         svgr: false,
     },
