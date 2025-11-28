@@ -72,7 +72,7 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=chillipharm-dashboard
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=chillipharm-dashboard.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_API_URL=https://us-central1-chillipharm-dashboard.cloudfunctions.net
+NEXT_PUBLIC_API_URL=https://europe-west2-chillipharm-dashboard.cloudfunctions.net
 ```
 
 ### Functions (Backend)

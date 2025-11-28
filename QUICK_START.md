@@ -23,7 +23,7 @@ NEXT_PUBLIC_FIREBASE_PROJECT_ID=chillipharm-dashboard
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=chillipharm-dashboard.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
 NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
-NEXT_PUBLIC_API_URL=http://localhost:5002/chillipharm-dashboard/us-central1
+NEXT_PUBLIC_API_URL=http://localhost:5002/chillipharm-dashboard/europe-west2
 ```
 
 Get these values from [Firebase Console](https://console.firebase.google.com/project/chillipharm-dashboard/settings/general) under **Your apps > SDK setup and configuration > Config**.
