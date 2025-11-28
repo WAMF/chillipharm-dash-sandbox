@@ -1,5 +1,4 @@
-import type { ApiClient, RequestOptions } from '../client';
-import type { PaginatedResponse } from '@cp/types';
+import type { ApiClient } from '../client';
 
 export interface PaginationParams {
   page?: number;

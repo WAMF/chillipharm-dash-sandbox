@@ -1,6 +1,6 @@
 import type { AssetRecord } from '@cp/types';
-import { groupBy, sumBy } from './aggregation';
 import { getCountryName } from './formatting';
+import { groupBy } from './aggregation';
 
 export interface ChartDataPoint {
   label: string;
