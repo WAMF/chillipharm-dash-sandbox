@@ -1,5 +1,6 @@
 import { writable, derived } from 'svelte/store';
 import type { AssetRecord } from '../types';
+import { trackDrillDown } from '../firebase';
 
 interface AssetModalState {
   showDetail: boolean;
@@ -32,6 +33,7 @@ function createAssetModalStore() {
     },
 
     openAssetList(title: string, assets: AssetRecord[]) {
+      trackDrillDown('asset_list', title);
       update(state => ({
         ...state,
         showList: true,

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
   import { authStore } from '../stores/authStore';
+  import { trackTabChange, auth } from '../firebase';
   import FeedbackButton from './FeedbackButton.svelte';
   import type { AssetRecord } from '../types';
 
@@ -9,8 +10,21 @@
 
   const dispatch = createEventDispatcher<{ openReportWizard: void }>();
 
+  const API_DOCS_URL = import.meta.env.PROD
+    ? 'https://api-rr3wuhq42a-nw.a.run.app/docs/'
+    : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2/api/docs/';
+
   function openReportWizard() {
     dispatch('openReportWizard');
+  }
+
+  async function openApiDocs() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const token = await user.getIdToken();
+    const url = `${API_DOCS_URL}?token=${encodeURIComponent(token)}`;
+    window.open(url, '_blank');
   }
 
   $: uniqueTrials = [...new Set(records.map(r => r.trialName).filter(Boolean))];
@@ -30,6 +44,7 @@
 
   function setTab(tabId: string) {
     activeTab = tabId;
+    trackTabChange(tabId);
   }
 
   function handleLogout() {
@@ -54,6 +69,10 @@
         <button class="report-btn" on:click={openReportWizard}>
           <span class="report-icon">📋</span>
           Generate Report
+        </button>
+        <button class="docs-btn" on:click={openApiDocs}>
+          <span class="docs-icon">📖</span>
+          API Docs
         </button>
         <FeedbackButton {activeTab} />
         <button class="logout-btn" on:click={handleLogout}>
@@ -152,6 +171,29 @@
   }
 
   .report-icon {
+    font-size: 1rem;
+  }
+
+  .docs-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: rgba(255, 255, 255, 0.15);
+    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .docs-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .docs-icon {
     font-size: 1rem;
   }
 

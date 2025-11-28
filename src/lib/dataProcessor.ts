@@ -14,28 +14,86 @@ import type {
   CommentStats,
   FilterState
 } from './types';
+import { fetchAllAssets, queryAllAssets, type Asset, type QueryFilter } from './api';
 
-const API_BASE_URL = import.meta.env.PROD
-  ? 'https://europe-west2-chillipharm-dashboard.cloudfunctions.net'
-  : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2';
+function transformApiAssetToRecord(asset: Asset): AssetRecord {
+  return {
+    trialName: asset.trial?.name || '',
+    trialId: asset.trial?.id || 0,
+    siteName: asset.site?.name || '',
+    siteId: asset.site?.id || 0,
+    siteCountry: asset.site?.country || '',
+    subjectNumber: asset.studyProcedure?.subjectNumber || '',
+    studyArm: asset.studyProcedure?.arm || '',
+    studyEvent: asset.studyProcedure?.event || '',
+    studyProcedure: asset.studyProcedure?.name || '',
+    studyProcedureDate: asset.studyProcedure?.date || '',
+    evaluator: asset.studyProcedure?.evaluator || '',
+    assetId: asset.id,
+    assetTitle: asset.filename,
+    uploadDate: asset.createdAt ? new Date(asset.createdAt) : new Date(),
+    uploadedBy: asset.uploader?.name || asset.uploader?.email || '',
+    processed: asset.processed ? 'Yes' : 'No',
+    assetDuration: asset.duration || '',
+    reviewed: asset.review?.reviewed || false,
+    comments: asset.comments || '',
+    reviewedBy: asset.review?.reviewer || '',
+    reviewedDate: asset.review?.reviewDate || '',
+    fileSize: asset.filesizeFormatted || '',
+    assetLink: asset.url || ''
+  };
+}
 
 export async function loadData(): Promise<AssetRecord[]> {
-  const response = await fetch(`${API_BASE_URL}/getAssets`);
+  const assets = await fetchAllAssets();
+  return assets.map(transformApiAssetToRecord);
+}
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status}`);
+export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
+  const queryFilter: QueryFilter = {};
+
+  if (filters.selectedTrials.length > 0) {
+    queryFilter.trials = filters.selectedTrials;
+  }
+  if (filters.selectedSites.length > 0) {
+    queryFilter.sites = filters.selectedSites;
+  }
+  if (filters.selectedCountries.length > 0) {
+    queryFilter.countries = filters.selectedCountries;
+  }
+  if (filters.selectedStudyArms.length > 0) {
+    queryFilter.studyArms = filters.selectedStudyArms;
+  }
+  if (filters.selectedProcedures.length > 0) {
+    queryFilter.procedures = filters.selectedProcedures;
+  }
+  if (filters.dateRange.start || filters.dateRange.end) {
+    queryFilter.dateRange = {
+      start: filters.dateRange.start,
+      end: filters.dateRange.end
+    };
+  }
+  if (filters.reviewStatus !== 'all') {
+    queryFilter.reviewStatus = filters.reviewStatus;
+  }
+  if (filters.processedStatus !== 'all') {
+    queryFilter.processedStatus = filters.processedStatus;
+  }
+  if (filters.searchTerm.trim()) {
+    queryFilter.searchTerm = filters.searchTerm.trim();
+  }
+  if (filters.sortBy) {
+    queryFilter.sortBy = filters.sortBy;
+    queryFilter.sortOrder = filters.sortOrder;
   }
 
-  const result = await response.json();
+  return queryFilter;
+}
 
-  if (!result.success) {
-    throw new Error(result.message || 'Failed to fetch data');
-  }
-
-  return result.data.map((record: any) => ({
-    ...record,
-    uploadDate: record.uploadDate ? new Date(record.uploadDate) : new Date()
-  }));
+export async function loadFilteredData(filters: FilterState): Promise<AssetRecord[]> {
+  const queryFilter = filterStateToQueryFilter(filters);
+  const assets = await queryAllAssets(queryFilter);
+  return assets.map(transformApiAssetToRecord);
 }
 
 export function calculateDashboardMetrics(records: AssetRecord[]): DashboardMetrics {

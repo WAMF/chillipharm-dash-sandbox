@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AssetRecord } from '../types';
   import { assetModalStore } from '../stores/assetModalStore';
+  import { trackExport } from '../firebase';
   import { format, parseISO } from 'date-fns';
 
   export let title: string;
@@ -159,6 +160,8 @@
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    trackExport('csv', sortedAssets.length);
   }
 </script>
 

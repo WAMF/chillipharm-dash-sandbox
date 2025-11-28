@@ -1,5 +1,6 @@
 <script lang="ts">
   import { filterStore, presetsStore, defaultFilterState } from '../stores/filterStore';
+  import { trackFilter } from '../firebase';
   import type { FilterPreset } from '../types';
 
   export let trials: string[] = [];
@@ -64,6 +65,7 @@
 
   function toggleArrayValue(key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', value: string) {
     filterStore.toggleArrayFilter(key, value);
+    trackFilter(key, value);
   }
 
   function handleSelectChange(key: 'selectedTrials' | 'selectedSites' | 'selectedCountries' | 'selectedStudyArms' | 'selectedProcedures', event: Event) {
@@ -85,11 +87,13 @@
   function handleReviewStatusChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     filterStore.setFilter('reviewStatus', target.value as 'all' | 'reviewed' | 'pending');
+    trackFilter('reviewStatus', target.value);
   }
 
   function handleProcessedStatusChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     filterStore.setFilter('processedStatus', target.value as 'all' | 'yes' | 'no');
+    trackFilter('processedStatus', target.value);
   }
 
   function handleSortByChange(event: Event) {

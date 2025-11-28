@@ -16,8 +16,10 @@
   import { authStore } from './lib/stores/authStore';
   import { filterStore } from './lib/stores/filterStore';
   import { assetModalStore } from './lib/stores/assetModalStore';
+  import { initAnalytics, trackPageView, trackTabChange } from './lib/firebase';
   import {
     loadData,
+    loadFilteredData,
     calculateDashboardMetrics,
     calculateSitePerformance,
     calculateTimeSeriesData,
@@ -31,8 +33,6 @@
     getReviewPerformance,
     getProcedureLagAnalysis,
     getCommentStats,
-    filterRecords,
-    sortRecords,
     getFilterOptions
   } from './lib/dataProcessor';
   import type {
@@ -52,6 +52,7 @@
 
   let activeTab = 'overview';
   let loading = true;
+  let filterLoading = false;
   let error = '';
   let showReportWizard = false;
 
@@ -67,17 +68,38 @@
     uploaders: [] as string[]
   };
 
-  function updateFilteredRecords() {
+  let filterVersion = 0;
+  let lastAppliedFilters = '';
+
+  async function applyFilters() {
     const currentFilters = $filterStore;
-    filteredRecords = sortRecords(
-      filterRecords(allRecords, currentFilters),
-      currentFilters.sortBy,
-      currentFilters.sortOrder
-    );
+    const filterKey = JSON.stringify(currentFilters);
+
+    if (filterKey === lastAppliedFilters) return;
+
+    filterVersion++;
+    const thisVersion = filterVersion;
+    filterLoading = true;
+
+    try {
+      const records = await loadFilteredData(currentFilters);
+      if (thisVersion === filterVersion) {
+        filteredRecords = records;
+        lastAppliedFilters = filterKey;
+      }
+    } catch (e) {
+      if (thisVersion === filterVersion) {
+        console.error('Failed to apply filters:', e);
+      }
+    } finally {
+      if (thisVersion === filterVersion) {
+        filterLoading = false;
+      }
+    }
   }
 
-  $: if (allRecords.length > 0 && $filterStore) {
-    updateFilteredRecords();
+  $: if (dataLoaded && $filterStore) {
+    applyFilters();
   }
 
   $: metrics = filteredRecords.length > 0 ? calculateDashboardMetrics(filteredRecords) : null;
@@ -97,16 +119,33 @@
   $: isAuthenticated = $authStore.user !== null;
   $: authLoading = $authStore.loading;
 
-  onMount(async () => {
+  let dataLoaded = false;
+
+  async function fetchDashboardData() {
+    if (dataLoaded || loading === false) return;
     try {
       allRecords = await loadData();
       filterOptions = getFilterOptions(allRecords);
-      updateFilteredRecords();
+      dataLoaded = true;
       loading = false;
     } catch (e) {
       error = 'Failed to load dashboard data: ' + (e as Error).message;
       loading = false;
     }
+  }
+
+  $: if (isAuthenticated && !dataLoaded && !authLoading) {
+    fetchDashboardData();
+  }
+
+  function handleTabChange(newTab: string) {
+    activeTab = newTab;
+    trackTabChange(newTab);
+  }
+
+  onMount(() => {
+    initAnalytics();
+    trackPageView('dashboard');
   });
 </script>
 
@@ -144,7 +183,12 @@
         filteredCount={filteredRecords.length}
       />
 
-      {#if filteredRecords.length === 0}
+      {#if filterLoading}
+        <div class="filter-loading">
+          <div class="spinner small"></div>
+          <p>Applying filters...</p>
+        </div>
+      {:else if filteredRecords.length === 0}
         <div class="empty-state">
           <div class="empty-icon">🔍</div>
           <h3>No Records Found</h3>
@@ -295,6 +339,29 @@
   .loading p {
     font-size: 1.125rem;
     color: var(--neutral-600);
+  }
+
+  .filter-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: var(--white);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow-sm);
+    gap: 1rem;
+  }
+
+  .filter-loading p {
+    font-size: 1rem;
+    color: var(--neutral-600);
+  }
+
+  .spinner.small {
+    width: 30px;
+    height: 30px;
+    border-width: 3px;
   }
 
   .error {

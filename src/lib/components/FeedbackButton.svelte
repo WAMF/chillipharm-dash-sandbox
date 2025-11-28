@@ -1,5 +1,6 @@
 <script lang="ts">
   import html2canvas from 'html2canvas';
+  import { trackFeedback } from '../firebase';
 
   export let activeTab: string = 'overview';
   export let feedbackEmail: string = 'leeh@chillipharm.com';
@@ -59,6 +60,8 @@
     const tabName = tabNames[activeTab] || activeTab;
     const timestamp = new Date().toLocaleString();
     const userAgent = navigator.userAgent;
+
+    trackFeedback(activeTab, !!screenshotDataUrl, feedbackText.length);
 
     const subject = encodeURIComponent(`Dashboard Feedback: ${tabName}`);
     const body = encodeURIComponent(
