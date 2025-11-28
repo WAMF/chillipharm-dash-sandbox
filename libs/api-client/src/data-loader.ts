@@ -1,284 +1,309 @@
-import type { AssetRecord, FilterState, QueryFilter, PaginatedResponse } from '@cp/types';
+import type {
+    AssetRecord,
+    FilterState,
+    QueryFilter,
+    PaginatedResponse,
+} from '@cp/types';
 import type { ApiClient } from './client';
 
 export interface ApiAsset {
-  id: number;
-  filename: string;
-  filesize: number;
-  filesizeFormatted: string;
-  duration: string | null;
-  processed: boolean;
-  url: string;
-  createdAt: string;
-  trial: {
     id: number;
-    name: string;
-  };
-  site: {
-    id: number;
-    name: string;
-    country: string;
-    countryCode: string;
-  } | null;
-  uploader: {
-    email: string;
-    name: string | null;
-  } | null;
-  studyProcedure: {
-    id: number;
-    name: string;
-    date: string;
-    event: string;
-    arm: string;
-    subjectNumber: string;
-    evaluator: string | null;
-  } | null;
-  review: {
-    reviewed: boolean;
-    reviewDate: string | null;
-    reviewer: string | null;
-  };
-  comments: string | null;
+    filename: string;
+    filesize: number;
+    filesizeFormatted: string;
+    duration: string | null;
+    processed: boolean;
+    url: string;
+    createdAt: string;
+    trial: {
+        id: number;
+        name: string;
+    };
+    site: {
+        id: number;
+        name: string;
+        country: string;
+        countryCode: string;
+    } | null;
+    uploader: {
+        email: string;
+        name: string | null;
+    } | null;
+    studyProcedure: {
+        id: number;
+        name: string;
+        date: string;
+        event: string;
+        arm: string;
+        subjectNumber: string;
+        evaluator: string | null;
+    } | null;
+    review: {
+        reviewed: boolean;
+        reviewDate: string | null;
+        reviewer: string | null;
+    };
+    comments: string | null;
 }
 
 export interface ApiStats {
-  assets: {
-    total: number;
-    processed: number;
-    processingRate: number;
-    totalSizeBytes: number;
-    totalSizeFormatted: string;
-  };
-  trials: {
-    total: number;
-  };
-  sites: {
-    total: number;
-  };
-  subjects: {
-    total: number;
-  };
-  reviews: {
-    reviewed: number;
-    total: number;
-    reviewRate: number;
-  };
-  uploadTrend: Array<{
-    date: string;
-    uploads: number;
-  }>;
+    assets: {
+        total: number;
+        processed: number;
+        processingRate: number;
+        totalSizeBytes: number;
+        totalSizeFormatted: string;
+    };
+    trials: {
+        total: number;
+    };
+    sites: {
+        total: number;
+    };
+    subjects: {
+        total: number;
+    };
+    reviews: {
+        reviewed: number;
+        total: number;
+        reviewRate: number;
+    };
+    uploadTrend: Array<{
+        date: string;
+        uploads: number;
+    }>;
 }
 
 export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
-  return {
-    trialName: asset.trial?.name || '',
-    trialId: asset.trial?.id || 0,
-    siteName: asset.site?.name || '',
-    siteId: asset.site?.id || 0,
-    siteCountry: asset.site?.country || '',
-    subjectNumber: asset.studyProcedure?.subjectNumber || '',
-    studyArm: asset.studyProcedure?.arm || '',
-    studyEvent: asset.studyProcedure?.event || '',
-    studyProcedure: asset.studyProcedure?.name || '',
-    studyProcedureDate: asset.studyProcedure?.date || '',
-    evaluator: asset.studyProcedure?.evaluator || '',
-    assetId: asset.id,
-    assetTitle: asset.filename,
-    uploadDate: asset.createdAt ? new Date(asset.createdAt) : new Date(),
-    uploadedBy: asset.uploader?.name || asset.uploader?.email || '',
-    processed: asset.processed ? 'Yes' : 'No',
-    assetDuration: asset.duration || '',
-    reviewed: asset.review?.reviewed || false,
-    comments: asset.comments || '',
-    reviewedBy: asset.review?.reviewer || '',
-    reviewedDate: asset.review?.reviewDate || '',
-    fileSize: asset.filesizeFormatted || '',
-    assetLink: asset.url || ''
-  };
+    return {
+        trialName: asset.trial?.name || '',
+        trialId: asset.trial?.id || 0,
+        siteName: asset.site?.name || '',
+        siteId: asset.site?.id || 0,
+        siteCountry: asset.site?.country || '',
+        subjectNumber: asset.studyProcedure?.subjectNumber || '',
+        studyArm: asset.studyProcedure?.arm || '',
+        studyEvent: asset.studyProcedure?.event || '',
+        studyProcedure: asset.studyProcedure?.name || '',
+        studyProcedureDate: asset.studyProcedure?.date || '',
+        evaluator: asset.studyProcedure?.evaluator || '',
+        assetId: asset.id,
+        assetTitle: asset.filename,
+        uploadDate: asset.createdAt ? new Date(asset.createdAt) : new Date(),
+        uploadedBy: asset.uploader?.name || asset.uploader?.email || '',
+        processed: asset.processed ? 'Yes' : 'No',
+        assetDuration: asset.duration || '',
+        reviewed: asset.review?.reviewed || false,
+        comments: asset.comments || '',
+        reviewedBy: asset.review?.reviewer || '',
+        reviewedDate: asset.review?.reviewDate || '',
+        fileSize: asset.filesizeFormatted || '',
+        assetLink: asset.url || '',
+    };
 }
 
 export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
-  const queryFilter: QueryFilter = {};
+    const queryFilter: QueryFilter = {};
 
-  if (filters.selectedTrials.length > 0) {
-    queryFilter.trials = filters.selectedTrials;
-  }
-  if (filters.selectedSites.length > 0) {
-    queryFilter.sites = filters.selectedSites;
-  }
-  if (filters.selectedCountries.length > 0) {
-    queryFilter.countries = filters.selectedCountries;
-  }
-  if (filters.selectedStudyArms.length > 0) {
-    queryFilter.studyArms = filters.selectedStudyArms;
-  }
-  if (filters.selectedProcedures.length > 0) {
-    queryFilter.procedures = filters.selectedProcedures;
-  }
-  if (filters.dateRange.start || filters.dateRange.end) {
-    queryFilter.startDate = filters.dateRange.start || undefined;
-    queryFilter.endDate = filters.dateRange.end || undefined;
-  }
-  if (filters.reviewStatus !== 'all') {
-    queryFilter.reviewStatus = filters.reviewStatus;
-  }
-  if (filters.processedStatus !== 'all') {
-    queryFilter.processedStatus = filters.processedStatus;
-  }
-  if (filters.searchTerm.trim()) {
-    queryFilter.search = filters.searchTerm.trim();
-  }
-  if (filters.sortBy) {
-    queryFilter.sortBy = filters.sortBy;
-    queryFilter.sortOrder = filters.sortOrder;
-  }
+    if (filters.selectedTrials.length > 0) {
+        queryFilter.trials = filters.selectedTrials;
+    }
+    if (filters.selectedSites.length > 0) {
+        queryFilter.sites = filters.selectedSites;
+    }
+    if (filters.selectedCountries.length > 0) {
+        queryFilter.countries = filters.selectedCountries;
+    }
+    if (filters.selectedStudyArms.length > 0) {
+        queryFilter.studyArms = filters.selectedStudyArms;
+    }
+    if (filters.selectedProcedures.length > 0) {
+        queryFilter.procedures = filters.selectedProcedures;
+    }
+    if (filters.dateRange.start || filters.dateRange.end) {
+        queryFilter.startDate = filters.dateRange.start || undefined;
+        queryFilter.endDate = filters.dateRange.end || undefined;
+    }
+    if (filters.reviewStatus !== 'all') {
+        queryFilter.reviewStatus = filters.reviewStatus;
+    }
+    if (filters.processedStatus !== 'all') {
+        queryFilter.processedStatus = filters.processedStatus;
+    }
+    if (filters.searchTerm.trim()) {
+        queryFilter.search = filters.searchTerm.trim();
+    }
+    if (filters.sortBy) {
+        queryFilter.sortBy = filters.sortBy;
+        queryFilter.sortOrder = filters.sortOrder;
+    }
 
-  return queryFilter;
+    return queryFilter;
 }
 
 export class DataLoader {
-  private client: ApiClient;
-  private baseUrl: string;
-  private getAuthToken: () => Promise<string>;
+    private client: ApiClient;
+    private baseUrl: string;
+    private getAuthToken: () => Promise<string>;
 
-  constructor(baseUrl: string, getAuthToken: () => Promise<string>) {
-    this.baseUrl = baseUrl;
-    this.getAuthToken = getAuthToken;
-    this.client = null as unknown as ApiClient;
-  }
-
-  private async fetchWithAuth(endpoint: string, options: RequestInit = {}): Promise<Response> {
-    const token = await this.getAuthToken();
-
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...options.headers
-    };
-
-    return fetch(`${this.baseUrl}${endpoint}`, {
-      ...options,
-      headers
-    });
-  }
-
-  async fetchAssets(params?: {
-    page?: number;
-    limit?: number;
-    trial_id?: number;
-    site_id?: number;
-    processed?: boolean;
-    reviewed?: boolean;
-    search?: string;
-  }): Promise<PaginatedResponse<ApiAsset>> {
-    const searchParams = new URLSearchParams();
-
-    if (params?.page) searchParams.set('page', String(params.page));
-    if (params?.limit) searchParams.set('limit', String(params.limit));
-    if (params?.trial_id) searchParams.set('trial_id', String(params.trial_id));
-    if (params?.site_id) searchParams.set('site_id', String(params.site_id));
-    if (params?.processed !== undefined) searchParams.set('processed', String(params.processed));
-    if (params?.reviewed !== undefined) searchParams.set('reviewed', String(params.reviewed));
-    if (params?.search) searchParams.set('search', params.search);
-
-    const query = searchParams.toString();
-    const response = await this.fetchWithAuth(`/api/v1/assets${query ? `?${query}` : ''}`);
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+    constructor(baseUrl: string, getAuthToken: () => Promise<string>) {
+        this.baseUrl = baseUrl;
+        this.getAuthToken = getAuthToken;
+        this.client = null as unknown as ApiClient;
     }
 
-    return response.json();
-  }
+    private async fetchWithAuth(
+        endpoint: string,
+        options: RequestInit = {}
+    ): Promise<Response> {
+        const token = await this.getAuthToken();
 
-  async fetchAllAssets(): Promise<AssetRecord[]> {
-    const allAssets: ApiAsset[] = [];
-    let page = 1;
-    const limit = 1000;
-    let hasMore = true;
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers,
+        };
 
-    while (hasMore) {
-      const response = await this.fetchAssets({ page, limit });
-      allAssets.push(...response.data);
-
-      if (page >= response.meta.totalPages) {
-        hasMore = false;
-      } else {
-        page++;
-      }
+        return fetch(`${this.baseUrl}${endpoint}`, {
+            ...options,
+            headers,
+        });
     }
 
-    return allAssets.map(transformApiAssetToRecord);
-  }
+    async fetchAssets(params?: {
+        page?: number;
+        limit?: number;
+        trial_id?: number;
+        site_id?: number;
+        processed?: boolean;
+        reviewed?: boolean;
+        search?: string;
+    }): Promise<PaginatedResponse<ApiAsset>> {
+        const searchParams = new URLSearchParams();
 
-  async queryAssets(filters: QueryFilter): Promise<PaginatedResponse<ApiAsset>> {
-    const response = await this.fetchWithAuth('/api/v1/assets/query', {
-      method: 'POST',
-      body: JSON.stringify(filters)
-    });
+        if (params?.page) searchParams.set('page', String(params.page));
+        if (params?.limit) searchParams.set('limit', String(params.limit));
+        if (params?.trial_id)
+            searchParams.set('trial_id', String(params.trial_id));
+        if (params?.site_id)
+            searchParams.set('site_id', String(params.site_id));
+        if (params?.processed !== undefined)
+            searchParams.set('processed', String(params.processed));
+        if (params?.reviewed !== undefined)
+            searchParams.set('reviewed', String(params.reviewed));
+        if (params?.search) searchParams.set('search', params.search);
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+        const query = searchParams.toString();
+        const response = await this.fetchWithAuth(
+            `/api/v1/assets${query ? `?${query}` : ''}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
     }
 
-    return response.json();
-  }
+    async fetchAllAssets(): Promise<AssetRecord[]> {
+        const allAssets: ApiAsset[] = [];
+        let page = 1;
+        const limit = 1000;
+        let hasMore = true;
 
-  async queryAllAssets(filters: QueryFilter): Promise<AssetRecord[]> {
-    const allAssets: ApiAsset[] = [];
-    let page = 1;
-    const limit = 1000;
-    let hasMore = true;
+        while (hasMore) {
+            const response = await this.fetchAssets({ page, limit });
+            allAssets.push(...response.data);
 
-    while (hasMore) {
-      const response = await this.queryAssets({ ...filters, page, limit });
-      allAssets.push(...response.data);
+            if (page >= response.meta.totalPages) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
 
-      if (page >= response.meta.totalPages) {
-        hasMore = false;
-      } else {
-        page++;
-      }
+        return allAssets.map(transformApiAssetToRecord);
     }
 
-    return allAssets.map(transformApiAssetToRecord);
-  }
+    async queryAssets(
+        filters: QueryFilter
+    ): Promise<PaginatedResponse<ApiAsset>> {
+        const response = await this.fetchWithAuth('/api/v1/assets/query', {
+            method: 'POST',
+            body: JSON.stringify(filters),
+        });
 
-  async loadData(): Promise<AssetRecord[]> {
-    return this.fetchAllAssets();
-  }
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
 
-  async loadFilteredData(filters: FilterState): Promise<AssetRecord[]> {
-    const queryFilter = filterStateToQueryFilter(filters);
-    return this.queryAllAssets(queryFilter);
-  }
-
-  async fetchStats(trialId?: number): Promise<ApiStats> {
-    const searchParams = new URLSearchParams();
-    if (trialId) searchParams.set('trial_id', String(trialId));
-
-    const query = searchParams.toString();
-    const response = await this.fetchWithAuth(`/api/v1/stats${query ? `?${query}` : ''}`);
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+        return response.json();
     }
 
-    const result = await response.json();
-    return result.data;
-  }
+    async queryAllAssets(filters: QueryFilter): Promise<AssetRecord[]> {
+        const allAssets: ApiAsset[] = [];
+        let page = 1;
+        const limit = 1000;
+        let hasMore = true;
 
-  async checkHealth(): Promise<{ status: string; timestamp: string }> {
-    const response = await fetch(`${this.baseUrl}/api/health`);
+        while (hasMore) {
+            const response = await this.queryAssets({
+                ...filters,
+                page,
+                limit,
+            });
+            allAssets.push(...response.data);
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+            if (page >= response.meta.totalPages) {
+                hasMore = false;
+            } else {
+                page++;
+            }
+        }
+
+        return allAssets.map(transformApiAssetToRecord);
     }
 
-    return response.json();
-  }
+    async loadData(): Promise<AssetRecord[]> {
+        return this.fetchAllAssets();
+    }
+
+    async loadFilteredData(filters: FilterState): Promise<AssetRecord[]> {
+        const queryFilter = filterStateToQueryFilter(filters);
+        return this.queryAllAssets(queryFilter);
+    }
+
+    async fetchStats(trialId?: number): Promise<ApiStats> {
+        const searchParams = new URLSearchParams();
+        if (trialId) searchParams.set('trial_id', String(trialId));
+
+        const query = searchParams.toString();
+        const response = await this.fetchWithAuth(
+            `/api/v1/stats${query ? `?${query}` : ''}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async checkHealth(): Promise<{ status: string; timestamp: string }> {
+        const response = await fetch(`${this.baseUrl}/api/health`);
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
 }
 
-export function createDataLoader(baseUrl: string, getAuthToken: () => Promise<string>): DataLoader {
-  return new DataLoader(baseUrl, getAuthToken);
+export function createDataLoader(
+    baseUrl: string,
+    getAuthToken: () => Promise<string>
+): DataLoader {
+    return new DataLoader(baseUrl, getAuthToken);
 }

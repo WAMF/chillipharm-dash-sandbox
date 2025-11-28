@@ -1,6 +1,8 @@
 dist
 coverage
 .nx
+.next
 node_modules
 apps/*/node_modules
+apps/*/.next
 libs/*/node_modules

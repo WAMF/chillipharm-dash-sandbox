@@ -10,10 +10,10 @@ export { EventsApi } from './endpoints/events';
 export { UsersApi } from './endpoints/users';
 export type { ApiClientConfig, RequestOptions } from './client';
 export {
-  DataLoader,
-  createDataLoader,
-  transformApiAssetToRecord,
-  filterStateToQueryFilter,
-  type ApiAsset,
-  type ApiStats
+    DataLoader,
+    createDataLoader,
+    transformApiAssetToRecord,
+    filterStateToQueryFilter,
+    type ApiAsset,
+    type ApiStats,
 } from './data-loader';

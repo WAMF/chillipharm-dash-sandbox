@@ -22,9 +22,6 @@ export default [
             '**/node_modules',
             '**/generated/**',
             '**/.storybook/**',
-            '_svelte_backup/**',
-            'src/**',
-            'functions/**',
             'apps/functions/**',
         ],
     },
@@ -76,7 +73,6 @@ export default [
                         src: true,
                         i: true,
                         j: true,
-                        fn: true,
                         Fn: true,
                         str: true,
                         Str: true,
@@ -146,7 +142,7 @@ export default [
         languageOptions: {
             parser: tseslint.parser,
             parserOptions: {
-                project: ['./tsconfig.*?.json'],
+                project: ['./tsconfig.*.json'],
             },
         },
         rules: {

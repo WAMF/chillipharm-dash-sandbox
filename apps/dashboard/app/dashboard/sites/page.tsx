@@ -1,13 +1,13 @@
 'use client';
 
-import { FilterPanel } from '../../../components/FilterPanel';
 import { SitePerformance } from '../../../components/SitePerformance';
+import { FilterPanel } from '../../../components/FilterPanel';
 
 export default function SitesPage() {
-  return (
-    <div className="space-y-6">
-      <FilterPanel />
-      <SitePerformance />
-    </div>
-  );
+    return (
+        <div className="space-y-6">
+            <FilterPanel />
+            <SitePerformance />
+        </div>
+    );
 }

@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "dist",
+    "public": "apps/dashboard/out",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -10,10 +10,6 @@
       {
         "source": "/api/**",
         "function": "getAssets"
-      },
-      {
-        "source": "**",
-        "destination": "/index.html"
       }
     ]
   },

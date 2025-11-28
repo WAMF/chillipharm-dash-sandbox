@@ -1,29 +1,29 @@
 {
-  "name": "functions",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/functions/src",
-  "projectType": "application",
-  "tags": ["scope:backend", "type:app"],
-  "targets": {
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "firebase emulators:start --only functions",
-        "cwd": "apps/functions"
-      }
-    },
-    "deploy": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "firebase deploy --only functions",
-        "cwd": "apps/functions"
-      }
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "options": {
-        "lintFilePatterns": ["apps/functions/**/*.js"]
-      }
+    "name": "functions",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/functions/src",
+    "projectType": "application",
+    "tags": ["scope:backend", "type:app"],
+    "targets": {
+        "serve": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "firebase emulators:start --only functions",
+                "cwd": "apps/functions"
+            }
+        },
+        "deploy": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "firebase deploy --only functions",
+                "cwd": "apps/functions"
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "options": {
+                "lintFilePatterns": ["apps/functions/**/*.js"]
+            }
+        }
     }
-  }
 }
