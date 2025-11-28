@@ -74,8 +74,9 @@ export function SitePerformance() {
 
     const handleSiteClick = useCallback(
         (siteName: string) => {
-            const siteAssets = filteredRecords.filter(
-                r => r.siteName === siteName
+            const isUnknown = siteName === 'Unknown';
+            const siteAssets = filteredRecords.filter(r =>
+                isUnknown ? !r.siteName?.trim() : r.siteName === siteName
             );
             setAssetListTitle(`Assets for Site: ${siteName}`);
             setAssetListRecords(siteAssets);
