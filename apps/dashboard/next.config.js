@@ -1,6 +1,8 @@
 const { composePlugins, withNx } = require('@nx/next');
 
 const nextConfig = {
+    output: 'export',
+    distDir: 'out',
     nx: {
         svgr: false,
     },
