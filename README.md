@@ -1,6 +1,6 @@
 # ChilliPharm Clinical Trial Dashboard
 
-A comprehensive reporting dashboard for ChilliPharm's clinical trial video platform test instance.
+A comprehensive reporting dashboard for ChilliPharm's clinical trial video platform.
 
 ## Overview
 
@@ -21,28 +21,48 @@ ChilliPharm is the "Stripe of Clinical Video" - providing essential video infras
 
 ## Technology Stack
 
-- **Frontend Framework**: Svelte with TypeScript
-- **Build Tool**: Vite
+- **Frontend**: Next.js 15 with React 19 and TypeScript
+- **Monorepo**: Nx workspace
 - **Authentication**: Firebase Authentication (Email/Password)
+- **Backend API**: Firebase Functions with Express.js
+- **Database**: Google Cloud Firestore
 - **Hosting**: Firebase Hosting
-- **Data Visualization**: Chart.js
-- **Data Processing**: xlsx, date-fns
-- **Styling**: Custom CSS with healthcare-focused design
+- **Data Visualization**: Chart.js, Recharts
+- **Styling**: Tailwind CSS v4
 
-## 🔐 Security & Authentication
+## Project Structure
+
+```
+chillipharm-dashboard/
+├── apps/
+│   ├── dashboard/          # Next.js frontend application
+│   │   ├── app/           # App Router pages and layouts
+│   │   ├── components/    # React components
+│   │   └── public/        # Static assets
+│   └── functions/         # Firebase Functions API
+│       ├── index.js       # API endpoints
+│       └── src/           # Helper modules
+├── libs/
+│   ├── api/               # API client library
+│   ├── firebase/          # Firebase authentication
+│   └── ui/                # Shared UI components
+├── eslint.config.mjs      # ESLint flat config
+├── firebase.json          # Firebase configuration
+└── nx.json                # Nx workspace config
+```
+
+## Security & Authentication
 
 This dashboard is protected by Firebase Authentication:
 - Email/password login required
-- Secure session management
-- Logout functionality
+- Secure session management with Firebase ID tokens
+- Protected API endpoints with token verification
 - Protected from web crawlers (robots.txt)
-
-**Quick Setup:** Run `./setup-auth.sh` or see `QUICK_START.md`
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v20.11.0 or compatible)
+- Node.js v20.11.0 or later
 - npm
 
 ### Installation
@@ -51,34 +71,62 @@ This dashboard is protected by Firebase Authentication:
 npm install
 ```
 
-### Development
+### Environment Setup
 
-```bash
-npm run dev
+Create `.env.local` in `apps/dashboard/`:
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_API_URL=http://localhost:5002/your_project/europe-west2
 ```
 
-The dashboard will be available at `http://localhost:3000` (or next available port)
+### Development
+
+Start the Next.js development server:
+
+```bash
+npx nx run dashboard:dev
+```
+
+Start Firebase Functions emulator (in a separate terminal):
+
+```bash
+firebase emulators:start --only functions
+```
+
+The dashboard will be available at `http://localhost:3000`
 
 ### Build for Production
 
 ```bash
-npm run build
+npx nx run dashboard:build
 ```
 
-### Preview Production Build
+### Linting
 
 ```bash
-npm run preview
+npx eslint apps/dashboard libs/
+npx stylelint "**/*.css"
+npx prettier --check .
 ```
 
-## Data Source
+## API Endpoints
 
-The dashboard loads data from `public/data.xlsx` which contains:
-- 898 video assets
-- 41 clinical sites
-- 44 enrolled subjects
-- Multiple study events and procedures
-- Upload, review, and processing metrics
+The backend provides these authenticated endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/assets` | Fetch video assets from Firestore |
+| `GET /api/events` | Fetch events data |
+| `GET /api/procedures` | Fetch procedures data |
+| `GET /api/geocodeCountry` | Geocode country codes to names |
+
+All endpoints require a valid Firebase ID token in the Authorization header.
 
 ## Dashboard Features
 
@@ -107,32 +155,30 @@ The dashboard loads data from `public/data.xlsx` which contains:
 - Geographic distribution
 - EDC integration status
 
-## Key Metrics
+## Deployment
 
-- **Total Assets**: 898 video recordings
-- **Processing Rate**: Percentage of assets that have been de-identified
-- **Review Rate**: Percentage of assets that have been reviewed
-- **Compliance Score**: Overall regulatory compliance rating
-- **Active Sites**: Number of participating clinical locations
+### Firebase Hosting & Functions
+
+```bash
+# Build the dashboard
+npx nx run dashboard:build
+
+# Deploy everything
+firebase deploy
+
+# Or deploy separately
+firebase deploy --only hosting
+firebase deploy --only functions
+```
 
 ## Design Philosophy
 
 The dashboard uses a clean, medical/clinical design with:
-- Blue and white color scheme for professional healthcare appearance
-- Clear data visualizations that tell a story
+- Red and white color scheme matching ChilliPharm branding
+- Clear data visualizations
 - Emphasis on compliance and data security
 - Mobile-responsive design
 - Executive-presentation quality
-
-## Future Enhancements
-
-Potential additions:
-- Real-time data refresh
-- Advanced filtering by date range, site, or subject
-- Export to PDF/CSV functionality
-- User authentication
-- Custom report generation
-- Audit trail visualization
 
 ## Contact & Support
 

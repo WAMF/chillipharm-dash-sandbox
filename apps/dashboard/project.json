@@ -1,0 +1,63 @@
+{
+    "name": "dashboard",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/dashboard",
+    "projectType": "application",
+    "tags": ["scope:app", "type:app"],
+    "targets": {
+        "build": {
+            "executor": "@nx/next:build",
+            "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
+            "options": {
+                "outputPath": "dist/apps/dashboard"
+            },
+            "configurations": {
+                "development": {
+                    "outputPath": "apps/dashboard"
+                },
+                "production": {}
+            }
+        },
+        "serve": {
+            "executor": "@nx/next:server",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "dashboard:build",
+                "dev": true
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "dashboard:build:development",
+                    "dev": true
+                },
+                "production": {
+                    "buildTarget": "dashboard:build:production",
+                    "dev": false
+                }
+            }
+        },
+        "dev": {
+            "executor": "@nx/next:server",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "dashboard:build",
+                "dev": true,
+                "port": 3000
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "dashboard:build:development",
+                    "dev": true
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["apps/dashboard/**/*.{ts,tsx,js,jsx}"]
+            }
+        }
+    }
+}

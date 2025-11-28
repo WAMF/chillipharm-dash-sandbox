@@ -1,131 +1,111 @@
-# Quick Start: Setting Up Authentication
+# Quick Start Guide
 
-## 🔐 What's New
+## Prerequisites
 
-Your dashboard now has:
-- ✅ Email/password authentication
-- ✅ Login screen
-- ✅ Logout button
-- ✅ Protected routes
-- ✅ Robots.txt to prevent crawling
+- Node.js v20.11.0 or later
+- npm
+- Firebase CLI (`npm install -g firebase-tools`)
 
-## 🚀 Quick Setup (5 minutes)
+## 1. Install Dependencies
 
-### Step 1: Get Your Firebase Config
-
-Run this command to open your Firebase project settings:
 ```bash
-open "https://console.firebase.google.com/project/chillipharm-dashboard/settings/general"
+npm install
 ```
 
-Scroll down to **Your apps** → **SDK setup and configuration** → **Config**
+## 2. Configure Environment
 
-Copy the values you need:
-- apiKey
-- messagingSenderId
-- appId
+Create `apps/dashboard/.env.local`:
 
-### Step 2: Update Firebase Config
-
-Edit `src/lib/firebase.ts` and update these three values:
-
-```typescript
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",           // ← Update this
-  authDomain: "chillipharm-dashboard.firebaseapp.com",
-  projectId: "chillipharm-dashboard",
-  storageBucket: "chillipharm-dashboard.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",   // ← Update this
-  appId: "YOUR_APP_ID"                   // ← Update this
-};
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=chillipharm-dashboard.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=chillipharm-dashboard
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=chillipharm-dashboard.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_API_URL=http://localhost:5002/chillipharm-dashboard/europe-west2
 ```
 
-### Step 3: Enable Authentication
+Get these values from [Firebase Console](https://console.firebase.google.com/project/chillipharm-dashboard/settings/general) under **Your apps > SDK setup and configuration > Config**.
 
-Run this command to open Authentication settings:
+Create `apps/functions/.env`:
+
+```env
+GOOGLE_CLOUD_PROJECT=chillipharm-dashboard
+```
+
+## 3. Start Development Servers
+
+### Terminal 1: Firebase Functions Emulator
+
 ```bash
-open "https://console.firebase.google.com/project/chillipharm-dashboard/authentication/providers"
+firebase emulators:start --only functions
 ```
 
-1. Click on **Email/Password**
-2. Toggle **Enable** to ON
-3. Click **Save**
+This starts the API at `http://localhost:5002`
 
-### Step 4: Create Your First User
+### Terminal 2: Next.js Dashboard
 
-Run this command to open Users panel:
 ```bash
-open "https://console.firebase.google.com/project/chillipharm-dashboard/authentication/users"
+npx nx run dashboard:dev
 ```
 
-1. Click **Add user**
-2. Enter email: `admin@chillipharm.com` (or your email)
-3. Enter a strong password
+This starts the frontend at `http://localhost:3000`
+
+## 4. Create a User (First Time Only)
+
+1. Go to [Firebase Console > Authentication > Users](https://console.firebase.google.com/project/chillipharm-dashboard/authentication/users)
+2. Click **Add user**
+3. Enter email and password
 4. Click **Add user**
 
-### Step 5: Test Locally
+## 5. Login
 
-The dev server should still be running. Visit:
+Visit `http://localhost:3000` and login with your credentials.
+
+## Common Commands
+
+| Command | Description |
+|---------|-------------|
+| `npx nx run dashboard:dev` | Start Next.js dev server |
+| `npx nx run dashboard:build` | Build for production |
+| `firebase emulators:start --only functions` | Start Functions emulator |
+| `firebase deploy` | Deploy to Firebase |
+| `npx eslint apps/ libs/` | Run ESLint |
+| `npx stylelint "**/*.css"` | Run Stylelint |
+| `npx prettier --write .` | Format code |
+
+## Project Structure
+
 ```
-http://localhost:3001
+apps/
+├── dashboard/           # Next.js frontend
+│   ├── app/            # Pages and layouts
+│   ├── components/     # React components
+│   └── .env.local      # Environment variables
+└── functions/          # Firebase Functions API
+    ├── index.js        # API endpoints
+    └── .env            # Functions environment
+
+libs/
+├── api/                # API client library
+├── firebase/           # Authentication context
+└── ui/                 # Shared components
 ```
 
-You should see a login screen. Try logging in with your credentials!
+## Troubleshooting
 
-### Step 6: Deploy
+### "Invalid API key"
+- Check `apps/dashboard/.env.local` has correct Firebase config
+- Restart the dev server after changing env vars
 
-Once login works locally:
-
-```bash
-npm run build
-firebase deploy
-```
-
-Your authenticated dashboard will be live at:
-**https://chillipharm-dashboard.web.app**
-
-## 📝 Login Credentials
-
-Make sure to save your login credentials:
-- **Email:** _________________
-- **Password:** _________________
-
-## 🔒 Security Features
-
-- Firebase Authentication handles all security
-- No passwords stored in your code
-- Session management automatic
-- Logout button in header
-- Protected routes (can't access without login)
-
-## 🐛 Troubleshooting
-
-**Can't see login screen?**
-- Check that you updated `src/lib/firebase.ts` with your actual config values
-
-**"Firebase: Error (auth/invalid-api-key)"**
-- Your API key in `src/lib/firebase.ts` is incorrect
-- Copy it again from Firebase Console
-
-**"User not found"**
+### "No user signed in"
 - Create a user in Firebase Console > Authentication > Users
 
-**Login works locally but not online?**
-- Make sure you ran `npm run build && firebase deploy` after updating the config
+### "Network error" or API not responding
+- Ensure Firebase emulator is running (`firebase emulators:start --only functions`)
+- Check `NEXT_PUBLIC_API_URL` matches emulator URL
 
-## 📚 Full Documentation
-
-For detailed setup instructions, see: `AUTHENTICATION_SETUP.md`
-
-## ✅ Current Status
-
-- [x] Firebase SDK installed
-- [x] Auth store created
-- [x] Login component created
-- [x] Protected routes implemented
-- [x] Logout functionality added
-- [x] Robots.txt added
-- [ ] Firebase config updated (YOU NEED TO DO THIS)
-- [ ] Authentication enabled in Firebase Console
-- [ ] First user created
-- [ ] Deployed to production
+### ESLint "No cached ProjectGraph" warnings
+- This is expected when running ESLint outside of Nx context
+- Run via Nx for full functionality: `npx nx lint dashboard`
