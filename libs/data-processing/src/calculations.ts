@@ -55,16 +55,18 @@ function calculateComplianceRate(records: AssetRecord[]): number {
     return (reviewedAndProcessed / records.length) * 100;
 }
 
+const UNKNOWN_SITE = 'Unknown';
+
 export function calculateSitePerformance(
     records: AssetRecord[]
 ): SitePerformance[] {
     const siteMap = new Map<string, AssetRecord[]>();
 
     records.forEach(record => {
-        if (!record.siteName) return;
-        const assets = siteMap.get(record.siteName) || [];
+        const siteName = record.siteName?.trim() || UNKNOWN_SITE;
+        const assets = siteMap.get(siteName) || [];
         assets.push(record);
-        siteMap.set(record.siteName, assets);
+        siteMap.set(siteName, assets);
     });
 
     return Array.from(siteMap.entries())
