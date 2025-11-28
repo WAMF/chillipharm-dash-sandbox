@@ -31,6 +31,10 @@ export function AssetListModal() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
 
+  const handleClose = useCallback(() => {
+    setShowAssetList(false);
+  }, [setShowAssetList]);
+
   useEffect(() => {
     if (!showAssetList) {
       setSearchTerm('');
@@ -50,7 +54,7 @@ export function AssetListModal() {
     }
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
-  }, [showAssetList]);
+  }, [showAssetList, handleClose]);
 
   const filteredAssets = useMemo(() => {
     return assetListRecords.filter(asset => {
@@ -92,10 +96,6 @@ export function AssetListModal() {
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
   );
-
-  const handleClose = useCallback(() => {
-    setShowAssetList(false);
-  }, [setShowAssetList]);
 
   const handleRowClick = useCallback((asset: AssetRecord) => {
     setSelectedAsset(asset);
@@ -139,7 +139,7 @@ export function AssetListModal() {
       asset.studyEvent || '',
       asset.studyProcedure || '',
       asset.studyProcedureDate || '',
-      asset.uploadDate ? format(asset.uploadDate, 'yyyy-MM-dd HH:mm:ss') : '',
+      asset.uploadDate ? format(typeof asset.uploadDate === 'string' ? parseISO(asset.uploadDate) : asset.uploadDate, 'yyyy-MM-dd HH:mm:ss') : '',
       asset.uploadedBy || '',
       asset.assetDuration || '',
       asset.fileSize || '',
@@ -167,6 +167,7 @@ export function AssetListModal() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }, [sortedAssets, assetListTitle]);
 
   if (!showAssetList) return null;

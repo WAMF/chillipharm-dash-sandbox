@@ -202,7 +202,7 @@ export function StudyAnalytics() {
                     legend: { display: false },
                     tooltip: {
                       callbacks: {
-                        label: (ctx) => `${ctx.parsed.x.toFixed(1)} days avg lag`
+                        label: (ctx) => `${ctx.parsed.x?.toFixed(1) ?? '0'} days avg lag`
                       }
                     }
                   },

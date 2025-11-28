@@ -139,13 +139,19 @@ export function filterRecordsForReport(
   return records.filter(record => {
     if (config.dateRange.start) {
       const startDate = new Date(config.dateRange.start);
-      if (record.uploadDate < startDate) return false;
+      const uploadDate = record.uploadDate instanceof Date
+        ? record.uploadDate
+        : new Date(record.uploadDate);
+      if (uploadDate < startDate) return false;
     }
 
     if (config.dateRange.end) {
       const endDate = new Date(config.dateRange.end);
       endDate.setHours(23, 59, 59, 999);
-      if (record.uploadDate > endDate) return false;
+      const uploadDate = record.uploadDate instanceof Date
+        ? record.uploadDate
+        : new Date(record.uploadDate);
+      if (uploadDate > endDate) return false;
     }
 
     if (config.filters.sites !== 'all' && config.filters.sites.length > 0) {

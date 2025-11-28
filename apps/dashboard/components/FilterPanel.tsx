@@ -27,9 +27,14 @@ export function FilterPanel() {
   const [showPresetModal, setShowPresetModal] = useState(false);
   const [newPresetName, setNewPresetName] = useState('');
   const [searchInput, setSearchInput] = useState(filters.searchTerm);
+  const [mounted, setMounted] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const activeFilterCount = getActiveFilterCount();
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activeFilterCount = mounted ? getActiveFilterCount() : 0;
   const hasActiveFilters = activeFilterCount > 0;
 
   useEffect(() => {

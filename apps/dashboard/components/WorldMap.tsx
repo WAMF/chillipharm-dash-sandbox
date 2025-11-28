@@ -123,7 +123,6 @@ export function WorldMap({ countryData, onCountryClick }: WorldMapProps) {
 
   useEffect(() => {
     setMounted(true);
-    import('leaflet/dist/leaflet.css');
   }, []);
 
   useEffect(() => {
@@ -138,10 +137,16 @@ export function WorldMap({ countryData, onCountryClick }: WorldMapProps) {
       }
 
       setIsLoading(true);
-      const countries = countryData.map(c => c.country);
-      await resolveAllCoordinates(countries);
-      setCoordinatesResolved(true);
-      setIsLoading(false);
+      try {
+        const countries = countryData.map(c => c.country);
+        await resolveAllCoordinates(countries);
+        setCoordinatesResolved(true);
+      } catch (error) {
+        console.error('Failed to resolve country coordinates:', error);
+        setCoordinatesResolved(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
 
     loadCoordinates();

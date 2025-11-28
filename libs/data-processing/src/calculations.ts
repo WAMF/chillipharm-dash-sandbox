@@ -99,11 +99,11 @@ export function calculateTimeSeriesData(records: AssetRecord[]): TimeSeriesData[
   });
 
   return Array.from(monthMap.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, data]) => ({
       date: format(parseISO(date + '-01'), 'MMM yyyy'),
       ...data
     }))
-    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-12);
 }
 
@@ -379,12 +379,12 @@ export function getReviewPerformance(records: AssetRecord[]): ReviewPerformanceD
   });
 
   const reviewTrend = Array.from(monthlyReviews.entries())
+    .sort((a, b) => a[0].localeCompare(b[0]))
     .map(([date, data]) => ({
       date: format(parseISO(date + '-01'), 'MMM yyyy'),
       avgTurnaroundDays: data.totalDays / data.count,
       reviewCount: data.count
     }))
-    .sort((a, b) => a.date.localeCompare(b.date))
     .slice(-12);
 
   return {

@@ -11,9 +11,9 @@ export interface PaginationParams {
 export abstract class BaseApi {
   constructor(protected client: ApiClient) {}
 
-  protected buildParams(
+  protected buildParams<T extends object>(
     pagination?: PaginationParams,
-    filters?: Record<string, unknown>
+    filters?: T
   ): Record<string, unknown> {
     return {
       ...pagination,

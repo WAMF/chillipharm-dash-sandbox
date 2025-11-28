@@ -55,15 +55,15 @@ export interface AggregatedMetrics {
 
 export function aggregateAssetMetrics(assets: AssetRecord[]): AggregatedMetrics {
   const total = assets.length;
-  const processed = countBy(assets, (a) => a.processed === true);
+  const processed = countBy(assets, (a) => a.processed === 'Yes');
   const reviewed = countBy(assets, (a) => a.reviewed === true);
   const pending = total - processed;
 
   const processedRate = total > 0 ? (processed / total) * 100 : 0;
   const reviewedRate = total > 0 ? (reviewed / total) * 100 : 0;
 
-  const totalFileSize = sumBy(assets, (a) => a.filesize || 0);
-  const totalDuration = sumBy(assets, (a) => a.duration || 0);
+  const totalFileSize = 0;
+  const totalDuration = 0;
 
   return {
     total,

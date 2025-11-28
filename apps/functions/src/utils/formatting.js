@@ -50,7 +50,7 @@ export function getCountryName(code) {
 }
 
 export function formatDuration(seconds) {
-  if (!seconds || isNaN(seconds)) return null;
+  if (seconds === null || seconds === undefined || isNaN(seconds)) return null;
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
@@ -61,7 +61,7 @@ export function formatDuration(seconds) {
 }
 
 export function formatFileSize(bytes) {
-  if (!bytes || isNaN(bytes)) return null;
+  if (bytes === null || bytes === undefined || isNaN(bytes)) return null;
   const mb = bytes / (1024 * 1024);
   if (mb >= 1000) {
     return `${(mb / 1024).toFixed(2)} GB`;
@@ -71,10 +71,14 @@ export function formatFileSize(bytes) {
 
 export function formatDate(date) {
   if (!date) return null;
-  return new Date(date).toISOString().split('T')[0];
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return null;
+  return parsed.toISOString().split('T')[0];
 }
 
 export function formatDateTime(date) {
   if (!date) return null;
-  return new Date(date).toISOString();
+  const parsed = new Date(date);
+  if (isNaN(parsed.getTime())) return null;
+  return parsed.toISOString();
 }

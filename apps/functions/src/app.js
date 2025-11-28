@@ -50,9 +50,12 @@ app.use('/api/v1/stats', statsRouter);
 
 app.use((err, req, res, next) => {
   console.error('API Error:', err);
-  res.status(err.status || 500).json({
+  const isProduction = process.env.NODE_ENV === 'production';
+  const statusCode = err.status || 500;
+  const showDetail = !isProduction || statusCode < 500;
+  res.status(statusCode).json({
     success: false,
-    error: err.message || 'Internal server error'
+    error: showDetail ? (err.message || 'Internal server error') : 'Internal server error'
   });
 });
 

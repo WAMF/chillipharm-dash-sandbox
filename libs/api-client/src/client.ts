@@ -54,7 +54,7 @@ export class ApiClient {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string> | undefined),
     };
 
     if (this.config.getAuthToken) {
@@ -77,7 +77,7 @@ export class ApiClient {
     return response.json();
   }
 
-  async get<T>(endpoint: string, params?: Record<string, unknown>, options?: RequestOptions): Promise<T> {
+  async get<T, P extends object = Record<string, unknown>>(endpoint: string, params?: P, options?: RequestOptions): Promise<T> {
     const searchParams = params ? this.buildQueryString(params) : '';
     const url = searchParams ? `${endpoint}?${searchParams}` : endpoint;
     return this.request<T>(url, { method: 'GET', ...options });
@@ -103,7 +103,7 @@ export class ApiClient {
     return this.request<T>(endpoint, { method: 'DELETE', ...options });
   }
 
-  private buildQueryString(params: Record<string, unknown>): string {
+  private buildQueryString<T extends object>(params: T): string {
     const searchParams = new URLSearchParams();
 
     Object.entries(params).forEach(([key, value]) => {

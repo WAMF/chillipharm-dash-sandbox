@@ -7,6 +7,14 @@ const router = Router();
 
 const ALLOWED_SORT_FIELDS = ['id', 'filename', 'filesize', 'created_at', 'processed'];
 
+const SORT_COLUMN_MAP = {
+  id: 'a.id',
+  filename: 'a.filename',
+  filesize: 'a.filesize',
+  created_at: 'a.created_at',
+  processed: 'a.processed'
+};
+
 router.get('/', async (req, res, next) => {
   try {
     const { page, limit, offset } = getPaginationParams(req.query);
@@ -103,7 +111,7 @@ router.get('/', async (req, res, next) => {
       LEFT JOIN asset_reviews ar ON ar.asset_id = a.id AND ar.deleted_at IS NULL
       LEFT JOIN users reviewer ON ar.user_id = reviewer.id
       ${whereClause}
-      ORDER BY a.${sort} ${order}
+      ORDER BY ${SORT_COLUMN_MAP[sort] || 'a.created_at'} ${order === 'asc' ? 'ASC' : 'DESC'}
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
     

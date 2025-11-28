@@ -42,7 +42,7 @@ const COLOR_PALETTE = [
 ];
 
 export function getAssetsByCountry(assets: AssetRecord[]): ChartDataPoint[] {
-  const grouped = groupBy(assets, (a) => a.country_code || 'Unknown', getCountryName);
+  const grouped = groupBy(assets, (a) => a.siteCountry || 'Unknown', getCountryName);
 
   return grouped
     .map((group, index) => ({
@@ -54,7 +54,7 @@ export function getAssetsByCountry(assets: AssetRecord[]): ChartDataPoint[] {
 }
 
 export function getAssetsBySite(assets: AssetRecord[]): ChartDataPoint[] {
-  const grouped = groupBy(assets, (a) => a.site_name || 'Unknown');
+  const grouped = groupBy(assets, (a) => a.siteName || 'Unknown');
 
   return grouped
     .map((group, index) => ({
@@ -80,12 +80,12 @@ export function getReviewStatusData(reviewed: number, unreviewed: number): Chart
 }
 
 export function getFileSizeByTrial(assets: AssetRecord[]): ChartDataPoint[] {
-  const grouped = groupBy(assets, (a) => a.trial_name || 'Unknown');
+  const grouped = groupBy(assets, (a) => a.trialName || 'Unknown');
 
   return grouped
     .map((group, index) => ({
       label: group.label,
-      value: sumBy(group.items, (a) => a.filesize || 0),
+      value: 0,
       color: COLOR_PALETTE[index % COLOR_PALETTE.length],
     }))
     .sort((a, b) => b.value - a.value);
