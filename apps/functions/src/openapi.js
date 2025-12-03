@@ -567,6 +567,184 @@ export default {
                 },
             },
         },
+        '/api/v1/sites/{siteId}/subjects': {
+            get: {
+                summary: 'List subjects at a site',
+                description:
+                    'Returns all subjects enrolled at the specified site with event and procedure counts',
+                tags: ['Sites', 'Hierarchical Navigation'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                    { $ref: '#/components/parameters/pageParam' },
+                    { $ref: '#/components/parameters/limitParam' },
+                    { $ref: '#/components/parameters/sortParam' },
+                    { $ref: '#/components/parameters/orderParam' },
+                ],
+                responses: {
+                    200: { description: 'List of subjects at the site' },
+                    404: { description: 'Site not found' },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/subjects/{subjectId}/events': {
+            get: {
+                summary: 'List events for a subject',
+                description:
+                    'Returns all study events for a subject with procedure and asset counts. Validates subject belongs to specified site.',
+                tags: ['Sites', 'Hierarchical Navigation'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                    {
+                        name: 'subjectId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Subject ID',
+                    },
+                    { $ref: '#/components/parameters/pageParam' },
+                    { $ref: '#/components/parameters/limitParam' },
+                    { $ref: '#/components/parameters/sortParam' },
+                    { $ref: '#/components/parameters/orderParam' },
+                ],
+                responses: {
+                    200: { description: 'List of events for the subject' },
+                    404: {
+                        description:
+                            'Site or subject not found, or subject does not belong to site',
+                    },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/subjects/{subjectId}/events/{eventId}/procedures':
+            {
+                get: {
+                    summary: 'List procedures for an event',
+                    description:
+                        'Returns all study procedures for an event with asset counts. Validates full hierarchy chain.',
+                    tags: ['Sites', 'Hierarchical Navigation'],
+                    parameters: [
+                        {
+                            name: 'siteId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Site ID',
+                        },
+                        {
+                            name: 'subjectId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Subject ID',
+                        },
+                        {
+                            name: 'eventId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Event ID',
+                        },
+                        { $ref: '#/components/parameters/pageParam' },
+                        { $ref: '#/components/parameters/limitParam' },
+                        { $ref: '#/components/parameters/sortParam' },
+                        { $ref: '#/components/parameters/orderParam' },
+                    ],
+                    responses: {
+                        200: { description: 'List of procedures for the event' },
+                        404: {
+                            description:
+                                'Invalid hierarchy - site, subject, or event not found',
+                        },
+                    },
+                },
+            },
+        '/api/v1/sites/{siteId}/subjects/{subjectId}/events/{eventId}/procedures/{procedureId}/assets':
+            {
+                get: {
+                    summary: 'List assets in a procedure',
+                    description:
+                        'Returns all assets within a specific study procedure. Validates full hierarchy chain from site to procedure.',
+                    tags: ['Sites', 'Hierarchical Navigation'],
+                    parameters: [
+                        {
+                            name: 'siteId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Site ID',
+                        },
+                        {
+                            name: 'subjectId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Subject ID',
+                        },
+                        {
+                            name: 'eventId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Event ID',
+                        },
+                        {
+                            name: 'procedureId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Procedure ID',
+                        },
+                        { $ref: '#/components/parameters/pageParam' },
+                        { $ref: '#/components/parameters/limitParam' },
+                        { $ref: '#/components/parameters/sortParam' },
+                        { $ref: '#/components/parameters/orderParam' },
+                    ],
+                    responses: {
+                        200: { description: 'List of assets in the procedure' },
+                        404: {
+                            description:
+                                'Invalid hierarchy - any element in chain not found',
+                        },
+                    },
+                },
+            },
+        '/api/v1/sites/{siteId}/assets': {
+            get: {
+                summary: 'List all assets at a site (flat view)',
+                description:
+                    'Returns all assets at a site regardless of study hierarchy. Useful for site-level asset overview.',
+                tags: ['Sites', 'Hierarchical Navigation'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                    { $ref: '#/components/parameters/pageParam' },
+                    { $ref: '#/components/parameters/limitParam' },
+                    { $ref: '#/components/parameters/sortParam' },
+                    { $ref: '#/components/parameters/orderParam' },
+                ],
+                responses: {
+                    200: { description: 'List of all assets at the site' },
+                    404: { description: 'Site not found' },
+                },
+            },
+        },
         '/api/v1/subjects': {
             get: {
                 summary: 'List subjects',
@@ -844,6 +1022,68 @@ export default {
                 },
             },
         },
+        '/api/v1/libraries': {
+            get: {
+                summary: 'List libraries',
+                description: 'Returns all non-site trial containers (libraries)',
+                tags: ['Libraries'],
+                parameters: [
+                    { $ref: '#/components/parameters/pageParam' },
+                    { $ref: '#/components/parameters/limitParam' },
+                    { $ref: '#/components/parameters/searchParam' },
+                    {
+                        name: 'trial_id',
+                        in: 'query',
+                        schema: { type: 'integer' },
+                        description: 'Filter by trial',
+                    },
+                ],
+                responses: { 200: { description: 'List of libraries' } },
+            },
+        },
+        '/api/v1/libraries/{id}': {
+            get: {
+                summary: 'Get library by ID',
+                tags: ['Libraries'],
+                parameters: [
+                    {
+                        name: 'id',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                    },
+                ],
+                responses: {
+                    200: { description: 'Library details' },
+                    404: { description: 'Library not found' },
+                },
+            },
+        },
+        '/api/v1/libraries/{libraryId}/assets': {
+            get: {
+                summary: 'List assets in a library',
+                description:
+                    'Returns all assets within a specific library container',
+                tags: ['Libraries'],
+                parameters: [
+                    {
+                        name: 'libraryId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Library ID',
+                    },
+                    { $ref: '#/components/parameters/pageParam' },
+                    { $ref: '#/components/parameters/limitParam' },
+                    { $ref: '#/components/parameters/sortParam' },
+                    { $ref: '#/components/parameters/orderParam' },
+                ],
+                responses: {
+                    200: { description: 'List of assets in the library' },
+                    404: { description: 'Library not found' },
+                },
+            },
+        },
         '/api/v1/stats': {
             get: {
                 summary: 'Get aggregate statistics',
@@ -857,6 +1097,42 @@ export default {
                     },
                 ],
                 responses: { 200: { description: 'Statistics' } },
+            },
+        },
+        '/api/v1/stats/sites': {
+            get: {
+                summary: 'Get site-centric statistics',
+                description:
+                    'Returns aggregated statistics focused on site data: total sites, subjects, assets per site, and country distribution',
+                tags: ['Stats'],
+                parameters: [
+                    {
+                        name: 'trial_id',
+                        in: 'query',
+                        schema: { type: 'integer' },
+                        description: 'Filter by trial',
+                    },
+                ],
+                responses: { 200: { description: 'Site-centric statistics' } },
+            },
+        },
+        '/api/v1/stats/libraries': {
+            get: {
+                summary: 'Get library-centric statistics',
+                description:
+                    'Returns aggregated statistics focused on library data: total libraries, assets per library, and trial distribution',
+                tags: ['Stats'],
+                parameters: [
+                    {
+                        name: 'trial_id',
+                        in: 'query',
+                        schema: { type: 'integer' },
+                        description: 'Filter by trial',
+                    },
+                ],
+                responses: {
+                    200: { description: 'Library-centric statistics' },
+                },
             },
         },
         '/api/openapi.json': {

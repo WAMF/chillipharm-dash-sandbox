@@ -25,6 +25,10 @@ export interface ApiAsset {
         country: string;
         countryCode: string;
     } | null;
+    library: {
+        id: number;
+        name: string;
+    } | null;
     uploader: {
         email: string;
         name: string | null;
@@ -99,17 +103,25 @@ export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
         reviewedDate: asset.review?.reviewDate || '',
         fileSize: asset.filesizeFormatted || '',
         assetLink: asset.url || '',
+        libraryId: asset.library?.id,
+        libraryName: asset.library?.name,
     };
 }
 
 export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
     const queryFilter: QueryFilter = {};
 
+    if (filters.dataViewMode && filters.dataViewMode !== 'all') {
+        queryFilter.dataViewMode = filters.dataViewMode;
+    }
     if (filters.selectedTrials.length > 0) {
         queryFilter.trials = filters.selectedTrials;
     }
     if (filters.selectedSites.length > 0) {
         queryFilter.sites = filters.selectedSites;
+    }
+    if (filters.selectedLibraries.length > 0) {
+        queryFilter.libraries = filters.selectedLibraries;
     }
     if (filters.selectedCountries.length > 0) {
         queryFilter.countries = filters.selectedCountries;

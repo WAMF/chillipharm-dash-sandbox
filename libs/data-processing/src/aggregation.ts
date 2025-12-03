@@ -101,3 +101,32 @@ export function aggregateByDate<T>(
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 }
+
+export interface LibraryData {
+    name: string;
+    assetCount: number;
+    reviewedCount: number;
+    processedCount: number;
+}
+
+export function getLibraryDistribution(records: AssetRecord[]): LibraryData[] {
+    const libraryRecords = records.filter(r => r.libraryName);
+    const grouped = groupBy(libraryRecords, r => r.libraryName || 'Unknown');
+
+    return grouped.map(group => ({
+        name: group.key,
+        assetCount: group.count,
+        reviewedCount: countBy(group.items, a => a.reviewed === true),
+        processedCount: countBy(group.items, a => a.processed === 'Yes'),
+    }));
+}
+
+export function getLibraryFilterOptions(records: AssetRecord[]): string[] {
+    const libraries = new Set<string>();
+    records.forEach(r => {
+        if (r.libraryName) {
+            libraries.add(r.libraryName);
+        }
+    });
+    return Array.from(libraries).sort();
+}

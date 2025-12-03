@@ -1,4 +1,4 @@
-import type { AssetRecord, PaginatedResponse } from '@cp/types';
+import type { AssetRecord, DataViewMode, PaginatedResponse } from '@cp/types';
 import { BaseApi, PaginationParams } from './base';
 import type { RequestOptions } from '../client';
 
@@ -9,6 +9,7 @@ export interface AssetFilters {
     date_from?: string;
     date_to?: string;
     search?: string;
+    data_view?: DataViewMode;
 }
 
 export class AssetsApi extends BaseApi {

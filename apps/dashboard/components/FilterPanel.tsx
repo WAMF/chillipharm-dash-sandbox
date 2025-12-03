@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { FilterPreset, AssetRecord } from '@cp/types';
+import type { FilterPreset, AssetRecord, DataViewMode } from '@cp/types';
 import { useFilters } from '../contexts/FilterContext';
 import { useDashboard } from '../contexts/DashboardContext';
+import { DataViewSwitcher } from './DataViewSwitcher';
 
 type ArrayFilterKey =
     | 'selectedTrials'
     | 'selectedSites'
+    | 'selectedLibraries'
     | 'selectedCountries'
     | 'selectedStudyArms'
     | 'selectedProcedures';
@@ -105,27 +107,38 @@ export function FilterPanel() {
                 className={`rounded-lg bg-white shadow-sm mb-6 ${!expanded ? 'border-b-0' : ''}`}
             >
                 <div
-                    className={`flex justify-between items-center px-6 py-4 ${expanded ? 'border-b border-neutral-200' : ''}`}
+                    className={`flex flex-col gap-3 px-6 py-4 ${expanded ? 'border-b border-neutral-200' : ''}`}
                 >
-                    <button
-                        className="flex items-center gap-2 bg-transparent border-none text-base font-semibold text-neutral-700 cursor-pointer p-0"
-                        onClick={() => setExpanded(!expanded)}
-                    >
-                        <span className="text-xs text-neutral-500">
-                            {expanded ? '▼' : '▶'}
-                        </span>
-                        <span>Filters</span>
-                        {activeFilterCount > 0 && (
-                            <span className="bg-chilli-red text-white text-xs px-2 py-0.5 rounded-full font-semibold">
-                                {activeFilterCount}
+                    <div className="flex justify-between items-center">
+                        <DataViewSwitcher
+                            value={filters.dataViewMode}
+                            onChange={(mode: DataViewMode) =>
+                                setFilter('dataViewMode', mode)
+                            }
+                        />
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm text-neutral-500">
+                                Showing{' '}
+                                {filteredRecords.length.toLocaleString()} of{' '}
+                                {allRecords.length.toLocaleString()} records
                             </span>
-                        )}
-                    </button>
-                    <div className="flex items-center gap-4">
-                        <span className="text-sm text-neutral-500">
-                            Showing {filteredRecords.length.toLocaleString()} of{' '}
-                            {allRecords.length.toLocaleString()} records
-                        </span>
+                        </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <button
+                            className="flex items-center gap-2 bg-transparent border-none text-base font-semibold text-neutral-700 cursor-pointer p-0"
+                            onClick={() => setExpanded(!expanded)}
+                        >
+                            <span className="text-xs text-neutral-500">
+                                {expanded ? '▼' : '▶'}
+                            </span>
+                            <span>Filters</span>
+                            {activeFilterCount > 0 && (
+                                <span className="bg-chilli-red text-white text-xs px-2 py-0.5 rounded-full font-semibold">
+                                    {activeFilterCount}
+                                </span>
+                            )}
+                        </button>
                         {hasActiveFilters && (
                             <button
                                 className="bg-transparent border border-neutral-300 text-neutral-600 px-3 py-1.5 rounded text-xs cursor-pointer transition-all hover:bg-neutral-100 hover:border-neutral-400"
@@ -200,17 +213,45 @@ export function FilterPanel() {
                                 }
                             />
 
-                            <MultiSelectFilter
-                                label="Site"
-                                options={filterOptions.sites}
-                                selected={filters.selectedSites}
-                                onToggle={value =>
-                                    toggleArrayFilter('selectedSites', value)
-                                }
-                                onSelect={value =>
-                                    handleSelectChange('selectedSites', value)
-                                }
-                            />
+                            {filters.dataViewMode !== 'library' && (
+                                <MultiSelectFilter
+                                    label="Site"
+                                    options={filterOptions.sites}
+                                    selected={filters.selectedSites}
+                                    onToggle={value =>
+                                        toggleArrayFilter(
+                                            'selectedSites',
+                                            value
+                                        )
+                                    }
+                                    onSelect={value =>
+                                        handleSelectChange(
+                                            'selectedSites',
+                                            value
+                                        )
+                                    }
+                                />
+                            )}
+
+                            {filters.dataViewMode !== 'sites' && (
+                                <MultiSelectFilter
+                                    label="Library"
+                                    options={filterOptions.libraries}
+                                    selected={filters.selectedLibraries}
+                                    onToggle={value =>
+                                        toggleArrayFilter(
+                                            'selectedLibraries',
+                                            value
+                                        )
+                                    }
+                                    onSelect={value =>
+                                        handleSelectChange(
+                                            'selectedLibraries',
+                                            value
+                                        )
+                                    }
+                                />
+                            )}
 
                             <MultiSelectFilter
                                 label="Country"
@@ -429,6 +470,16 @@ export function FilterPanel() {
                                         label={`Sites: ${filters.selectedSites.length}`}
                                         onRemove={() =>
                                             clearArrayFilter('selectedSites')
+                                        }
+                                    />
+                                )}
+                                {filters.selectedLibraries.length > 0 && (
+                                    <FilterPill
+                                        label={`Libraries: ${filters.selectedLibraries.length}`}
+                                        onRemove={() =>
+                                            clearArrayFilter(
+                                                'selectedLibraries'
+                                            )
                                         }
                                     />
                                 )}

@@ -13,6 +13,7 @@ import { AssetDetailModal } from '../../components/AssetDetailModal';
 const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
     { href: '/dashboard/sites', label: 'Sites', icon: 'building' },
+    { href: '/dashboard/libraries', label: 'Libraries', icon: 'folder' },
     { href: '/dashboard/analytics', label: 'Analytics', icon: 'chart-pie' },
     { href: '/dashboard/video-metrics', label: 'Video Metrics', icon: 'play' },
     { href: '/dashboard/reviews', label: 'Reviews', icon: 'check-circle' },
@@ -140,6 +141,21 @@ function NavIcon({ name }: { name: string }) {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+            </svg>
+        ),
+        'folder': (
+            <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
                 />
             </svg>
         ),

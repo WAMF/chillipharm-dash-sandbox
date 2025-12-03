@@ -78,10 +78,21 @@ router.get('/', async (req, res, next) => {
             params.push(`%${req.query.search}%`);
         }
 
+        if (req.query.data_view === 'sites') {
+            filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
+        } else if (req.query.data_view === 'library') {
+            filters.push("(tc.id IS NULL OR tc.type != 'Site')");
+        }
+
         const whereClause =
             filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
 
-        const countQuery = `SELECT COUNT(*) FROM assets a ${whereClause}`;
+        const countQuery = `
+      SELECT COUNT(*)
+      FROM assets a
+      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id
+      ${whereClause}
+    `;
         const countResult = await query(countQuery, params);
         const total = parseInt(countResult.rows[0].count);
 
@@ -97,8 +108,9 @@ router.get('/', async (req, res, next) => {
         a.account_id as trial_id,
         acc.trial_name,
         acc.company_name,
-        tc.id as site_id,
-        tc.name as site_name,
+        tc.id as container_id,
+        tc.name as container_name,
+        tc.type as container_type,
         tc.country_code,
         uploader.email as uploader_email,
         uploader.first_name as uploader_first_name,
@@ -122,7 +134,7 @@ router.get('/', async (req, res, next) => {
         ) as comments
       FROM assets a
       LEFT JOIN accounts acc ON a.account_id = acc.id
-      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id AND tc.type = 'Site'
+      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id
       LEFT JOIN users uploader ON a.uploader_id = uploader.id
       LEFT JOIN study_procedures sp ON a.study_procedure_id = sp.id
       LEFT JOIN study_procedure_definitions spd ON sp.study_procedure_definition_id = spd.id
@@ -149,6 +161,8 @@ router.get('/', async (req, res, next) => {
                 }
             }
 
+            const isSite = row.container_type === 'Site';
+
             return {
                 id: row.id,
                 filename: row.filename,
@@ -162,14 +176,22 @@ router.get('/', async (req, res, next) => {
                     id: row.trial_id,
                     name: row.trial_name || row.company_name,
                 },
-                site: row.site_id
-                    ? {
-                          id: row.site_id,
-                          name: row.site_name,
-                          country: getCountryName(row.country_code),
-                          countryCode: row.country_code,
-                      }
-                    : null,
+                site:
+                    row.container_id && isSite
+                        ? {
+                              id: row.container_id,
+                              name: row.container_name,
+                              country: getCountryName(row.country_code),
+                              countryCode: row.country_code,
+                          }
+                        : null,
+                library:
+                    row.container_id && !isSite
+                        ? {
+                              id: row.container_id,
+                              name: row.container_name,
+                          }
+                        : null,
                 uploader: row.uploader_email
                     ? {
                           email: row.uploader_email,
@@ -246,6 +268,7 @@ router.post('/query', async (req, res, next) => {
         const {
             trials = [],
             sites = [],
+            libraries = [],
             countries = [],
             studyArms = [],
             procedures = [],
@@ -257,6 +280,7 @@ router.post('/query', async (req, res, next) => {
             sortOrder = 'desc',
             page = 1,
             limit = 1000,
+            dataViewMode = 'all',
         } = req.body;
 
         const safeLimit = Math.min(Math.max(1, limit), 5000);
@@ -396,6 +420,17 @@ router.post('/query', async (req, res, next) => {
             paramIndex++;
         }
 
+        if (dataViewMode === 'sites') {
+            filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
+        } else if (dataViewMode === 'library') {
+            filters.push("(tc.id IS NULL OR tc.type != 'Site')");
+        }
+
+        if (libraries.length > 0) {
+            filters.push(`(tc.type != 'Site' AND tc.name = ANY($${paramIndex++}))`);
+            params.push(libraries);
+        }
+
         const whereClause = `WHERE ${filters.join(' AND ')}`;
 
         const sortColumn = QUERY_SORT_MAP[sortBy] || 'a.created_at';
@@ -405,7 +440,7 @@ router.post('/query', async (req, res, next) => {
       SELECT COUNT(DISTINCT a.id)
       FROM assets a
       LEFT JOIN accounts acc ON a.account_id = acc.id
-      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id AND tc.type = 'Site'
+      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id
       LEFT JOIN study_procedures sp ON a.study_procedure_id = sp.id
       LEFT JOIN study_procedure_definitions spd ON sp.study_procedure_definition_id = spd.id
       LEFT JOIN study_events se ON sp.study_event_id = se.id
@@ -429,8 +464,9 @@ router.post('/query', async (req, res, next) => {
         a.account_id as trial_id,
         acc.trial_name,
         acc.company_name,
-        tc.id as site_id,
-        tc.name as site_name,
+        tc.id as container_id,
+        tc.name as container_name,
+        tc.type as container_type,
         tc.country_code,
         uploader.email as uploader_email,
         uploader.first_name as uploader_first_name,
@@ -454,7 +490,7 @@ router.post('/query', async (req, res, next) => {
         ) as comments
       FROM assets a
       LEFT JOIN accounts acc ON a.account_id = acc.id
-      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id AND tc.type = 'Site'
+      LEFT JOIN trial_containers tc ON a.trial_container_id = tc.id
       LEFT JOIN users uploader ON a.uploader_id = uploader.id
       LEFT JOIN study_procedures sp ON a.study_procedure_id = sp.id
       LEFT JOIN study_procedure_definitions spd ON sp.study_procedure_definition_id = spd.id
@@ -485,6 +521,8 @@ router.post('/query', async (req, res, next) => {
                 }
             }
 
+            const isSite = row.container_type === 'Site';
+
             return {
                 id: row.id,
                 filename: row.filename,
@@ -498,14 +536,22 @@ router.post('/query', async (req, res, next) => {
                     id: row.trial_id,
                     name: row.trial_name || row.company_name,
                 },
-                site: row.site_id
-                    ? {
-                          id: row.site_id,
-                          name: row.site_name,
-                          country: getCountryName(row.country_code),
-                          countryCode: row.country_code,
-                      }
-                    : null,
+                site:
+                    row.container_id && isSite
+                        ? {
+                              id: row.container_id,
+                              name: row.container_name,
+                              country: getCountryName(row.country_code),
+                              countryCode: row.country_code,
+                          }
+                        : null,
+                library:
+                    row.container_id && !isSite
+                        ? {
+                              id: row.container_id,
+                              name: row.container_name,
+                          }
+                        : null,
                 uploader: row.uploader_email
                     ? {
                           email: row.uploader_email,
