@@ -1,14 +1,22 @@
 import type { FilterState, AssetRecord, DataViewMode } from '@cp/types';
 
+function isSiteAsset(record: AssetRecord): boolean {
+    return Boolean(record.siteId);
+}
+
+function isLibraryAsset(record: AssetRecord): boolean {
+    return Boolean(record.libraryId && !record.siteId);
+}
+
 export function filterByDataViewMode(
     records: AssetRecord[],
     mode: DataViewMode
 ): AssetRecord[] {
     switch (mode) {
         case 'sites':
-            return records.filter(r => r.siteId != null && r.siteName != null);
+            return records.filter(isSiteAsset);
         case 'library':
-            return records.filter(r => r.siteId == null && r.libraryId != null);
+            return records.filter(isLibraryAsset);
         default:
             return records;
     }
@@ -18,16 +26,9 @@ export function filterRecords(
     records: AssetRecord[],
     filters: FilterState
 ): AssetRecord[] {
-    let filteredRecords = records;
+    let filtered = filterByDataViewMode(records, filters.dataViewMode);
 
-    if (filters.dataViewMode && filters.dataViewMode !== 'all') {
-        filteredRecords = filterByDataViewMode(
-            filteredRecords,
-            filters.dataViewMode
-        );
-    }
-
-    return filteredRecords.filter(record => {
+    return filtered.filter(record => {
         if (
             filters.selectedTrials.length > 0 &&
             !filters.selectedTrials.includes(record.trialName)
@@ -44,8 +45,7 @@ export function filterRecords(
 
         if (
             filters.selectedLibraries.length > 0 &&
-            (!record.libraryName ||
-                !filters.selectedLibraries.includes(record.libraryName))
+            (!record.libraryName || !filters.selectedLibraries.includes(record.libraryName))
         ) {
             return false;
         }
