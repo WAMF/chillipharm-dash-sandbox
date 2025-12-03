@@ -283,6 +283,13 @@ router.post('/query', async (req, res, next) => {
             dataViewMode = 'all',
         } = req.body;
 
+        if (dataViewMode === 'sites' && libraries.length > 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot filter by libraries when dataViewMode is "sites"',
+            });
+        }
+
         const safeLimit = Math.min(Math.max(1, limit), 5000);
         const safePage = Math.max(1, page);
         const offset = (safePage - 1) * safeLimit;
@@ -427,7 +434,11 @@ router.post('/query', async (req, res, next) => {
         }
 
         if (libraries.length > 0) {
-            filters.push(`(tc.type != 'Site' AND tc.name = ANY($${paramIndex++}))`);
+            if (dataViewMode === 'library') {
+                filters.push(`tc.name = ANY($${paramIndex++})`);
+            } else {
+                filters.push(`(tc.type != 'Site' AND tc.name = ANY($${paramIndex++}))`);
+            }
             params.push(libraries);
         }
 
