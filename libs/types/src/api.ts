@@ -34,11 +34,10 @@ export interface QueryFilter {
     countries?: string[];
     studyArms?: string[];
     procedures?: string[];
-    startDate?: string;
-    endDate?: string;
+    dateRange?: { start?: string; end?: string };
     reviewStatus?: 'all' | 'reviewed' | 'pending';
     processedStatus?: 'all' | 'yes' | 'no';
-    search?: string;
+    searchTerm?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     page?: number;

@@ -137,8 +137,10 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
         queryFilter.procedures = filters.selectedProcedures;
     }
     if (filters.dateRange.start || filters.dateRange.end) {
-        queryFilter.startDate = filters.dateRange.start || undefined;
-        queryFilter.endDate = filters.dateRange.end || undefined;
+        queryFilter.dateRange = {
+            start: filters.dateRange.start || undefined,
+            end: filters.dateRange.end || undefined,
+        };
     }
     if (filters.reviewStatus !== 'all') {
         queryFilter.reviewStatus = filters.reviewStatus;
@@ -147,7 +149,7 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
         queryFilter.processedStatus = filters.processedStatus;
     }
     if (filters.searchTerm.trim()) {
-        queryFilter.search = filters.searchTerm.trim();
+        queryFilter.searchTerm = filters.searchTerm.trim();
     }
     if (filters.sortBy) {
         queryFilter.sortBy = filters.sortBy;
