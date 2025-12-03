@@ -17,4 +17,6 @@ export {
     filterStateToQueryFilter,
     type ApiAsset,
     type ApiStats,
+    type SitesStats,
+    type LibrariesStats,
 } from './data-loader';

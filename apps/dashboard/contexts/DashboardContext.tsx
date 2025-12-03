@@ -41,7 +41,7 @@ import {
     filterRecords,
     sortRecords,
 } from '@cp/data-processing';
-import { createDataLoader } from '@cp/api-client';
+import { createDataLoader, DataLoader } from '@cp/api-client';
 import { useFilters } from './FilterContext';
 
 const API_BASE_URL =
@@ -94,6 +94,7 @@ interface DashboardContextValue {
     setAssetListRecords: (records: AssetRecord[]) => void;
     showReportWizard: boolean;
     setShowReportWizard: (show: boolean) => void;
+    dataLoader: DataLoader | null;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
@@ -112,6 +113,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     const [assetListTitle, setAssetListTitle] = useState('');
     const [assetListRecords, setAssetListRecords] = useState<AssetRecord[]>([]);
     const [showReportWizard, setShowReportWizard] = useState(false);
+    const [dataLoaderInstance, setDataLoaderInstance] =
+        useState<DataLoader | null>(null);
 
     const loadData = useCallback(async () => {
         if (!user) {
@@ -124,6 +127,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
         try {
             const dataLoader = createDataLoader(API_BASE_URL, getIdToken);
+            setDataLoaderInstance(dataLoader);
 
             const records = await dataLoader.loadData();
             setAllRecords(records);
@@ -240,6 +244,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 setAssetListRecords,
                 showReportWizard,
                 setShowReportWizard,
+                dataLoader: dataLoaderInstance,
             }}
         >
             {children}

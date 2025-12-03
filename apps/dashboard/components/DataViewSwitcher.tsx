@@ -1,7 +1,6 @@
 'use client';
 
-import type { DataViewMode } from '@cp/types';
-import { DATA_VIEW_MODE_LABELS } from '@cp/types';
+import { DATA_VIEW_MODE_LABELS, type DataViewMode } from '@cp/types';
 
 interface DataViewSwitcherProps {
     value: DataViewMode;
