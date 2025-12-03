@@ -5,6 +5,9 @@ import type {
     PaginatedResponse,
 } from '@cp/types';
 import type { ApiClient } from './client';
+import type { SitesStats, LibrariesStats } from './endpoints/stats';
+
+export type { SitesStats, LibrariesStats };
 
 export interface ApiAsset {
     id: number;
@@ -78,34 +81,6 @@ export interface ApiStats {
     }>;
 }
 
-export interface SitesStats {
-    totalSites: number;
-    totalSubjects: number;
-    totalAssets: number;
-    assetsPerSite: Array<{ siteId: number; siteName: string; count: number }>;
-    subjectsPerSite: Array<{ siteId: number; siteName: string; count: number }>;
-    countriesDistribution: Array<{
-        country: string;
-        siteCount: number;
-        assetCount: number;
-    }>;
-}
-
-export interface LibrariesStats {
-    totalLibraries: number;
-    totalAssets: number;
-    assetsPerLibrary: Array<{
-        libraryId: number;
-        libraryName: string;
-        count: number;
-    }>;
-    trialDistribution: Array<{
-        trialId: number;
-        trialName: string;
-        libraryCount: number;
-        assetCount: number;
-    }>;
-}
 
 export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
     return {
