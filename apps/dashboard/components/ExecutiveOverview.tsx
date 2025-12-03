@@ -367,10 +367,12 @@ export function ExecutiveOverview() {
                                 key={activity.assetId}
                                 className="flex items-center gap-4 p-3 bg-neutral-50 rounded-md border border-neutral-200 cursor-pointer transition-all hover:bg-neutral-100 hover:border-chilli-red"
                                 onClick={() => handleActivityClick(activity)}
-                                onKeyDown={e =>
-                                    e.key === 'Enter' &&
-                                    handleActivityClick(activity)
-                                }
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleActivityClick(activity);
+                                    }
+                                }}
                                 tabIndex={0}
                                 role="button"
                             >
