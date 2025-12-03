@@ -6,9 +6,9 @@ export function filterByDataViewMode(
 ): AssetRecord[] {
     switch (mode) {
         case 'sites':
-            return records.filter(r => r.siteId && r.siteName);
+            return records.filter(r => r.siteId != null && r.siteName != null);
         case 'library':
-            return records.filter(r => !r.siteId || r.libraryId);
+            return records.filter(r => r.siteId == null && r.libraryId != null);
         default:
             return records;
     }
