@@ -36,6 +36,11 @@ export function ExecutiveOverview() {
         null
     );
     const [statsLoading, setStatsLoading] = useState(false);
+    const [statsError, setStatsError] = useState<string | null>(null);
+
+    const retryStatsLoad = useCallback(() => {
+        setStatsError(null);
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -44,23 +49,53 @@ export function ExecutiveOverview() {
             if (!dataLoader) return;
 
             setStatsLoading(true);
+            setStatsError(null);
+
             try {
-                if (
+                const needsSites =
                     filters.dataViewMode === 'sites' ||
-                    filters.dataViewMode === 'all'
-                ) {
+                    filters.dataViewMode === 'all';
+                const needsLibraries =
+                    filters.dataViewMode === 'library' ||
+                    filters.dataViewMode === 'all';
+
+                if (needsSites && needsLibraries) {
+                    const [sitesResult, librariesResult] = await Promise.allSettled([
+                        dataLoader.fetchSitesStats(),
+                        dataLoader.fetchLibrariesStats(),
+                    ]);
+
+                    if (cancelled) return;
+
+                    if (sitesResult.status === 'fulfilled') {
+                        setSitesStats(sitesResult.value);
+                    }
+                    if (librariesResult.status === 'fulfilled') {
+                        setLibrariesStats(librariesResult.value);
+                    }
+
+                    const errors: string[] = [];
+                    if (sitesResult.status === 'rejected') {
+                        errors.push('sites stats');
+                    }
+                    if (librariesResult.status === 'rejected') {
+                        errors.push('libraries stats');
+                    }
+                    if (errors.length > 0) {
+                        setStatsError(`Failed to load ${errors.join(' and ')}`);
+                    }
+                } else if (needsSites) {
                     const sites = await dataLoader.fetchSitesStats();
                     if (!cancelled) setSitesStats(sites);
-                }
-                if (
-                    filters.dataViewMode === 'library' ||
-                    filters.dataViewMode === 'all'
-                ) {
+                } else if (needsLibraries) {
                     const libraries = await dataLoader.fetchLibrariesStats();
                     if (!cancelled) setLibrariesStats(libraries);
                 }
             } catch (error_) {
-                if (!cancelled) console.error('Failed to load mode stats:', error_);
+                if (!cancelled) {
+                    console.error('Failed to load mode stats:', error_);
+                    setStatsError('Failed to load statistics');
+                }
             } finally {
                 if (!cancelled) setStatsLoading(false);
             }
@@ -71,7 +106,7 @@ export function ExecutiveOverview() {
         return () => {
             cancelled = true;
         };
-    }, [dataLoader, filters.dataViewMode]);
+    }, [dataLoader, filters.dataViewMode, statsError]);
 
     const chartData = useMemo(
         () => ({
@@ -191,6 +226,18 @@ export function ExecutiveOverview() {
                     Key performance indicators and trends - {modeLabel}
                 </p>
             </div>
+
+            {statsError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+                    <span className="text-red-700 text-sm">{statsError}</span>
+                    <button
+                        onClick={retryStatsLoad}
+                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium"
+                    >
+                        Retry
+                    </button>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
