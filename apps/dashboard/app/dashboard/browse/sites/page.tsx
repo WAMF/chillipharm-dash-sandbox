@@ -139,7 +139,7 @@ export default function BrowseSitesPage() {
     );
 
     const handleSiteClick = useCallback(
-        async (siteId: number, siteName: string) => {
+        (siteId: number, siteName: string) => {
             if (!dataLoader) return;
 
             setExpanded(prev => {
@@ -152,31 +152,36 @@ export default function BrowseSitesPage() {
                 return { ...prev, sites: newSites };
             });
 
+            let shouldFetch = false;
             setSubjectsCache(prev => {
                 if (prev.has(siteId)) return prev;
+                shouldFetch = true;
+                const m = new Map(prev);
+                m.set(siteId, []);
+                return m;
+            });
 
-                setLoadingStates(loadPrev => ({
-                    ...loadPrev,
-                    subjects: new Set([...loadPrev.subjects, siteId]),
+            if (shouldFetch) {
+                setLoadingStates(prev => ({
+                    ...prev,
+                    subjects: new Set([...prev.subjects, siteId]),
                 }));
 
                 dataLoader.fetchSiteSubjects(siteId, 1, 100)
                     .then(response => {
-                        setSubjectsCache(cachePrev => new Map(cachePrev).set(siteId, response.data));
+                        setSubjectsCache(prev => new Map(prev).set(siteId, response.data));
                     })
                     .catch(error_ => {
                         console.error('Failed to load subjects:', error_);
                     })
                     .finally(() => {
-                        setLoadingStates(loadPrev => {
-                            const newSubjects = new Set(loadPrev.subjects);
+                        setLoadingStates(prev => {
+                            const newSubjects = new Set(prev.subjects);
                             newSubjects.delete(siteId);
-                            return { ...loadPrev, subjects: newSubjects };
+                            return { ...prev, subjects: newSubjects };
                         });
                     });
-
-                return prev;
-            });
+            }
         },
         [dataLoader]
     );
@@ -197,31 +202,36 @@ export default function BrowseSitesPage() {
                 return { ...prev, subjects: newSubjects };
             });
 
+            let shouldFetch = false;
             setEventsCache(prev => {
                 if (prev.has(key)) return prev;
+                shouldFetch = true;
+                const m = new Map(prev);
+                m.set(key, []);
+                return m;
+            });
 
-                setLoadingStates(loadPrev => ({
-                    ...loadPrev,
-                    events: new Set([...loadPrev.events, key]),
+            if (shouldFetch) {
+                setLoadingStates(prev => ({
+                    ...prev,
+                    events: new Set([...prev.events, key]),
                 }));
 
                 dataLoader.fetchSubjectEvents(ctx.siteId, subjectId, 1, 100)
                     .then(response => {
-                        setEventsCache(cachePrev => new Map(cachePrev).set(key, response.data));
+                        setEventsCache(prev => new Map(prev).set(key, response.data));
                     })
                     .catch(error_ => {
                         console.error('Failed to load events:', error_);
                     })
                     .finally(() => {
-                        setLoadingStates(loadPrev => {
-                            const newEvents = new Set(loadPrev.events);
+                        setLoadingStates(prev => {
+                            const newEvents = new Set(prev.events);
                             newEvents.delete(key);
-                            return { ...loadPrev, events: newEvents };
+                            return { ...prev, events: newEvents };
                         });
                     });
-
-                return prev;
-            });
+            }
         },
         [dataLoader]
     );
@@ -242,31 +252,36 @@ export default function BrowseSitesPage() {
                 return { ...prev, events: newEvents };
             });
 
+            let shouldFetch = false;
             setProceduresCache(prev => {
                 if (prev.has(key)) return prev;
+                shouldFetch = true;
+                const m = new Map(prev);
+                m.set(key, []);
+                return m;
+            });
 
-                setLoadingStates(loadPrev => ({
-                    ...loadPrev,
-                    procedures: new Set([...loadPrev.procedures, key]),
+            if (shouldFetch) {
+                setLoadingStates(prev => ({
+                    ...prev,
+                    procedures: new Set([...prev.procedures, key]),
                 }));
 
-                dataLoader.fetchEventProcedures(ctx.siteId, ctx.subjectId!, eventId, 1, 100)
+                dataLoader.fetchEventProcedures(ctx.siteId, ctx.subjectId, eventId, 1, 100)
                     .then(response => {
-                        setProceduresCache(cachePrev => new Map(cachePrev).set(key, response.data));
+                        setProceduresCache(prev => new Map(prev).set(key, response.data));
                     })
                     .catch(error_ => {
                         console.error('Failed to load procedures:', error_);
                     })
                     .finally(() => {
-                        setLoadingStates(loadPrev => {
-                            const newProcedures = new Set(loadPrev.procedures);
+                        setLoadingStates(prev => {
+                            const newProcedures = new Set(prev.procedures);
                             newProcedures.delete(key);
-                            return { ...loadPrev, procedures: newProcedures };
+                            return { ...prev, procedures: newProcedures };
                         });
                     });
-
-                return prev;
-            });
+            }
         },
         [dataLoader]
     );
