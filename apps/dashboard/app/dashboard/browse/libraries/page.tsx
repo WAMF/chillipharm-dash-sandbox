@@ -91,7 +91,10 @@ export default function BrowseLibrariesPage() {
                 const assetRecords: AssetRecord[] = response.data.map((asset: LibraryAsset) => ({
                     assetId: asset.id,
                     assetTitle: asset.filename,
-                    siteName: libraryName,
+                    trialName: '',
+                    trialId: 0,
+                    siteName: '',
+                    siteId: 0,
                     siteCountry: '',
                     subjectNumber: '',
                     studyArm: '',
@@ -109,6 +112,8 @@ export default function BrowseLibrariesPage() {
                     evaluator: '',
                     comments: '',
                     assetLink: '',
+                    libraryId: libraryId,
+                    libraryName: libraryName,
                 }));
 
                 setAssetListTitle(`Library: ${libraryName}`);

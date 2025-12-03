@@ -142,115 +142,133 @@ export default function BrowseSitesPage() {
         async (siteId: number, siteName: string) => {
             if (!dataLoader) return;
 
-            const newExpanded = { ...expanded };
-            if (newExpanded.sites.has(siteId)) {
-                newExpanded.sites.delete(siteId);
-            } else {
-                newExpanded.sites.add(siteId);
-
-                if (!subjectsCache.has(siteId)) {
-                    setLoadingStates(prev => ({
-                        ...prev,
-                        subjects: new Set([...prev.subjects, siteId]),
-                    }));
-
-                    try {
-                        const response = await dataLoader.fetchSiteSubjects(siteId, 1, 100);
-                        setSubjectsCache(prev => new Map(prev).set(siteId, response.data));
-                    } catch (error_) {
-                        console.error('Failed to load subjects:', error_);
-                    } finally {
-                        setLoadingStates(prev => {
-                            const newSubjects = new Set(prev.subjects);
-                            newSubjects.delete(siteId);
-                            return { ...prev, subjects: newSubjects };
-                        });
-                    }
+            setExpanded(prev => {
+                const newSites = new Set(prev.sites);
+                if (newSites.has(siteId)) {
+                    newSites.delete(siteId);
+                    return { ...prev, sites: newSites };
                 }
-            }
-            setExpanded(newExpanded);
+                newSites.add(siteId);
+                return { ...prev, sites: newSites };
+            });
+
+            setSubjectsCache(prev => {
+                if (prev.has(siteId)) return prev;
+
+                setLoadingStates(loadPrev => ({
+                    ...loadPrev,
+                    subjects: new Set([...loadPrev.subjects, siteId]),
+                }));
+
+                dataLoader.fetchSiteSubjects(siteId, 1, 100)
+                    .then(response => {
+                        setSubjectsCache(cachePrev => new Map(cachePrev).set(siteId, response.data));
+                    })
+                    .catch(error_ => {
+                        console.error('Failed to load subjects:', error_);
+                    })
+                    .finally(() => {
+                        setLoadingStates(loadPrev => {
+                            const newSubjects = new Set(loadPrev.subjects);
+                            newSubjects.delete(siteId);
+                            return { ...loadPrev, subjects: newSubjects };
+                        });
+                    });
+
+                return prev;
+            });
         },
-        [dataLoader, expanded, subjectsCache]
+        [dataLoader]
     );
 
     const handleSubjectClick = useCallback(
-        async (ctx: HierarchyContext, subjectId: number, subjectNumber: string) => {
+        (ctx: HierarchyContext, subjectId: number, subjectNumber: string) => {
             if (!dataLoader) return;
 
             const key = `${ctx.siteId}-${subjectId}`;
-            const newExpanded = { ...expanded };
 
-            if (newExpanded.subjects.has(key)) {
-                newExpanded.subjects.delete(key);
-            } else {
-                newExpanded.subjects.add(key);
-
-                if (!eventsCache.has(key)) {
-                    setLoadingStates(prev => ({
-                        ...prev,
-                        events: new Set([...prev.events, key]),
-                    }));
-
-                    try {
-                        const response = await dataLoader.fetchSubjectEvents(ctx.siteId, subjectId, 1, 100);
-                        setEventsCache(prev => new Map(prev).set(key, response.data));
-                    } catch (error_) {
-                        console.error('Failed to load events:', error_);
-                    } finally {
-                        setLoadingStates(prev => {
-                            const newEvents = new Set(prev.events);
-                            newEvents.delete(key);
-                            return { ...prev, events: newEvents };
-                        });
-                    }
+            setExpanded(prev => {
+                const newSubjects = new Set(prev.subjects);
+                if (newSubjects.has(key)) {
+                    newSubjects.delete(key);
+                    return { ...prev, subjects: newSubjects };
                 }
-            }
-            setExpanded(newExpanded);
+                newSubjects.add(key);
+                return { ...prev, subjects: newSubjects };
+            });
+
+            setEventsCache(prev => {
+                if (prev.has(key)) return prev;
+
+                setLoadingStates(loadPrev => ({
+                    ...loadPrev,
+                    events: new Set([...loadPrev.events, key]),
+                }));
+
+                dataLoader.fetchSubjectEvents(ctx.siteId, subjectId, 1, 100)
+                    .then(response => {
+                        setEventsCache(cachePrev => new Map(cachePrev).set(key, response.data));
+                    })
+                    .catch(error_ => {
+                        console.error('Failed to load events:', error_);
+                    })
+                    .finally(() => {
+                        setLoadingStates(loadPrev => {
+                            const newEvents = new Set(loadPrev.events);
+                            newEvents.delete(key);
+                            return { ...loadPrev, events: newEvents };
+                        });
+                    });
+
+                return prev;
+            });
         },
-        [dataLoader, expanded, eventsCache]
+        [dataLoader]
     );
 
     const handleEventClick = useCallback(
-        async (ctx: HierarchyContext, eventId: number, eventName: string) => {
+        (ctx: HierarchyContext, eventId: number, eventName: string) => {
             if (!dataLoader || !ctx.subjectId) return;
 
             const key = `${ctx.siteId}-${ctx.subjectId}-${eventId}`;
-            const newExpanded = { ...expanded };
 
-            if (newExpanded.events.has(key)) {
-                newExpanded.events.delete(key);
-            } else {
-                newExpanded.events.add(key);
-
-                if (!proceduresCache.has(key)) {
-                    setLoadingStates(prev => ({
-                        ...prev,
-                        procedures: new Set([...prev.procedures, key]),
-                    }));
-
-                    try {
-                        const response = await dataLoader.fetchEventProcedures(
-                            ctx.siteId,
-                            ctx.subjectId,
-                            eventId,
-                            1,
-                            100
-                        );
-                        setProceduresCache(prev => new Map(prev).set(key, response.data));
-                    } catch (error_) {
-                        console.error('Failed to load procedures:', error_);
-                    } finally {
-                        setLoadingStates(prev => {
-                            const newProcedures = new Set(prev.procedures);
-                            newProcedures.delete(key);
-                            return { ...prev, procedures: newProcedures };
-                        });
-                    }
+            setExpanded(prev => {
+                const newEvents = new Set(prev.events);
+                if (newEvents.has(key)) {
+                    newEvents.delete(key);
+                    return { ...prev, events: newEvents };
                 }
-            }
-            setExpanded(newExpanded);
+                newEvents.add(key);
+                return { ...prev, events: newEvents };
+            });
+
+            setProceduresCache(prev => {
+                if (prev.has(key)) return prev;
+
+                setLoadingStates(loadPrev => ({
+                    ...loadPrev,
+                    procedures: new Set([...loadPrev.procedures, key]),
+                }));
+
+                dataLoader.fetchEventProcedures(ctx.siteId, ctx.subjectId!, eventId, 1, 100)
+                    .then(response => {
+                        setProceduresCache(cachePrev => new Map(cachePrev).set(key, response.data));
+                    })
+                    .catch(error_ => {
+                        console.error('Failed to load procedures:', error_);
+                    })
+                    .finally(() => {
+                        setLoadingStates(loadPrev => {
+                            const newProcedures = new Set(loadPrev.procedures);
+                            newProcedures.delete(key);
+                            return { ...loadPrev, procedures: newProcedures };
+                        });
+                    });
+
+                return prev;
+            });
         },
-        [dataLoader, expanded, proceduresCache]
+        [dataLoader]
     );
 
     const handleProcedureClick = useCallback(
@@ -277,7 +295,10 @@ export default function BrowseSitesPage() {
                 const assetRecords: AssetRecord[] = response.data.map((asset: Asset) => ({
                     assetId: asset.id,
                     assetTitle: asset.filename,
+                    trialName: '',
+                    trialId: 0,
                     siteName: ctx.siteName,
+                    siteId: ctx.siteId,
                     siteCountry: '',
                     subjectNumber: ctx.subjectNumber || '',
                     studyArm: '',
@@ -304,6 +325,9 @@ export default function BrowseSitesPage() {
                 setShowAssetList(true);
             } catch (error_) {
                 console.error('Failed to load assets:', error_);
+                setAssetListTitle('Failed to load assets');
+                setAssetListRecords([]);
+                setShowAssetList(true);
             } finally {
                 setLoadingStates(prev => {
                     const newAssets = new Set(prev.assets);
