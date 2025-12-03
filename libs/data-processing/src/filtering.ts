@@ -1,10 +1,34 @@
-import type { FilterState, AssetRecord } from '@cp/types';
+import type { FilterState, AssetRecord, DataViewMode } from '@cp/types';
+
+function isSiteAsset(record: AssetRecord): boolean {
+    return Boolean(record.siteId);
+}
+
+function isLibraryAsset(record: AssetRecord): boolean {
+    return Boolean(record.libraryId && !record.siteId);
+}
+
+export function filterByDataViewMode(
+    records: AssetRecord[],
+    mode: DataViewMode
+): AssetRecord[] {
+    switch (mode) {
+        case 'sites':
+            return records.filter(isSiteAsset);
+        case 'library':
+            return records.filter(isLibraryAsset);
+        default:
+            return records;
+    }
+}
 
 export function filterRecords(
     records: AssetRecord[],
     filters: FilterState
 ): AssetRecord[] {
-    return records.filter(record => {
+    let filtered = filterByDataViewMode(records, filters.dataViewMode);
+
+    return filtered.filter(record => {
         if (
             filters.selectedTrials.length > 0 &&
             !filters.selectedTrials.includes(record.trialName)
@@ -15,6 +39,13 @@ export function filterRecords(
         if (
             filters.selectedSites.length > 0 &&
             !filters.selectedSites.includes(record.siteName)
+        ) {
+            return false;
+        }
+
+        if (
+            filters.selectedLibraries.length > 0 &&
+            (!record.libraryName || !filters.selectedLibraries.includes(record.libraryName))
         ) {
             return false;
         }
@@ -136,6 +167,7 @@ export function getActiveFilterCount(filters: FilterState): number {
 
     if (filters.selectedTrials.length > 0) count++;
     if (filters.selectedSites.length > 0) count++;
+    if (filters.selectedLibraries.length > 0) count++;
     if (filters.selectedCountries.length > 0) count++;
     if (filters.selectedStudyArms.length > 0) count++;
     if (filters.selectedProcedures.length > 0) count++;

@@ -5,6 +5,9 @@ import type {
     PaginatedResponse,
 } from '@cp/types';
 import type { ApiClient } from './client';
+import type { SitesStats, LibrariesStats } from './endpoints/stats';
+
+export type { SitesStats, LibrariesStats };
 
 export interface ApiAsset {
     id: number;
@@ -24,6 +27,10 @@ export interface ApiAsset {
         name: string;
         country: string;
         countryCode: string;
+    } | null;
+    library: {
+        id: number;
+        name: string;
     } | null;
     uploader: {
         email: string;
@@ -74,6 +81,7 @@ export interface ApiStats {
     }>;
 }
 
+
 export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
     return {
         trialName: asset.trial?.name || '',
@@ -99,17 +107,25 @@ export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
         reviewedDate: asset.review?.reviewDate || '',
         fileSize: asset.filesizeFormatted || '',
         assetLink: asset.url || '',
+        libraryId: asset.library?.id,
+        libraryName: asset.library?.name,
     };
 }
 
 export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
     const queryFilter: QueryFilter = {};
 
+    if (filters.dataViewMode && filters.dataViewMode !== 'all') {
+        queryFilter.dataViewMode = filters.dataViewMode;
+    }
     if (filters.selectedTrials.length > 0) {
         queryFilter.trials = filters.selectedTrials;
     }
     if (filters.selectedSites.length > 0) {
         queryFilter.sites = filters.selectedSites;
+    }
+    if (filters.selectedLibraries.length > 0) {
+        queryFilter.libraries = filters.selectedLibraries;
     }
     if (filters.selectedCountries.length > 0) {
         queryFilter.countries = filters.selectedCountries;
@@ -121,8 +137,10 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
         queryFilter.procedures = filters.selectedProcedures;
     }
     if (filters.dateRange.start || filters.dateRange.end) {
-        queryFilter.startDate = filters.dateRange.start || undefined;
-        queryFilter.endDate = filters.dateRange.end || undefined;
+        queryFilter.dateRange = {
+            start: filters.dateRange.start || undefined,
+            end: filters.dateRange.end || undefined,
+        };
     }
     if (filters.reviewStatus !== 'all') {
         queryFilter.reviewStatus = filters.reviewStatus;
@@ -131,7 +149,7 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
         queryFilter.processedStatus = filters.processedStatus;
     }
     if (filters.searchTerm.trim()) {
-        queryFilter.search = filters.searchTerm.trim();
+        queryFilter.searchTerm = filters.searchTerm.trim();
     }
     if (filters.sortBy) {
         queryFilter.sortBy = filters.sortBy;
@@ -292,6 +310,188 @@ export class DataLoader {
 
     async checkHealth(): Promise<{ status: string; timestamp: string }> {
         const response = await fetch(`${this.baseUrl}/api/health`);
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchSitesStats(trialId?: number): Promise<SitesStats> {
+        const searchParams = new URLSearchParams();
+        if (trialId) searchParams.set('trial_id', String(trialId));
+
+        const query = searchParams.toString();
+        const response = await this.fetchWithAuth(
+            `/api/v1/stats/sites${query ? `?${query}` : ''}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchLibrariesStats(trialId?: number): Promise<LibrariesStats> {
+        const searchParams = new URLSearchParams();
+        if (trialId) searchParams.set('trial_id', String(trialId));
+
+        const query = searchParams.toString();
+        const response = await this.fetchWithAuth(
+            `/api/v1/stats/libraries${query ? `?${query}` : ''}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchSiteSubjects(
+        siteId: number,
+        page = 1,
+        limit = 50
+    ): Promise<
+        PaginatedResponse<{
+            id: number;
+            number: string;
+            active: boolean;
+            arm: { id: number; name: string } | null;
+            createdAt: string;
+            stats: { eventCount: number; procedureCount: number };
+        }>
+    > {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/subjects?page=${page}&limit=${limit}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchSubjectEvents(
+        siteId: number,
+        subjectId: number,
+        page = 1,
+        limit = 50
+    ): Promise<
+        PaginatedResponse<{
+            id: number;
+            identifier: string;
+            name: string;
+            date: string;
+            status: number;
+            stats: { procedureCount: number; assetCount: number };
+        }>
+    > {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/subjects/${subjectId}/events?page=${page}&limit=${limit}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchEventProcedures(
+        siteId: number,
+        subjectId: number,
+        eventId: number,
+        page = 1,
+        limit = 50
+    ): Promise<
+        PaginatedResponse<{
+            id: number;
+            identifier: string;
+            name: string;
+            date: string;
+            status: number;
+            locked: boolean;
+            evaluator: { name: string } | null;
+            stats: { assetCount: number };
+        }>
+    > {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/subjects/${subjectId}/events/${eventId}/procedures?page=${page}&limit=${limit}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchProcedureAssets(
+        siteId: number,
+        subjectId: number,
+        eventId: number,
+        procedureId: number,
+        page = 1,
+        limit = 50
+    ): Promise<
+        PaginatedResponse<{
+            id: number;
+            filename: string;
+            filesize: number;
+            filesizeFormatted: string;
+            duration: string | null;
+            url: string;
+            processed: boolean;
+            createdAt: string;
+            review: {
+                reviewed: boolean;
+                reviewDate: string | null;
+                reviewer: string | null;
+            };
+        }>
+    > {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/subjects/${subjectId}/events/${eventId}/procedures/${procedureId}/assets?page=${page}&limit=${limit}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchLibraryAssets(
+        libraryId: number,
+        page = 1,
+        limit = 50
+    ): Promise<
+        PaginatedResponse<{
+            id: number;
+            filename: string;
+            filesize: number;
+            filesizeFormatted: string;
+            duration: string | null;
+            url: string;
+            processed: boolean;
+            createdAt: string;
+            uploader: { email: string; name: string | null } | null;
+            review: {
+                reviewed: boolean;
+                reviewDate: string | null;
+                reviewer: string | null;
+            };
+        }>
+    > {
+        const response = await this.fetchWithAuth(
+            `/api/v1/libraries/${libraryId}/assets?page=${page}&limit=${limit}`
+        );
 
         if (!response.ok) {
             throw new Error(`API error: ${response.status}`);

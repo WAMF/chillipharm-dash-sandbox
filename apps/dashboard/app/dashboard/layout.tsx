@@ -12,8 +12,7 @@ import { AssetDetailModal } from '../../components/AssetDetailModal';
 
 const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
-    { href: '/dashboard/sites', label: 'Sites', icon: 'building' },
-    { href: '/dashboard/analytics', label: 'Analytics', icon: 'chart-pie' },
+    { href: '/dashboard/browse', label: 'Browse', icon: 'folder-open' },
     { href: '/dashboard/video-metrics', label: 'Video Metrics', icon: 'play' },
     { href: '/dashboard/reviews', label: 'Reviews', icon: 'check-circle' },
     {
@@ -21,7 +20,6 @@ const NAVIGATION_ITEMS = [
         label: 'Compliance',
         icon: 'shield-check',
     },
-    { href: '/dashboard/integration', label: 'Integration', icon: 'plug' },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -41,7 +39,7 @@ function NavIcon({ name }: { name: string }) {
                 />
             </svg>
         ),
-        'building': (
+        'folder-open': (
             <svg
                 className="h-5 w-5"
                 fill="none"
@@ -52,7 +50,7 @@ function NavIcon({ name }: { name: string }) {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    d="M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z"
                 />
             </svg>
         ),
@@ -125,21 +123,6 @@ function NavIcon({ name }: { name: string }) {
                     strokeLinejoin="round"
                     strokeWidth={2}
                     d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-            </svg>
-        ),
-        'plug': (
-            <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
             </svg>
         ),

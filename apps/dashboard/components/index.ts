@@ -7,7 +7,6 @@ export { StudyAnalytics } from './StudyAnalytics';
 export { VideoMetrics } from './VideoMetrics';
 export { ReviewPerformance } from './ReviewPerformance';
 export { ComplianceMonitoring } from './ComplianceMonitoring';
-export { IntegrationHealth } from './IntegrationHealth';
 export { WorldMap } from './WorldMap';
 export { AssetListModal } from './AssetListModal';
 export { AssetDetailModal } from './AssetDetailModal';

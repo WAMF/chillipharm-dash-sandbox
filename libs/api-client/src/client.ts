@@ -5,6 +5,7 @@ import { StatsApi } from './endpoints/stats';
 import { SitesApi } from './endpoints/sites';
 import { ReviewsApi } from './endpoints/reviews';
 import { ProceduresApi } from './endpoints/procedures';
+import { LibrariesApi } from './endpoints/libraries';
 import { EventsApi } from './endpoints/events';
 import { AssetsApi } from './endpoints/assets';
 
@@ -23,6 +24,7 @@ export class ApiClient {
 
     readonly assets: AssetsApi;
     readonly sites: SitesApi;
+    readonly libraries: LibrariesApi;
     readonly trials: TrialsApi;
     readonly stats: StatsApi;
     readonly reviews: ReviewsApi;
@@ -36,6 +38,7 @@ export class ApiClient {
 
         this.assets = new AssetsApi(this);
         this.sites = new SitesApi(this);
+        this.libraries = new LibrariesApi(this);
         this.trials = new TrialsApi(this);
         this.stats = new StatsApi(this);
         this.reviews = new ReviewsApi(this);

@@ -14,6 +14,47 @@ export interface StatsFilters {
     date_to?: string;
 }
 
+export interface SiteDistributionItem {
+    siteId: number;
+    siteName: string;
+    count: number;
+}
+
+export interface CountryDistributionItem {
+    country: string;
+    siteCount: number;
+    assetCount: number;
+}
+
+export interface SitesStats {
+    totalSites: number;
+    totalSubjects: number;
+    totalAssets: number;
+    assetsPerSite: SiteDistributionItem[];
+    subjectsPerSite: SiteDistributionItem[];
+    countriesDistribution: CountryDistributionItem[];
+}
+
+export interface LibraryDistributionItem {
+    libraryId: number;
+    libraryName: string;
+    count: number;
+}
+
+export interface TrialDistributionItem {
+    trialId: number;
+    trialName: string;
+    libraryCount: number;
+    assetCount: number;
+}
+
+export interface LibrariesStats {
+    totalLibraries: number;
+    totalAssets: number;
+    assetsPerLibrary: LibraryDistributionItem[];
+    trialDistribution: TrialDistributionItem[];
+}
+
 export class StatsApi extends BaseApi {
     async getDashboard(
         filters?: StatsFilters,
@@ -34,5 +75,29 @@ export class StatsApi extends BaseApi {
         options?: RequestOptions
     ): Promise<TimeSeriesDataPoint[]> {
         return this.client.get('/api/stats/reviews-timeline', filters, options);
+    }
+
+    async getSitesStats(
+        filters?: { trial_id?: string },
+        options?: RequestOptions
+    ): Promise<SitesStats> {
+        const response = await this.client.get<{ data: SitesStats }>(
+            '/api/v1/stats/sites',
+            filters,
+            options
+        );
+        return response.data;
+    }
+
+    async getLibrariesStats(
+        filters?: { trial_id?: string },
+        options?: RequestOptions
+    ): Promise<LibrariesStats> {
+        const response = await this.client.get<{ data: LibrariesStats }>(
+            '/api/v1/stats/libraries',
+            filters,
+            options
+        );
+        return response.data;
     }
 }

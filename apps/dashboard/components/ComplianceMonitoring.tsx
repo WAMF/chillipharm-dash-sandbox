@@ -280,32 +280,6 @@ export function ComplianceMonitoring() {
                     onBarClick={handleChartClick}
                 />
             </div>
-
-            <div className="bg-gradient-to-br from-neutral-50 to-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-neutral-800 mb-4">
-                    Compliance Overview
-                </h3>
-                <div className="text-sm text-neutral-700 leading-relaxed">
-                    <p className="mb-4">
-                        ChilliPharm ensures regulatory compliance through
-                        automated checks and comprehensive monitoring:
-                    </p>
-                    <ul className="list-disc pl-6 space-y-2 mb-4">
-                        <li>
-                            <strong>Asset Review:</strong> Systematic review
-                            process ensuring data quality and protocol adherence
-                        </li>
-                        <li>
-                            <strong>Processing Status:</strong> Tracking of
-                            de-identification and processing workflows
-                        </li>
-                    </ul>
-                    <div className="mt-4 p-3 bg-neutral-100 rounded-md border-l-4 border-blue-500">
-                        <strong>Note:</strong> High compliance rates indicate
-                        robust data governance and quality control processes.
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }

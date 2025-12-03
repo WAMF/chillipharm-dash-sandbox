@@ -579,9 +579,17 @@ export function getUniqueValues(
 }
 
 export function getFilterOptions(records: AssetRecord[]) {
+    const libraryNames = new Set<string>();
+    records.forEach(r => {
+        if (r.libraryName) {
+            libraryNames.add(r.libraryName);
+        }
+    });
+
     return {
         trials: getUniqueValues(records, 'trialName'),
         sites: getUniqueValues(records, 'siteName'),
+        libraries: Array.from(libraryNames).sort(),
         countries: getUniqueValues(records, 'siteCountry'),
         studyArms: [
             ...getUniqueValues(records, 'studyArm'),
