@@ -33,6 +33,25 @@ export function ReviewPerformance() {
         setAssetListRecords,
     } = useDashboard();
 
+    const evaluatorStats = useMemo(() => {
+        const evaluatorCounts = new Map<string, number>();
+        filteredRecords.forEach(record => {
+            const evaluator = record.evaluator?.trim();
+            if (evaluator) {
+                evaluatorCounts.set(
+                    evaluator,
+                    (evaluatorCounts.get(evaluator) || 0) + 1
+                );
+            }
+        });
+        return Array.from(evaluatorCounts.entries())
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count);
+    }, [filteredRecords]);
+
+    const maxEvaluatorCount =
+        evaluatorStats.length > 0 ? evaluatorStats[0].count : 1;
+
     const turnaroundChartData = useMemo(() => {
         if (!reviewPerformance) return { labels: [], datasets: [] };
         return {
@@ -115,6 +134,23 @@ export function ReviewPerformance() {
             );
             setAssetListTitle(`Assets Reviewed by: ${reviewerName}`);
             setAssetListRecords(reviewerAssets);
+            setShowAssetList(true);
+        },
+        [
+            filteredRecords,
+            setAssetListTitle,
+            setAssetListRecords,
+            setShowAssetList,
+        ]
+    );
+
+    const handleEvaluatorClick = useCallback(
+        (evaluatorName: string) => {
+            const evaluatorAssets = filteredRecords.filter(
+                r => r.evaluator === evaluatorName
+            );
+            setAssetListTitle(`Assets Evaluated by: ${evaluatorName}`);
+            setAssetListRecords(evaluatorAssets);
             setShowAssetList(true);
         },
         [
@@ -358,6 +394,42 @@ export function ReviewPerformance() {
                         },
                     }}
                 />
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+                    Top Evaluators
+                </h3>
+                <div className="flex flex-col gap-2">
+                    {evaluatorStats.slice(0, 10).map(evaluator => (
+                        <div
+                            key={evaluator.name}
+                            className="flex items-center gap-3 px-3 py-2 bg-neutral-50 rounded-md border border-neutral-200 cursor-pointer transition-all hover:bg-neutral-100 hover:border-chilli-red"
+                            onClick={() => handleEvaluatorClick(evaluator.name)}
+                            onKeyDown={e =>
+                                e.key === 'Enter' &&
+                                handleEvaluatorClick(evaluator.name)
+                            }
+                            tabIndex={0}
+                            role="button"
+                        >
+                            <span className="text-sm text-neutral-700 min-w-[150px] flex-shrink-0">
+                                {evaluator.name}
+                            </span>
+                            <div className="flex-1 h-2 bg-neutral-200 rounded overflow-hidden">
+                                <div
+                                    className="h-full bg-chilli-red rounded transition-all duration-300"
+                                    style={{
+                                        width: `${(evaluator.count / maxEvaluatorCount) * 100}%`,
+                                    }}
+                                />
+                            </div>
+                            <span className="text-sm font-semibold text-neutral-600 min-w-[40px] text-right">
+                                {evaluator.count}
+                            </span>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">

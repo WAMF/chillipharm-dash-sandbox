@@ -1,14 +1,34 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import type { SitesStats, LibrariesStats } from '@cp/api-client';
 import { useFilters } from '../contexts/FilterContext';
 import { useDashboard } from '../contexts/DashboardContext';
 import { MetricCard } from './MetricCard';
 import { Chart } from './Chart';
 
+function formatDate(date: Date): string {
+    return new Date(date).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
+
+function truncate(text: string, length: number): string {
+    return text.length > length ? text.substring(0, length) + '...' : text;
+}
+
 export function ExecutiveOverview() {
-    const { metrics, timeSeriesData, isLoading, dataLoader } = useDashboard();
+    const {
+        metrics,
+        timeSeriesData,
+        isLoading,
+        dataLoader,
+        filteredRecords,
+        setSelectedAsset,
+    } = useDashboard();
     const { filters } = useFilters();
 
     const [sitesStats, setSitesStats] = useState<SitesStats | null>(null);
@@ -99,6 +119,19 @@ export function ExecutiveOverview() {
             },
         }),
         []
+    );
+
+    const recentActivity = useMemo(() => {
+        return [...filteredRecords]
+            .sort((a, b) => b.uploadDate.getTime() - a.uploadDate.getTime())
+            .slice(0, 5);
+    }, [filteredRecords]);
+
+    const handleActivityClick = useCallback(
+        (asset: (typeof filteredRecords)[0]) => {
+            setSelectedAsset(asset);
+        },
+        [setSelectedAsset]
     );
 
     if (isLoading || statsLoading) {
@@ -322,6 +355,59 @@ export function ExecutiveOverview() {
                     height="350px"
                 />
             </div>
+
+            {recentActivity.length > 0 && (
+                <div className="bg-white rounded-lg shadow-sm p-6">
+                    <h3 className="text-lg font-semibold text-neutral-800 mb-4">
+                        Recent Upload Activity
+                    </h3>
+                    <div className="flex flex-col gap-3">
+                        {recentActivity.map(activity => (
+                            <div
+                                key={activity.assetId}
+                                className="flex items-center gap-4 p-3 bg-neutral-50 rounded-md border border-neutral-200 cursor-pointer transition-all hover:bg-neutral-100 hover:border-chilli-red"
+                                onClick={() => handleActivityClick(activity)}
+                                onKeyDown={e =>
+                                    e.key === 'Enter' &&
+                                    handleActivityClick(activity)
+                                }
+                                tabIndex={0}
+                                role="button"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-neutral-900 text-sm">
+                                        {truncate(activity.assetTitle, 50)}
+                                    </div>
+                                    <div className="flex gap-4 flex-wrap mt-1 text-xs text-neutral-600">
+                                        <span>
+                                            <strong>Site:</strong>{' '}
+                                            {truncate(activity.siteName, 25)}
+                                        </span>
+                                        <span>
+                                            <strong>Subject:</strong>{' '}
+                                            {activity.subjectNumber}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="text-xs text-neutral-500 whitespace-nowrap">
+                                    {formatDate(activity.uploadDate)}
+                                </div>
+                                <div className="whitespace-nowrap">
+                                    {activity.reviewed ? (
+                                        <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+                                            Reviewed
+                                        </span>
+                                    ) : (
+                                        <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
+                                            Pending
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
