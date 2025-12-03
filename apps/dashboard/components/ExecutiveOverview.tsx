@@ -38,6 +38,8 @@ export function ExecutiveOverview() {
     const [statsLoading, setStatsLoading] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
+
         async function loadModeStats() {
             if (!dataLoader) return;
 
@@ -48,23 +50,27 @@ export function ExecutiveOverview() {
                     filters.dataViewMode === 'all'
                 ) {
                     const sites = await dataLoader.fetchSitesStats();
-                    setSitesStats(sites);
+                    if (!cancelled) setSitesStats(sites);
                 }
                 if (
                     filters.dataViewMode === 'library' ||
                     filters.dataViewMode === 'all'
                 ) {
                     const libraries = await dataLoader.fetchLibrariesStats();
-                    setLibrariesStats(libraries);
+                    if (!cancelled) setLibrariesStats(libraries);
                 }
             } catch (error_) {
-                console.error('Failed to load mode stats:', error_);
+                if (!cancelled) console.error('Failed to load mode stats:', error_);
             } finally {
-                setStatsLoading(false);
+                if (!cancelled) setStatsLoading(false);
             }
         }
 
         loadModeStats();
+
+        return () => {
+            cancelled = true;
+        };
     }, [dataLoader, filters.dataViewMode]);
 
     const chartData = useMemo(

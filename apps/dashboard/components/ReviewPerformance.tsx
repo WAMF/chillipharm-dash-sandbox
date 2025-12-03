@@ -147,7 +147,7 @@ export function ReviewPerformance() {
     const handleEvaluatorClick = useCallback(
         (evaluatorName: string) => {
             const evaluatorAssets = filteredRecords.filter(
-                r => r.evaluator === evaluatorName
+                r => r.evaluator?.trim() === evaluatorName
             );
             setAssetListTitle(`Assets Evaluated by: ${evaluatorName}`);
             setAssetListRecords(evaluatorAssets);

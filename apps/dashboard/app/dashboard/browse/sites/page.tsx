@@ -152,16 +152,16 @@ export default function BrowseSitesPage() {
                 return { ...prev, sites: newSites };
             });
 
-            let shouldFetch = false;
-            setSubjectsCache(prev => {
-                if (prev.has(siteId)) return prev;
-                shouldFetch = true;
-                const m = new Map(prev);
-                m.set(siteId, []);
-                return m;
-            });
+            const alreadyCached = subjectsCache.has(siteId);
+            const alreadyLoading = loadingStates.subjects.has(siteId);
 
-            if (shouldFetch) {
+            if (!alreadyCached && !alreadyLoading) {
+                setSubjectsCache(prev => {
+                    const m = new Map(prev);
+                    m.set(siteId, []);
+                    return m;
+                });
+
                 setLoadingStates(prev => ({
                     ...prev,
                     subjects: new Set([...prev.subjects, siteId]),
@@ -183,7 +183,7 @@ export default function BrowseSitesPage() {
                     });
             }
         },
-        [dataLoader]
+        [dataLoader, subjectsCache, loadingStates.subjects]
     );
 
     const handleSubjectClick = useCallback(
@@ -202,16 +202,16 @@ export default function BrowseSitesPage() {
                 return { ...prev, subjects: newSubjects };
             });
 
-            let shouldFetch = false;
-            setEventsCache(prev => {
-                if (prev.has(key)) return prev;
-                shouldFetch = true;
-                const m = new Map(prev);
-                m.set(key, []);
-                return m;
-            });
+            const alreadyCached = eventsCache.has(key);
+            const alreadyLoading = loadingStates.events.has(key);
 
-            if (shouldFetch) {
+            if (!alreadyCached && !alreadyLoading) {
+                setEventsCache(prev => {
+                    const m = new Map(prev);
+                    m.set(key, []);
+                    return m;
+                });
+
                 setLoadingStates(prev => ({
                     ...prev,
                     events: new Set([...prev.events, key]),
@@ -233,7 +233,7 @@ export default function BrowseSitesPage() {
                     });
             }
         },
-        [dataLoader]
+        [dataLoader, eventsCache, loadingStates.events]
     );
 
     const handleEventClick = useCallback(
@@ -252,16 +252,16 @@ export default function BrowseSitesPage() {
                 return { ...prev, events: newEvents };
             });
 
-            let shouldFetch = false;
-            setProceduresCache(prev => {
-                if (prev.has(key)) return prev;
-                shouldFetch = true;
-                const m = new Map(prev);
-                m.set(key, []);
-                return m;
-            });
+            const alreadyCached = proceduresCache.has(key);
+            const alreadyLoading = loadingStates.procedures.has(key);
 
-            if (shouldFetch) {
+            if (!alreadyCached && !alreadyLoading) {
+                setProceduresCache(prev => {
+                    const m = new Map(prev);
+                    m.set(key, []);
+                    return m;
+                });
+
                 setLoadingStates(prev => ({
                     ...prev,
                     procedures: new Set([...prev.procedures, key]),
@@ -283,7 +283,7 @@ export default function BrowseSitesPage() {
                     });
             }
         },
-        [dataLoader]
+        [dataLoader, proceduresCache, loadingStates.procedures]
     );
 
     const handleProcedureClick = useCallback(
@@ -419,8 +419,16 @@ export default function BrowseSitesPage() {
             return (
                 <React.Fragment key={subject.id}>
                     <tr
-                        className="hover:bg-neutral-50 cursor-pointer"
+                        className="hover:bg-neutral-50 cursor-pointer focus:outline-none focus:bg-neutral-100"
                         onClick={() => handleSubjectClick(ctx, subject.id, subject.number)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleSubjectClick(ctx, subject.id, subject.number);
+                            }
+                        }}
+                        tabIndex={0}
+                        role="button"
                     >
                         <td className="pl-12 py-3 text-sm">
                             <span className="flex items-center gap-2">
@@ -479,8 +487,16 @@ export default function BrowseSitesPage() {
             return (
                 <React.Fragment key={event.id}>
                     <tr
-                        className="hover:bg-neutral-50 cursor-pointer"
+                        className="hover:bg-neutral-50 cursor-pointer focus:outline-none focus:bg-neutral-100"
                         onClick={() => handleEventClick(ctx, event.id, event.name)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleEventClick(ctx, event.id, event.name);
+                            }
+                        }}
+                        tabIndex={0}
+                        role="button"
                     >
                         <td className="pl-20 py-3 text-sm">
                             <span className="flex items-center gap-2">
@@ -535,8 +551,16 @@ export default function BrowseSitesPage() {
             return (
                 <tr
                     key={procedure.id}
-                    className="hover:bg-neutral-50 cursor-pointer"
+                    className="hover:bg-neutral-50 cursor-pointer focus:outline-none focus:bg-neutral-100"
                     onClick={() => handleProcedureClick(ctx, procedure)}
+                    onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleProcedureClick(ctx, procedure);
+                        }
+                    }}
+                    tabIndex={0}
+                    role="button"
                 >
                     <td className="pl-28 py-3 text-sm">
                         <span className="flex items-center gap-2">
@@ -641,8 +665,16 @@ export default function BrowseSitesPage() {
                                     return (
                                         <React.Fragment key={site.siteId}>
                                             <tr
-                                                className={`hover:bg-neutral-50 cursor-pointer ${isExpanded ? 'bg-chilli-red/5' : ''}`}
+                                                className={`hover:bg-neutral-50 cursor-pointer focus:outline-none focus:bg-neutral-100 ${isExpanded ? 'bg-chilli-red/5' : ''}`}
                                                 onClick={() => handleSiteClick(site.siteId, site.siteName)}
+                                                onKeyDown={e => {
+                                                    if (e.key === 'Enter' || e.key === ' ') {
+                                                        e.preventDefault();
+                                                        handleSiteClick(site.siteId, site.siteName);
+                                                    }
+                                                }}
+                                                tabIndex={0}
+                                                role="button"
                                             >
                                                 <td className="px-6 py-4 text-sm font-medium text-neutral-900">
                                                     <span className="flex items-center gap-2">

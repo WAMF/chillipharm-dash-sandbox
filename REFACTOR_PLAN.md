@@ -302,7 +302,7 @@ Add "Libraries" nav item:
 ### Phase 8: Testing & Validation
 
 #### 8.1 Type Checking
-Run `dart fix` and `dart analyse` equivalent (tsc, eslint) to verify type safety.
+Run `npx tsc --noEmit` and `npm run lint` to verify type safety.
 
 #### 8.2 API Testing
 Test new endpoints return correct filtered data.

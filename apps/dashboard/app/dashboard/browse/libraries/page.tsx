@@ -40,6 +40,7 @@ export default function BrowseLibrariesPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [loadingLibraryId, setLoadingLibraryId] = useState<number | null>(null);
+    const [assetLoadError, setAssetLoadError] = useState<string | null>(null);
 
     useEffect(() => {
         async function loadStats() {
@@ -84,6 +85,7 @@ export default function BrowseLibrariesPage() {
             if (!dataLoader) return;
 
             setLoadingLibraryId(libraryId);
+            setAssetLoadError(null);
 
             try {
                 const response = await dataLoader.fetchLibraryAssets(libraryId, 1, 100);
@@ -121,6 +123,7 @@ export default function BrowseLibrariesPage() {
                 setShowAssetList(true);
             } catch (error_) {
                 console.error('Failed to load library assets:', error_);
+                setAssetLoadError(`Failed to load assets for "${libraryName}"`);
             } finally {
                 setLoadingLibraryId(null);
             }
@@ -164,6 +167,18 @@ export default function BrowseLibrariesPage() {
                     {stats?.totalLibraries ?? 0} libraries · {stats?.totalAssets ?? 0} assets
                 </span>
             </div>
+
+            {assetLoadError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+                    <span className="text-red-700 text-sm">{assetLoadError}</span>
+                    <button
+                        onClick={() => setAssetLoadError(null)}
+                        className="text-red-500 hover:text-red-700"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
 
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <h4 className="text-sm font-semibold text-neutral-700 mb-1">Top Libraries by Assets</h4>

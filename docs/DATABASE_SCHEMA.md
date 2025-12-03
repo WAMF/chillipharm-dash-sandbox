@@ -66,7 +66,7 @@ The polymorphic container for both Sites and Libraries.
 | anonymised_assets | boolean | Whether assets are anonymised |
 | uuid | varchar | Unique identifier |
 | created_at | timestamp | Creation date |
-| deleted_at | time | Soft delete timestamp |
+| deleted_at | timestamp | Soft delete timestamp |
 
 ### assets
 
