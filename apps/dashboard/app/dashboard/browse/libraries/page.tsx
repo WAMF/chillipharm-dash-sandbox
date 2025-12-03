@@ -210,8 +210,16 @@ export default function BrowseLibrariesPage() {
                                 {stats.assetsPerLibrary.map(library => (
                                     <tr
                                         key={library.libraryId}
-                                        className="hover:bg-neutral-50 cursor-pointer"
+                                        className="hover:bg-neutral-50 cursor-pointer focus:outline-none focus:bg-neutral-100"
                                         onClick={() => handleLibraryClick(library.libraryId, library.libraryName)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleLibraryClick(library.libraryId, library.libraryName);
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        role="button"
                                     >
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-neutral-900">
                                             <span className="flex items-center gap-2">
