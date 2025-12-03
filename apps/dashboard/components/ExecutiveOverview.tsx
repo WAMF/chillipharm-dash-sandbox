@@ -37,9 +37,11 @@ export function ExecutiveOverview() {
     );
     const [statsLoading, setStatsLoading] = useState(false);
     const [statsError, setStatsError] = useState<string | null>(null);
+    const [retryCount, setRetryCount] = useState(0);
 
     const retryStatsLoad = useCallback(() => {
         setStatsError(null);
+        setRetryCount(c => c + 1);
     }, []);
 
     useEffect(() => {
@@ -106,7 +108,7 @@ export function ExecutiveOverview() {
         return () => {
             cancelled = true;
         };
-    }, [dataLoader, filters.dataViewMode, statsError]);
+    }, [dataLoader, filters.dataViewMode, retryCount]);
 
     const chartData = useMemo(
         () => ({
