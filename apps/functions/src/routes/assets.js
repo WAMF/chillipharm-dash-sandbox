@@ -157,8 +157,6 @@ router.get('/', async (req, res, next) => {
                 }
             }
 
-            const isSite = row.container_type === 'Site';
-
             return {
                 id: row.id,
                 filename: row.filename,
@@ -172,22 +170,14 @@ router.get('/', async (req, res, next) => {
                     id: row.trial_id,
                     name: row.trial_name || row.company_name,
                 },
-                site:
-                    row.container_id && isSite
-                        ? {
-                              id: row.container_id,
-                              name: row.container_name,
-                              country: getCountryName(row.country_code),
-                              countryCode: row.country_code,
-                          }
-                        : null,
-                library:
-                    row.container_id && !isSite
-                        ? {
-                              id: row.container_id,
-                              name: row.container_name,
-                          }
-                        : null,
+                site: row.container_id
+                    ? {
+                          id: row.container_id,
+                          name: row.container_name,
+                          country: getCountryName(row.country_code),
+                          countryCode: row.country_code,
+                      }
+                    : null,
                 uploader: row.uploader_email
                     ? {
                           email: row.uploader_email,
@@ -264,7 +254,6 @@ router.post('/query', async (req, res, next) => {
         const {
             trials = [],
             sites = [],
-            libraries = [],
             countries = [],
             studyArms = [],
             procedures = [],
@@ -276,15 +265,7 @@ router.post('/query', async (req, res, next) => {
             sortOrder = 'desc',
             page = 1,
             limit = 1000,
-            dataViewMode = 'all',
         } = req.body;
-
-        if (dataViewMode === 'sites' && libraries.length > 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Cannot filter by libraries when dataViewMode is "sites"',
-            });
-        }
 
         const safeLimit = Math.min(Math.max(1, limit), 5000);
         const safePage = Math.max(1, page);
@@ -423,20 +404,7 @@ router.post('/query', async (req, res, next) => {
             paramIndex++;
         }
 
-        if (dataViewMode === 'sites') {
-            filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
-        } else if (dataViewMode === 'library') {
-            filters.push("(tc.id IS NULL OR tc.type != 'Site')");
-        }
-
-        if (libraries.length > 0) {
-            if (dataViewMode === 'library') {
-                filters.push(`tc.name = ANY($${paramIndex++})`);
-            } else {
-                filters.push(`(tc.type != 'Site' AND tc.name = ANY($${paramIndex++}))`);
-            }
-            params.push(libraries);
-        }
+        filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
 
         const whereClause = `WHERE ${filters.join(' AND ')}`;
 
@@ -528,8 +496,6 @@ router.post('/query', async (req, res, next) => {
                 }
             }
 
-            const isSite = row.container_type === 'Site';
-
             return {
                 id: row.id,
                 filename: row.filename,
@@ -543,22 +509,14 @@ router.post('/query', async (req, res, next) => {
                     id: row.trial_id,
                     name: row.trial_name || row.company_name,
                 },
-                site:
-                    row.container_id && isSite
-                        ? {
-                              id: row.container_id,
-                              name: row.container_name,
-                              country: getCountryName(row.country_code),
-                              countryCode: row.country_code,
-                          }
-                        : null,
-                library:
-                    row.container_id && !isSite
-                        ? {
-                              id: row.container_id,
-                              name: row.container_name,
-                          }
-                        : null,
+                site: row.container_id
+                    ? {
+                          id: row.container_id,
+                          name: row.container_name,
+                          country: getCountryName(row.country_code),
+                          countryCode: row.country_code,
+                      }
+                    : null,
                 uploader: row.uploader_email
                     ? {
                           email: row.uploader_email,
