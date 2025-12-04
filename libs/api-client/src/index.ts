@@ -1,7 +1,6 @@
 export { ApiClient, createApiClient } from './client';
 export { AssetsApi } from './endpoints/assets';
 export { SitesApi } from './endpoints/sites';
-export { LibrariesApi } from './endpoints/libraries';
 export { TrialsApi } from './endpoints/trials';
 export { StatsApi } from './endpoints/stats';
 export { ReviewsApi } from './endpoints/reviews';
@@ -18,5 +17,4 @@ export {
     type ApiAsset,
     type ApiStats,
     type SitesStats,
-    type LibrariesStats,
 } from './data-loader';

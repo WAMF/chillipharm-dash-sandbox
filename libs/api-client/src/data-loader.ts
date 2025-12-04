@@ -5,9 +5,9 @@ import type {
     PaginatedResponse,
 } from '@cp/types';
 import type { ApiClient } from './client';
-import type { SitesStats, LibrariesStats } from './endpoints/stats';
+import type { SitesStats } from './endpoints/stats';
 
-export type { SitesStats, LibrariesStats };
+export type { SitesStats };
 
 export interface ApiAsset {
     id: number;
@@ -27,10 +27,6 @@ export interface ApiAsset {
         name: string;
         country: string;
         countryCode: string;
-    } | null;
-    library: {
-        id: number;
-        name: string;
     } | null;
     uploader: {
         email: string;
@@ -107,25 +103,17 @@ export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
         reviewedDate: asset.review?.reviewDate || '',
         fileSize: asset.filesizeFormatted || '',
         assetLink: asset.url || '',
-        libraryId: asset.library?.id,
-        libraryName: asset.library?.name,
     };
 }
 
 export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
     const queryFilter: QueryFilter = {};
 
-    if (filters.dataViewMode && filters.dataViewMode !== 'all') {
-        queryFilter.dataViewMode = filters.dataViewMode;
-    }
     if (filters.selectedTrials.length > 0) {
         queryFilter.trials = filters.selectedTrials;
     }
     if (filters.selectedSites.length > 0) {
         queryFilter.sites = filters.selectedSites;
-    }
-    if (filters.selectedLibraries.length > 0) {
-        queryFilter.libraries = filters.selectedLibraries;
     }
     if (filters.selectedCountries.length > 0) {
         queryFilter.countries = filters.selectedCountries;
@@ -335,23 +323,6 @@ export class DataLoader {
         return result.data;
     }
 
-    async fetchLibrariesStats(trialId?: number): Promise<LibrariesStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats/libraries${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
     async fetchSiteSubjects(
         siteId: number,
         page = 1,
@@ -458,39 +429,6 @@ export class DataLoader {
     > {
         const response = await this.fetchWithAuth(
             `/api/v1/sites/${siteId}/subjects/${subjectId}/events/${eventId}/procedures/${procedureId}/assets?page=${page}&limit=${limit}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        return response.json();
-    }
-
-    async fetchLibraryAssets(
-        libraryId: number,
-        page = 1,
-        limit = 50
-    ): Promise<
-        PaginatedResponse<{
-            id: number;
-            filename: string;
-            filesize: number;
-            filesizeFormatted: string;
-            duration: string | null;
-            url: string;
-            processed: boolean;
-            createdAt: string;
-            uploader: { email: string; name: string | null } | null;
-            review: {
-                reviewed: boolean;
-                reviewDate: string | null;
-                reviewer: string | null;
-            };
-        }>
-    > {
-        const response = await this.fetchWithAuth(
-            `/api/v1/libraries/${libraryId}/assets?page=${page}&limit=${limit}`
         );
 
         if (!response.ok) {

@@ -1,8 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import type { SitesStats, LibrariesStats } from '@cp/api-client';
-import { useFilters } from '../contexts/FilterContext';
+import type { SitesStats } from '@cp/api-client';
 import { useDashboard } from '../contexts/DashboardContext';
 import { MetricCard } from './MetricCard';
 import { Chart } from './Chart';
@@ -29,12 +28,8 @@ export function ExecutiveOverview() {
         filteredRecords,
         setSelectedAsset,
     } = useDashboard();
-    const { filters } = useFilters();
 
     const [sitesStats, setSitesStats] = useState<SitesStats | null>(null);
-    const [librariesStats, setLibrariesStats] = useState<LibrariesStats | null>(
-        null
-    );
     const [statsLoading, setStatsLoading] = useState(false);
     const [statsError, setStatsError] = useState<string | null>(null);
     const [retryCount, setRetryCount] = useState(0);
@@ -47,55 +42,18 @@ export function ExecutiveOverview() {
     useEffect(() => {
         let cancelled = false;
 
-        async function loadModeStats() {
+        async function loadSitesStats() {
             if (!dataLoader) return;
 
             setStatsLoading(true);
             setStatsError(null);
 
             try {
-                const needsSites =
-                    filters.dataViewMode === 'sites' ||
-                    filters.dataViewMode === 'all';
-                const needsLibraries =
-                    filters.dataViewMode === 'library' ||
-                    filters.dataViewMode === 'all';
-
-                if (needsSites && needsLibraries) {
-                    const [sitesResult, librariesResult] = await Promise.allSettled([
-                        dataLoader.fetchSitesStats(),
-                        dataLoader.fetchLibrariesStats(),
-                    ]);
-
-                    if (cancelled) return;
-
-                    if (sitesResult.status === 'fulfilled') {
-                        setSitesStats(sitesResult.value);
-                    }
-                    if (librariesResult.status === 'fulfilled') {
-                        setLibrariesStats(librariesResult.value);
-                    }
-
-                    const errors: string[] = [];
-                    if (sitesResult.status === 'rejected') {
-                        errors.push('sites stats');
-                    }
-                    if (librariesResult.status === 'rejected') {
-                        errors.push('libraries stats');
-                    }
-                    if (errors.length > 0) {
-                        setStatsError(`Failed to load ${errors.join(' and ')}`);
-                    }
-                } else if (needsSites) {
-                    const sites = await dataLoader.fetchSitesStats();
-                    if (!cancelled) setSitesStats(sites);
-                } else if (needsLibraries) {
-                    const libraries = await dataLoader.fetchLibrariesStats();
-                    if (!cancelled) setLibrariesStats(libraries);
-                }
+                const sites = await dataLoader.fetchSitesStats();
+                if (!cancelled) setSitesStats(sites);
             } catch (error_) {
                 if (!cancelled) {
-                    console.error('Failed to load mode stats:', error_);
+                    console.error('Failed to load sites stats:', error_);
                     setStatsError('Failed to load statistics');
                 }
             } finally {
@@ -103,12 +61,12 @@ export function ExecutiveOverview() {
             }
         }
 
-        loadModeStats();
+        loadSitesStats();
 
         return () => {
             cancelled = true;
         };
-    }, [dataLoader, filters.dataViewMode, retryCount]);
+    }, [dataLoader, retryCount]);
 
     const chartData = useMemo(
         () => ({
@@ -211,13 +169,6 @@ export function ExecutiveOverview() {
         );
     }
 
-    const modeLabel =
-        filters.dataViewMode === 'sites'
-            ? 'Sites'
-            : filters.dataViewMode === 'library'
-              ? 'Libraries'
-              : 'All Data';
-
     return (
         <div className="flex flex-col gap-6">
             <div className="mb-2">
@@ -225,7 +176,7 @@ export function ExecutiveOverview() {
                     Executive Overview
                 </h2>
                 <p className="text-neutral-500 text-sm">
-                    Key performance indicators and trends - {modeLabel}
+                    Key performance indicators and trends - Sites Data
                 </p>
             </div>
 
@@ -245,47 +196,25 @@ export function ExecutiveOverview() {
                 <MetricCard
                     title="Total Video Assets"
                     value={metrics.totalAssets.toLocaleString()}
-                    subtitle={
-                        filters.dataViewMode === 'sites'
-                            ? 'Site assets'
-                            : filters.dataViewMode === 'library'
-                              ? 'Library assets'
-                              : 'Across all sources'
-                    }
+                    subtitle="Site assets"
                     icon="📹"
                 />
 
-                {(filters.dataViewMode === 'sites' ||
-                    filters.dataViewMode === 'all') && (
-                    <MetricCard
-                        title="Active Sites"
-                        value={sitesStats?.totalSites ?? metrics.totalSites}
-                        subtitle="Clinical trial locations"
-                        icon="🏥"
-                    />
-                )}
+                <MetricCard
+                    title="Active Sites"
+                    value={sitesStats?.totalSites ?? metrics.totalSites}
+                    subtitle="Clinical trial locations"
+                    icon="🏥"
+                />
 
-                {(filters.dataViewMode === 'library' ||
-                    filters.dataViewMode === 'all') && (
-                    <MetricCard
-                        title="Libraries"
-                        value={librariesStats?.totalLibraries ?? 0}
-                        subtitle="Asset libraries"
-                        icon="📁"
-                    />
-                )}
-
-                {(filters.dataViewMode === 'sites' ||
-                    filters.dataViewMode === 'all') && (
-                    <MetricCard
-                        title="Total Subjects"
-                        value={
-                            sitesStats?.totalSubjects ?? metrics.totalSubjects
-                        }
-                        subtitle="Enrolled participants"
-                        icon="👥"
-                    />
-                )}
+                <MetricCard
+                    title="Total Subjects"
+                    value={
+                        sitesStats?.totalSubjects ?? metrics.totalSubjects
+                    }
+                    subtitle="Enrolled participants"
+                    icon="👥"
+                />
 
                 <MetricCard
                     title="Processing Rate"
@@ -315,92 +244,6 @@ export function ExecutiveOverview() {
                     icon="🔬"
                 />
             </div>
-
-            {filters.dataViewMode === 'all' && sitesStats && librariesStats && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg shadow-sm p-5">
-                        <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
-                            Sites Breakdown
-                        </h3>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">Sites</span>
-                                <span className="font-medium">
-                                    {sitesStats.totalSites}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Subjects
-                                </span>
-                                <span className="font-medium">
-                                    {sitesStats.totalSubjects}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Site Assets
-                                </span>
-                                <span className="font-medium">
-                                    {sitesStats.totalAssets.toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Countries
-                                </span>
-                                <span className="font-medium">
-                                    {sitesStats.countriesDistribution?.length ??
-                                        0}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="bg-white rounded-lg shadow-sm p-5">
-                        <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">
-                            Libraries Breakdown
-                        </h3>
-                        <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Libraries
-                                </span>
-                                <span className="font-medium">
-                                    {librariesStats.totalLibraries}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Library Assets
-                                </span>
-                                <span className="font-medium">
-                                    {librariesStats.totalAssets.toLocaleString()}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">
-                                    Avg per Library
-                                </span>
-                                <span className="font-medium">
-                                    {librariesStats.totalLibraries > 0
-                                        ? Math.round(
-                                              librariesStats.totalAssets /
-                                                  librariesStats.totalLibraries
-                                          )
-                                        : 0}
-                                </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">Trials</span>
-                                <span className="font-medium">
-                                    {librariesStats.trialDistribution?.length ??
-                                        0}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             <div className="bg-white rounded-lg shadow-sm p-6">
                 <Chart

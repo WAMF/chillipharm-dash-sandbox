@@ -27,10 +27,8 @@ export interface ApiResponse<T> {
 }
 
 export interface QueryFilter {
-    dataViewMode?: 'sites' | 'library' | 'all';
     trials?: string[];
     sites?: string[];
-    libraries?: string[];
     countries?: string[];
     studyArms?: string[];
     procedures?: string[];

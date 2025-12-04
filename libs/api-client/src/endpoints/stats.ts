@@ -35,26 +35,6 @@ export interface SitesStats {
     countriesDistribution: CountryDistributionItem[];
 }
 
-export interface LibraryDistributionItem {
-    libraryId: number;
-    libraryName: string;
-    count: number;
-}
-
-export interface TrialDistributionItem {
-    trialId: number;
-    trialName: string;
-    libraryCount: number;
-    assetCount: number;
-}
-
-export interface LibrariesStats {
-    totalLibraries: number;
-    totalAssets: number;
-    assetsPerLibrary: LibraryDistributionItem[];
-    trialDistribution: TrialDistributionItem[];
-}
-
 export class StatsApi extends BaseApi {
     async getDashboard(
         filters?: StatsFilters,
@@ -83,18 +63,6 @@ export class StatsApi extends BaseApi {
     ): Promise<SitesStats> {
         const response = await this.client.get<{ data: SitesStats }>(
             '/api/v1/stats/sites',
-            filters,
-            options
-        );
-        return response.data;
-    }
-
-    async getLibrariesStats(
-        filters?: { trial_id?: string },
-        options?: RequestOptions
-    ): Promise<LibrariesStats> {
-        const response = await this.client.get<{ data: LibrariesStats }>(
-            '/api/v1/stats/libraries',
             filters,
             options
         );

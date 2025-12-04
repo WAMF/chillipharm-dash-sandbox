@@ -22,6 +22,4 @@ export interface AssetRecord {
     reviewedDate: string;
     fileSize: string;
     assetLink: string;
-    libraryId?: number;
-    libraryName?: string;
 }

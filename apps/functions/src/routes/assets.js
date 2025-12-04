@@ -78,11 +78,7 @@ router.get('/', async (req, res, next) => {
             params.push(`%${req.query.search}%`);
         }
 
-        if (req.query.data_view === 'sites') {
-            filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
-        } else if (req.query.data_view === 'library') {
-            filters.push("(tc.id IS NULL OR tc.type != 'Site')");
-        }
+        filters.push("tc.type = 'Site' AND tc.id IS NOT NULL");
 
         const whereClause =
             filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';

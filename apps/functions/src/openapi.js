@@ -1022,68 +1022,6 @@ export default {
                 },
             },
         },
-        '/api/v1/libraries': {
-            get: {
-                summary: 'List libraries',
-                description: 'Returns all non-site trial containers (libraries)',
-                tags: ['Libraries'],
-                parameters: [
-                    { $ref: '#/components/parameters/pageParam' },
-                    { $ref: '#/components/parameters/limitParam' },
-                    { $ref: '#/components/parameters/searchParam' },
-                    {
-                        name: 'trial_id',
-                        in: 'query',
-                        schema: { type: 'integer' },
-                        description: 'Filter by trial',
-                    },
-                ],
-                responses: { 200: { description: 'List of libraries' } },
-            },
-        },
-        '/api/v1/libraries/{id}': {
-            get: {
-                summary: 'Get library by ID',
-                tags: ['Libraries'],
-                parameters: [
-                    {
-                        name: 'id',
-                        in: 'path',
-                        required: true,
-                        schema: { type: 'integer' },
-                    },
-                ],
-                responses: {
-                    200: { description: 'Library details' },
-                    404: { description: 'Library not found' },
-                },
-            },
-        },
-        '/api/v1/libraries/{libraryId}/assets': {
-            get: {
-                summary: 'List assets in a library',
-                description:
-                    'Returns all assets within a specific library container',
-                tags: ['Libraries'],
-                parameters: [
-                    {
-                        name: 'libraryId',
-                        in: 'path',
-                        required: true,
-                        schema: { type: 'integer' },
-                        description: 'Library ID',
-                    },
-                    { $ref: '#/components/parameters/pageParam' },
-                    { $ref: '#/components/parameters/limitParam' },
-                    { $ref: '#/components/parameters/sortParam' },
-                    { $ref: '#/components/parameters/orderParam' },
-                ],
-                responses: {
-                    200: { description: 'List of assets in the library' },
-                    404: { description: 'Library not found' },
-                },
-            },
-        },
         '/api/v1/stats': {
             get: {
                 summary: 'Get aggregate statistics',
@@ -1114,25 +1052,6 @@ export default {
                     },
                 ],
                 responses: { 200: { description: 'Site-centric statistics' } },
-            },
-        },
-        '/api/v1/stats/libraries': {
-            get: {
-                summary: 'Get library-centric statistics',
-                description:
-                    'Returns aggregated statistics focused on library data: total libraries, assets per library, and trial distribution',
-                tags: ['Stats'],
-                parameters: [
-                    {
-                        name: 'trial_id',
-                        in: 'query',
-                        schema: { type: 'integer' },
-                        description: 'Filter by trial',
-                    },
-                ],
-                responses: {
-                    200: { description: 'Library-centric statistics' },
-                },
             },
         },
         '/api/openapi.json': {

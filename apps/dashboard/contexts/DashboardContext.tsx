@@ -52,7 +52,6 @@ const API_BASE_URL =
 interface FilterOptions {
     trials: string[];
     sites: string[];
-    libraries: string[];
     countries: string[];
     studyArms: string[];
     procedures: string[];

@@ -1,16 +1,13 @@
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
-import type { FilterPreset, AssetRecord, DataViewMode } from '@cp/types';
+import type { FilterPreset, AssetRecord } from '@cp/types';
 import { useFilters } from '../contexts/FilterContext';
 import { useDashboard } from '../contexts/DashboardContext';
-import { DataViewSwitcher } from './DataViewSwitcher';
 
 type ArrayFilterKey =
     | 'selectedTrials'
     | 'selectedSites'
-    | 'selectedLibraries'
     | 'selectedCountries'
     | 'selectedStudyArms'
     | 'selectedProcedures';
@@ -30,7 +27,6 @@ export function FilterPanel() {
     } = useFilters();
 
     const { allRecords, filteredRecords, filterOptions } = useDashboard();
-    const pathname = usePathname();
 
     const [expanded, setExpanded] = useState(false);
     const [showPresetModal, setShowPresetModal] = useState(false);
@@ -39,21 +35,9 @@ export function FilterPanel() {
     const [mounted, setMounted] = useState(false);
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-    const isSitesSection = pathname.startsWith('/dashboard/sites');
-    const isLibrariesSection = pathname.startsWith('/dashboard/libraries');
-    const isContextLockedSection = isSitesSection || isLibrariesSection;
-
     useEffect(() => {
         setMounted(true);
     }, []);
-
-    useEffect(() => {
-        if (isSitesSection && filters.dataViewMode !== 'sites') {
-            setFilter('dataViewMode', 'sites');
-        } else if (isLibrariesSection && filters.dataViewMode !== 'library') {
-            setFilter('dataViewMode', 'library');
-        }
-    }, [pathname, isSitesSection, isLibrariesSection, filters.dataViewMode, setFilter]);
 
     const activeFilterCount = mounted ? getActiveFilterCount() : 0;
     const hasActiveFilters = activeFilterCount > 0;
@@ -124,20 +108,9 @@ export function FilterPanel() {
                     className={`flex flex-col gap-3 px-6 py-4 ${expanded ? 'border-b border-neutral-200' : ''}`}
                 >
                     <div className="flex justify-between items-center">
-                        {isContextLockedSection ? (
-                            <div className="flex items-center gap-2 text-sm text-neutral-600">
-                                <span className="font-medium">
-                                    {isSitesSection ? 'Sites Data' : 'Libraries Data'}
-                                </span>
-                            </div>
-                        ) : (
-                            <DataViewSwitcher
-                                value={filters.dataViewMode}
-                                onChange={(mode: DataViewMode) =>
-                                    setFilter('dataViewMode', mode)
-                                }
-                            />
-                        )}
+                        <div className="flex items-center gap-2 text-sm text-neutral-600">
+                            <span className="font-medium">Sites Data</span>
+                        </div>
                         <div className="flex items-center gap-4">
                             <span className="text-sm text-neutral-500">
                                 Showing{' '}
@@ -235,105 +208,77 @@ export function FilterPanel() {
                                 }
                             />
 
-                            {filters.dataViewMode !== 'library' && (
-                                <MultiSelectFilter
-                                    label="Site"
-                                    options={filterOptions.sites}
-                                    selected={filters.selectedSites}
-                                    onToggle={value =>
-                                        toggleArrayFilter(
-                                            'selectedSites',
-                                            value
-                                        )
-                                    }
-                                    onSelect={value =>
-                                        handleSelectChange(
-                                            'selectedSites',
-                                            value
-                                        )
-                                    }
-                                />
-                            )}
+                            <MultiSelectFilter
+                                label="Site"
+                                options={filterOptions.sites}
+                                selected={filters.selectedSites}
+                                onToggle={value =>
+                                    toggleArrayFilter(
+                                        'selectedSites',
+                                        value
+                                    )
+                                }
+                                onSelect={value =>
+                                    handleSelectChange(
+                                        'selectedSites',
+                                        value
+                                    )
+                                }
+                            />
 
-                            {filters.dataViewMode !== 'sites' && (
-                                <MultiSelectFilter
-                                    label="Library"
-                                    options={filterOptions.libraries}
-                                    selected={filters.selectedLibraries}
-                                    onToggle={value =>
-                                        toggleArrayFilter(
-                                            'selectedLibraries',
-                                            value
-                                        )
-                                    }
-                                    onSelect={value =>
-                                        handleSelectChange(
-                                            'selectedLibraries',
-                                            value
-                                        )
-                                    }
-                                />
-                            )}
+                            <MultiSelectFilter
+                                label="Country"
+                                options={filterOptions.countries}
+                                selected={filters.selectedCountries}
+                                onToggle={value =>
+                                    toggleArrayFilter(
+                                        'selectedCountries',
+                                        value
+                                    )
+                                }
+                                onSelect={value =>
+                                    handleSelectChange(
+                                        'selectedCountries',
+                                        value
+                                    )
+                                }
+                            />
 
-                            {filters.dataViewMode !== 'library' && (
-                                <MultiSelectFilter
-                                    label="Country"
-                                    options={filterOptions.countries}
-                                    selected={filters.selectedCountries}
-                                    onToggle={value =>
-                                        toggleArrayFilter(
-                                            'selectedCountries',
-                                            value
-                                        )
-                                    }
-                                    onSelect={value =>
-                                        handleSelectChange(
-                                            'selectedCountries',
-                                            value
-                                        )
-                                    }
-                                />
-                            )}
+                            <MultiSelectFilter
+                                label="Study Arm"
+                                options={filterOptions.studyArms}
+                                selected={filters.selectedStudyArms}
+                                onToggle={value =>
+                                    toggleArrayFilter(
+                                        'selectedStudyArms',
+                                        value
+                                    )
+                                }
+                                onSelect={value =>
+                                    handleSelectChange(
+                                        'selectedStudyArms',
+                                        value
+                                    )
+                                }
+                            />
 
-                            {filters.dataViewMode !== 'library' && (
-                                <MultiSelectFilter
-                                    label="Study Arm"
-                                    options={filterOptions.studyArms}
-                                    selected={filters.selectedStudyArms}
-                                    onToggle={value =>
-                                        toggleArrayFilter(
-                                            'selectedStudyArms',
-                                            value
-                                        )
-                                    }
-                                    onSelect={value =>
-                                        handleSelectChange(
-                                            'selectedStudyArms',
-                                            value
-                                        )
-                                    }
-                                />
-                            )}
-
-                            {filters.dataViewMode !== 'library' && (
-                                <MultiSelectFilter
-                                    label="Procedure"
-                                    options={filterOptions.procedures}
-                                    selected={filters.selectedProcedures}
-                                    onToggle={value =>
-                                        toggleArrayFilter(
-                                            'selectedProcedures',
-                                            value
-                                        )
-                                    }
-                                    onSelect={value =>
-                                        handleSelectChange(
-                                            'selectedProcedures',
-                                            value
-                                        )
-                                    }
-                                />
-                            )}
+                            <MultiSelectFilter
+                                label="Procedure"
+                                options={filterOptions.procedures}
+                                selected={filters.selectedProcedures}
+                                onToggle={value =>
+                                    toggleArrayFilter(
+                                        'selectedProcedures',
+                                        value
+                                    )
+                                }
+                                onSelect={value =>
+                                    handleSelectChange(
+                                        'selectedProcedures',
+                                        value
+                                    )
+                                }
+                            />
 
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
@@ -498,16 +443,6 @@ export function FilterPanel() {
                                         label={`Sites: ${filters.selectedSites.length}`}
                                         onRemove={() =>
                                             clearArrayFilter('selectedSites')
-                                        }
-                                    />
-                                )}
-                                {filters.selectedLibraries.length > 0 && (
-                                    <FilterPill
-                                        label={`Libraries: ${filters.selectedLibraries.length}`}
-                                        onRemove={() =>
-                                            clearArrayFilter(
-                                                'selectedLibraries'
-                                            )
                                         }
                                     />
                                 )}

@@ -13,13 +13,11 @@ import type { FilterState, FilterPreset } from '@cp/types';
 const STORAGE_KEY = 'chillipharm-filters';
 const PRESETS_KEY = 'chillipharm-filter-presets';
 const VERSION_KEY = 'chillipharm-version';
-const CURRENT_VERSION = '4';
+const CURRENT_VERSION = '5';
 
 const defaultFilterState: FilterState = {
-    dataViewMode: 'all',
     selectedTrials: [],
     selectedSites: [],
-    selectedLibraries: [],
     selectedCountries: [],
     selectedStudyArms: [],
     selectedProcedures: [],
@@ -48,7 +46,6 @@ type FilterAction =
 type ArrayFilterKey =
     | 'selectedTrials'
     | 'selectedSites'
-    | 'selectedLibraries'
     | 'selectedCountries'
     | 'selectedStudyArms'
     | 'selectedProcedures';
@@ -261,7 +258,6 @@ export function FilterProvider({ children }: { children: ReactNode }) {
         let count = 0;
         if (filters.selectedTrials.length > 0) count++;
         if (filters.selectedSites.length > 0) count++;
-        if (filters.selectedLibraries.length > 0) count++;
         if (filters.selectedCountries.length > 0) count++;
         if (filters.selectedStudyArms.length > 0) count++;
         if (filters.selectedProcedures.length > 0) count++;

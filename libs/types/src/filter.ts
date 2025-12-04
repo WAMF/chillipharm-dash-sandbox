@@ -1,14 +1,11 @@
-import type { DataViewMode } from './dataView';
 import type { AssetRecord } from './asset';
 
 export interface FilterState {
-    dataViewMode: DataViewMode;
     selectedTrials: string[];
     selectedSites: string[];
     selectedCountries: string[];
     selectedStudyArms: string[];
     selectedProcedures: string[];
-    selectedLibraries: string[];
     dateRange: {
         start: string | null;
         end: string | null;
@@ -33,13 +30,11 @@ export interface ExportColumn {
 }
 
 export const DEFAULT_FILTER_STATE: FilterState = {
-    dataViewMode: 'all',
     selectedTrials: [],
     selectedSites: [],
     selectedCountries: [],
     selectedStudyArms: [],
     selectedProcedures: [],
-    selectedLibraries: [],
     dateRange: { start: null, end: null },
     reviewStatus: 'all',
     processedStatus: 'all',
