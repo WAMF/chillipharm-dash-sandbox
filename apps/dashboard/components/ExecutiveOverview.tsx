@@ -81,8 +81,8 @@ export function ExecutiveOverview() {
                     tension: 0.4,
                 },
                 {
-                    label: 'Reviews',
-                    data: timeSeriesData.map(d => d.reviews),
+                    label: 'Tasks Completed',
+                    data: timeSeriesData.map(d => d.tasksCompleted),
                     borderColor: 'rgb(16, 185, 129)',
                     backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     fill: true,
@@ -226,9 +226,9 @@ export function ExecutiveOverview() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <MetricCard
-                    title="Review Completion"
-                    value={`${metrics.reviewRate.toFixed(1)}%`}
-                    subtitle={`${metrics.reviewedCount} assets reviewed`}
+                    title="Task Completion"
+                    value={`${metrics.taskCompletionRate.toFixed(1)}%`}
+                    subtitle={`${metrics.completedTasksCount} of ${metrics.totalTasksCount} tasks`}
                     icon="✓"
                 />
                 <MetricCard
@@ -293,13 +293,13 @@ export function ExecutiveOverview() {
                                     {formatDate(activity.uploadDate)}
                                 </div>
                                 <div className="whitespace-nowrap">
-                                    {activity.reviewed ? (
+                                    {activity.processed === 'Yes' ? (
                                         <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
-                                            Reviewed
+                                            Processed
                                         </span>
                                     ) : (
                                         <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                                            Pending
+                                            Processing
                                         </span>
                                     )}
                                 </div>

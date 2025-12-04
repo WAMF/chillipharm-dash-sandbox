@@ -315,29 +315,6 @@ export function FilterPanel() {
 
                             <div className="flex flex-col gap-1.5">
                                 <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
-                                    Review Status
-                                </label>
-                                <select
-                                    value={filters.reviewStatus}
-                                    onChange={e =>
-                                        setFilter(
-                                            'reviewStatus',
-                                            e.target.value as
-                                                | 'all'
-                                                | 'reviewed'
-                                                | 'pending'
-                                        )
-                                    }
-                                    className="px-3 py-2 border border-neutral-300 rounded-md text-sm text-neutral-700 bg-white transition-colors focus:outline-none focus:border-chilli-red"
-                                >
-                                    <option value="all">All</option>
-                                    <option value="reviewed">Reviewed</option>
-                                    <option value="pending">Pending</option>
-                                </select>
-                            </div>
-
-                            <div className="flex flex-col gap-1.5">
-                                <label className="text-xs font-semibold text-neutral-600 uppercase tracking-wide">
                                     Processed
                                 </label>
                                 <select
@@ -391,9 +368,6 @@ export function FilterPanel() {
                                         </option>
                                         <option value="studyArm">
                                             Study Arm
-                                        </option>
-                                        <option value="reviewed">
-                                            Review Status
                                         </option>
                                     </select>
                                     <button
@@ -485,18 +459,6 @@ export function FilterPanel() {
                                                 start: null,
                                                 end: null,
                                             })
-                                        }
-                                    />
-                                )}
-                                {filters.reviewStatus !== 'all' && (
-                                    <FilterPill
-                                        label={
-                                            filters.reviewStatus === 'reviewed'
-                                                ? 'Reviewed'
-                                                : 'Pending'
-                                        }
-                                        onRemove={() =>
-                                            setFilter('reviewStatus', 'all')
                                         }
                                     />
                                 )}

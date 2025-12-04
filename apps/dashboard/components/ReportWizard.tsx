@@ -884,11 +884,6 @@ export function ReportWizard({
                                                                               'dd/MM/yyyy'
                                                                           )
                                                                         : colKey ===
-                                                                            'reviewed'
-                                                                          ? record.reviewed
-                                                                              ? 'Yes'
-                                                                              : 'No'
-                                                                          : colKey ===
                                                                               'assetLink'
                                                                             ? record.assetLink
                                                                                 ? 'Link'

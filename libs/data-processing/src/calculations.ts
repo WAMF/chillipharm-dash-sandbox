@@ -9,7 +9,6 @@ import type {
     StudyEventData,
     StudyProcedureData,
     VideoMetricsData,
-    ReviewPerformanceData,
     ProcedureLagData,
     CommentStats,
 } from '@cp/types';
@@ -26,12 +25,9 @@ export function calculateDashboardMetrics(
     const uniqueTrials = new Set(records.map(r => r.trialName).filter(Boolean))
         .size;
     const processedCount = records.filter(r => r.processed === 'Yes').length;
-    const reviewedCount = records.filter(r => r.reviewed).length;
 
     const processingRate =
         totalAssets > 0 ? (processedCount / totalAssets) * 100 : 0;
-    const reviewRate =
-        totalAssets > 0 ? (reviewedCount / totalAssets) * 100 : 0;
     const complianceRate = calculateComplianceRate(records);
 
     return {
@@ -40,19 +36,20 @@ export function calculateDashboardMetrics(
         totalSubjects: uniqueSubjects,
         totalTrials: uniqueTrials,
         processedCount,
-        reviewedCount,
+        completedTasksCount: 0,
+        totalTasksCount: 0,
         processingRate,
-        reviewRate,
+        taskCompletionRate: 0,
         complianceRate,
     };
 }
 
 function calculateComplianceRate(records: AssetRecord[]): number {
     if (records.length === 0) return 0;
-    const reviewedAndProcessed = records.filter(
-        r => r.reviewed && (r.processed === 'Yes' || r.processed === 'No')
+    const processed = records.filter(
+        r => r.processed === 'Yes'
     ).length;
-    return (reviewedAndProcessed / records.length) * 100;
+    return (processed / records.length) * 100;
 }
 
 const UNKNOWN_SITE = 'Unknown';
@@ -71,16 +68,16 @@ export function calculateSitePerformance(
 
     return Array.from(siteMap.entries())
         .map(([siteName, assets]) => {
-            const reviewedAssets = assets.filter(a => a.reviewed).length;
             const processedAssets = assets.filter(
                 a => a.processed === 'Yes'
             ).length;
             return {
                 siteName,
                 totalAssets: assets.length,
-                reviewedAssets,
+                completedTasks: 0,
+                totalTasks: 0,
                 processedAssets,
-                reviewRate: (reviewedAssets / assets.length) * 100,
+                taskCompletionRate: 0,
                 uploadTrend: calculateUploadTrend(assets),
             };
         })
@@ -103,19 +100,18 @@ export function calculateTimeSeriesData(
 ): TimeSeriesData[] {
     const monthMap = new Map<
         string,
-        { uploads: number; reviews: number; processed: number }
+        { uploads: number; tasksCompleted: number; processed: number }
     >();
 
     records.forEach(record => {
         const monthKey = format(startOfMonth(record.uploadDate), 'yyyy-MM');
         const data = monthMap.get(monthKey) || {
             uploads: 0,
-            reviews: 0,
+            tasksCompleted: 0,
             processed: 0,
         };
 
         data.uploads++;
-        if (record.reviewed) data.reviews++;
         if (record.processed === 'Yes') data.processed++;
 
         monthMap.set(monthKey, data);
@@ -137,14 +133,6 @@ export function calculateComplianceMetrics(
     if (totalRecords === 0) return [];
 
     return [
-        {
-            category: 'Asset Review',
-            compliant: records.filter(r => r.reviewed).length,
-            nonCompliant: records.filter(r => !r.reviewed).length,
-            unknown: 0,
-            complianceRate:
-                (records.filter(r => r.reviewed).length / totalRecords) * 100,
-        },
         {
             category: 'Processing Status',
             compliant: records.filter(r => r.processed === 'Yes').length,
@@ -216,22 +204,19 @@ export function getStudyArmDistribution(
 export function getStudyEventBreakdown(
     records: AssetRecord[]
 ): StudyEventData[] {
-    const eventMap = new Map<string, { total: number; reviewed: number }>();
+    const eventMap = new Map<string, number>();
 
     records.forEach(record => {
         const event = record.studyEvent?.trim() || 'Unknown';
-        const current = eventMap.get(event) || { total: 0, reviewed: 0 };
-        current.total++;
-        if (record.reviewed) current.reviewed++;
-        eventMap.set(event, current);
+        eventMap.set(event, (eventMap.get(event) || 0) + 1);
     });
 
     return Array.from(eventMap.entries())
-        .map(([event, data]) => ({
+        .map(([event, count]) => ({
             event,
-            count: data.total,
-            reviewedCount: data.reviewed,
-            reviewRate: (data.reviewed / data.total) * 100,
+            count,
+            completedTasksCount: 0,
+            taskCompletionRate: 0,
         }))
         .sort((a, b) => b.count - a.count);
 }
@@ -380,108 +365,7 @@ export function getVideoMetrics(records: AssetRecord[]): VideoMetricsData {
     };
 }
 
-export function getReviewPerformance(
-    records: AssetRecord[]
-): ReviewPerformanceData {
-    const reviewedRecords = records.filter(
-        r => r.reviewed && r.reviewedDate && r.uploadDate
-    );
-    const turnaroundDays: number[] = [];
-    const reviewerMap = new Map<string, { count: number; totalDays: number }>();
-
-    reviewedRecords.forEach(record => {
-        const uploadDate = record.uploadDate;
-        const reviewDate = parseReviewDate(record.reviewedDate);
-        if (reviewDate && uploadDate) {
-            const days = Math.max(
-                0,
-                (reviewDate.getTime() - uploadDate.getTime()) /
-                    (1000 * 60 * 60 * 24)
-            );
-            turnaroundDays.push(days);
-
-            const reviewer = record.reviewedBy?.trim() || 'Unknown';
-            const current = reviewerMap.get(reviewer) || {
-                count: 0,
-                totalDays: 0,
-            };
-            current.count++;
-            current.totalDays += days;
-            reviewerMap.set(reviewer, current);
-        }
-    });
-
-    const avgTurnaroundDays =
-        turnaroundDays.length > 0
-            ? turnaroundDays.reduce((a, b) => a + b, 0) / turnaroundDays.length
-            : 0;
-
-    const reviewerStats = Array.from(reviewerMap.entries())
-        .map(([reviewer, data]) => ({
-            reviewer,
-            reviewCount: data.count,
-            avgTurnaroundDays: data.totalDays / data.count,
-        }))
-        .sort((a, b) => b.reviewCount - a.reviewCount)
-        .slice(0, 10);
-
-    const turnaroundBuckets = [
-        { range: 'Same day', min: 0, max: 1 },
-        { range: '1-3 days', min: 1, max: 3 },
-        { range: '3-7 days', min: 3, max: 7 },
-        { range: '1-2 weeks', min: 7, max: 14 },
-        { range: '2-4 weeks', min: 14, max: 28 },
-        { range: '1+ month', min: 28, max: Infinity },
-    ];
-
-    const turnaroundDistribution = turnaroundBuckets.map(bucket => ({
-        range: bucket.range,
-        count: turnaroundDays.filter(d => d >= bucket.min && d < bucket.max)
-            .length,
-    }));
-
-    const monthlyReviews = new Map<
-        string,
-        { totalDays: number; count: number }
-    >();
-    reviewedRecords.forEach(record => {
-        const reviewDate = parseReviewDate(record.reviewedDate);
-        if (reviewDate) {
-            const monthKey = format(startOfMonth(reviewDate), 'yyyy-MM');
-            const uploadDate = record.uploadDate;
-            const days = Math.max(
-                0,
-                (reviewDate.getTime() - uploadDate.getTime()) /
-                    (1000 * 60 * 60 * 24)
-            );
-            const current = monthlyReviews.get(monthKey) || {
-                totalDays: 0,
-                count: 0,
-            };
-            current.totalDays += days;
-            current.count++;
-            monthlyReviews.set(monthKey, current);
-        }
-    });
-
-    const reviewTrend = Array.from(monthlyReviews.entries())
-        .sort((a, b) => a[0].localeCompare(b[0]))
-        .map(([date, data]) => ({
-            date: format(parseISO(date + '-01'), 'MMM yyyy'),
-            avgTurnaroundDays: data.totalDays / data.count,
-            reviewCount: data.count,
-        }))
-        .slice(-12);
-
-    return {
-        avgTurnaroundDays,
-        reviewerStats,
-        turnaroundDistribution,
-        reviewTrend,
-    };
-}
-
-function parseReviewDate(dateStr: string): Date | null {
+function parseDateString(dateStr: string): Date | null {
     if (!dateStr) return null;
     try {
         return parseISO(dateStr.replace(' UTC', ''));
@@ -497,7 +381,7 @@ export function getProcedureLagAnalysis(
 
     records.forEach(record => {
         if (record.studyProcedureDate && record.uploadDate) {
-            const procedureDate = parseReviewDate(record.studyProcedureDate);
+            const procedureDate = parseDateString(record.studyProcedureDate);
             if (procedureDate) {
                 const lagDays =
                     (record.uploadDate.getTime() - procedureDate.getTime()) /
@@ -527,8 +411,7 @@ export function getCommentStats(records: AssetRecord[]): CommentStats {
     const commenterMap = new Map<string, number>();
 
     withComments.forEach(record => {
-        const commenter =
-            record.reviewedBy?.trim() || record.uploadedBy?.trim() || 'Unknown';
+        const commenter = record.uploadedBy?.trim() || 'Unknown';
         commenterMap.set(commenter, (commenterMap.get(commenter) || 0) + 1);
     });
 

@@ -152,9 +152,6 @@ export function AssetListModal() {
             'Duration',
             'File Size',
             'Processed',
-            'Reviewed',
-            'Reviewed By',
-            'Review Date',
             'Comments',
         ];
 
@@ -179,9 +176,6 @@ export function AssetListModal() {
             asset.assetDuration || '',
             asset.fileSize || '',
             asset.processed || '',
-            asset.reviewed ? 'Yes' : 'No',
-            asset.reviewedBy || '',
-            asset.reviewedDate || '',
             (asset.comments || '').replace(/"/g, '""'),
         ]);
 
@@ -387,14 +381,14 @@ export function AssetListModal() {
                                             <td className="py-3 px-4 border-b border-neutral-100">
                                                 <span
                                                     className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                        asset.reviewed
+                                                        asset.processed === 'Yes'
                                                             ? 'bg-green-100 text-green-700'
                                                             : 'bg-orange-100 text-orange-700'
                                                     }`}
                                                 >
-                                                    {asset.reviewed
-                                                        ? 'Reviewed'
-                                                        : 'Pending'}
+                                                    {asset.processed === 'Yes'
+                                                        ? 'Processed'
+                                                        : 'Processing'}
                                                 </span>
                                             </td>
                                             <td className="w-[60px] text-center py-3 px-4 border-b border-neutral-100">

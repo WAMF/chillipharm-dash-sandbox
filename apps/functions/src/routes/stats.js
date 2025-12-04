@@ -24,12 +24,12 @@ router.get('/', async (req, res, next) => {
             trialStats,
             siteStats,
             subjectStats,
-            reviewStats,
+            taskStats,
             uploadTrend,
         ] = await Promise.all([
             query(
                 `
-        SELECT 
+        SELECT
           COUNT(*) as total,
           COUNT(*) FILTER (WHERE processed = true) as processed,
           SUM(filesize) as total_size
@@ -49,18 +49,24 @@ router.get('/', async (req, res, next) => {
             query(`SELECT COUNT(*) as total FROM study_subjects`),
 
             query(`
-        SELECT 
-          COUNT(*) FILTER (WHERE reviewed = true) as reviewed,
-          COUNT(*) as total
-        FROM asset_reviews WHERE deleted_at IS NULL
+        WITH procedure_tasks AS (
+          SELECT jsonb_array_elements(study_procedure_tasks_json->'tasks') as task
+          FROM study_procedures
+          WHERE deleted_at IS NULL
+          AND study_procedure_tasks_json IS NOT NULL
+        )
+        SELECT
+          COUNT(*) as total,
+          COUNT(*) FILTER (WHERE task->>'completed_date' IS NOT NULL) as completed
+        FROM procedure_tasks
       `),
 
             query(`
-        SELECT 
+        SELECT
           DATE_TRUNC('day', created_at)::date as date,
           COUNT(*) as uploads
         FROM assets
-        WHERE soft_deleted_at IS NULL 
+        WHERE soft_deleted_at IS NULL
           AND created_at >= NOW() - INTERVAL '30 days'
         GROUP BY DATE_TRUNC('day', created_at)
         ORDER BY date DESC
@@ -71,8 +77,8 @@ router.get('/', async (req, res, next) => {
         const totalAssets = parseInt(assetStats.rows[0].total) || 0;
         const processedAssets = parseInt(assetStats.rows[0].processed) || 0;
         const totalSize = parseInt(assetStats.rows[0].total_size) || 0;
-        const reviewedAssets = parseInt(reviewStats.rows[0].reviewed) || 0;
-        const totalReviews = parseInt(reviewStats.rows[0].total) || 0;
+        const completedTasks = parseInt(taskStats.rows[0].completed) || 0;
+        const totalTasks = parseInt(taskStats.rows[0].total) || 0;
 
         res.json({
             success: true,
@@ -96,12 +102,12 @@ router.get('/', async (req, res, next) => {
                 subjects: {
                     total: parseInt(subjectStats.rows[0].total) || 0,
                 },
-                reviews: {
-                    reviewed: reviewedAssets,
-                    total: totalReviews,
-                    reviewRate:
-                        totalReviews > 0
-                            ? Math.round((reviewedAssets / totalReviews) * 100)
+                tasks: {
+                    completed: completedTasks,
+                    total: totalTasks,
+                    completionRate:
+                        totalTasks > 0
+                            ? Math.round((completedTasks / totalTasks) * 100)
                             : 0,
                 },
                 uploadTrend: uploadTrend.rows.map(r => ({

@@ -55,13 +55,6 @@ export function filterRecords(
             }
         }
 
-        if (filters.reviewStatus === 'reviewed' && !record.reviewed) {
-            return false;
-        }
-        if (filters.reviewStatus === 'pending' && record.reviewed) {
-            return false;
-        }
-
         if (filters.processedStatus === 'yes' && record.processed !== 'Yes') {
             return false;
         }
@@ -80,7 +73,6 @@ export function filterRecords(
                 record.studyProcedure,
                 record.evaluator,
                 record.uploadedBy,
-                record.reviewedBy,
                 record.comments,
             ];
             const matches = searchFields.some(
@@ -140,7 +132,6 @@ export function getActiveFilterCount(filters: FilterState): number {
     if (filters.selectedStudyArms.length > 0) count++;
     if (filters.selectedProcedures.length > 0) count++;
     if (filters.dateRange.start || filters.dateRange.end) count++;
-    if (filters.reviewStatus !== 'all') count++;
     if (filters.processedStatus !== 'all') count++;
     if (filters.searchTerm.trim()) count++;
 

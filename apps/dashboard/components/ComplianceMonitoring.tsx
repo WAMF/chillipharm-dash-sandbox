@@ -86,15 +86,7 @@ export function ComplianceMonitoring() {
             let matchingAssets;
             let title;
 
-            if (category === 'Asset Review') {
-                if (status === 'compliant') {
-                    matchingAssets = filteredRecords.filter(r => r.reviewed);
-                    title = 'Reviewed Assets';
-                } else {
-                    matchingAssets = filteredRecords.filter(r => !r.reviewed);
-                    title = 'Pending Review Assets';
-                }
-            } else if (category === 'Processing Status') {
+            if (category === 'Processing Status') {
                 if (status === 'compliant') {
                     matchingAssets = filteredRecords.filter(
                         r => r.processed === 'Yes'

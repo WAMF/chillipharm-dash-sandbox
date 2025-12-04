@@ -14,7 +14,6 @@ const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
     { href: '/dashboard/browse', label: 'Browse', icon: 'folder-open' },
     { href: '/dashboard/video-metrics', label: 'Video Metrics', icon: 'play' },
-    { href: '/dashboard/reviews', label: 'Reviews', icon: 'check-circle' },
     {
         href: '/dashboard/compliance',
         label: 'Compliance',

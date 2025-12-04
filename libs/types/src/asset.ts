@@ -16,10 +16,7 @@ export interface AssetRecord {
     uploadedBy: string;
     processed: string;
     assetDuration: string;
-    reviewed: boolean;
     comments: string;
-    reviewedBy: string;
-    reviewedDate: string;
     fileSize: string;
     assetLink: string;
 }

@@ -49,9 +49,7 @@ export interface AggregatedMetrics {
     total: number;
     processed: number;
     pending: number;
-    reviewed: number;
     processedRate: number;
-    reviewedRate: number;
     totalFileSize: number;
     totalDuration: number;
 }
@@ -61,11 +59,9 @@ export function aggregateAssetMetrics(
 ): AggregatedMetrics {
     const total = assets.length;
     const processed = countBy(assets, a => a.processed === 'Yes');
-    const reviewed = countBy(assets, a => a.reviewed === true);
     const pending = total - processed;
 
     const processedRate = total > 0 ? (processed / total) * 100 : 0;
-    const reviewedRate = total > 0 ? (reviewed / total) * 100 : 0;
 
     const totalFileSize = 0;
     const totalDuration = 0;
@@ -74,9 +70,7 @@ export function aggregateAssetMetrics(
         total,
         processed,
         pending,
-        reviewed,
         processedRate,
-        reviewedRate,
         totalFileSize,
         totalDuration,
     };

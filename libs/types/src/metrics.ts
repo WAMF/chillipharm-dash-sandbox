@@ -4,25 +4,27 @@ export interface DashboardMetrics {
     totalSubjects: number;
     totalTrials: number;
     processedCount: number;
-    reviewedCount: number;
+    completedTasksCount: number;
+    totalTasksCount: number;
     processingRate: number;
-    reviewRate: number;
+    taskCompletionRate: number;
     complianceRate: number;
 }
 
 export interface SitePerformance {
     siteName: string;
     totalAssets: number;
-    reviewedAssets: number;
+    completedTasks: number;
+    totalTasks: number;
     processedAssets: number;
-    reviewRate: number;
+    taskCompletionRate: number;
     uploadTrend: number;
 }
 
 export interface TimeSeriesData {
     date: string;
     uploads: number;
-    reviews: number;
+    tasksCompleted: number;
     processed: number;
 }
 
@@ -43,8 +45,8 @@ export interface StudyArmData {
 export interface StudyEventData {
     event: string;
     count: number;
-    reviewedCount: number;
-    reviewRate: number;
+    completedTasksCount: number;
+    taskCompletionRate: number;
 }
 
 export interface StudyProcedureData {
@@ -74,28 +76,28 @@ export interface SizeBucket {
     totalSize: number;
 }
 
-export interface ReviewPerformanceData {
-    avgTurnaroundDays: number;
-    reviewerStats: ReviewerStat[];
-    turnaroundDistribution: TurnaroundBucket[];
-    reviewTrend: ReviewTrendData[];
+export interface TaskPerformanceData {
+    avgCompletionDays: number;
+    completedByStats: TaskCompletedByStat[];
+    completionDistribution: CompletionBucket[];
+    taskTrend: TaskTrendData[];
 }
 
-export interface ReviewerStat {
-    reviewer: string;
-    reviewCount: number;
-    avgTurnaroundDays: number;
+export interface TaskCompletedByStat {
+    completedBy: string;
+    taskCount: number;
+    avgCompletionDays: number;
 }
 
-export interface TurnaroundBucket {
+export interface CompletionBucket {
     range: string;
     count: number;
 }
 
-export interface ReviewTrendData {
+export interface TaskTrendData {
     date: string;
-    avgTurnaroundDays: number;
-    reviewCount: number;
+    avgCompletionDays: number;
+    taskCount: number;
 }
 
 export interface ProcedureLagData {

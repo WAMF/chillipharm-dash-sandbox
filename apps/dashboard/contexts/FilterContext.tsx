@@ -25,7 +25,6 @@ const defaultFilterState: FilterState = {
         start: null,
         end: null,
     },
-    reviewStatus: 'all',
     processedStatus: 'all',
     searchTerm: '',
     sortBy: '',
@@ -122,19 +121,19 @@ function getDefaultPresets(): FilterPreset[] {
             },
         },
         {
-            id: 'pending-review',
-            name: 'Pending Review',
+            id: 'not-processed',
+            name: 'Not Processed',
             filters: {
                 ...defaultFilterState,
-                reviewStatus: 'pending',
+                processedStatus: 'no',
             },
         },
         {
-            id: 'reviewed',
-            name: 'Reviewed Only',
+            id: 'processed',
+            name: 'Processed Only',
             filters: {
                 ...defaultFilterState,
-                reviewStatus: 'reviewed',
+                processedStatus: 'yes',
             },
         },
     ];
@@ -262,7 +261,6 @@ export function FilterProvider({ children }: { children: ReactNode }) {
         if (filters.selectedStudyArms.length > 0) count++;
         if (filters.selectedProcedures.length > 0) count++;
         if (filters.dateRange.start || filters.dateRange.end) count++;
-        if (filters.reviewStatus !== 'all') count++;
         if (filters.processedStatus !== 'all') count++;
         if (filters.searchTerm.trim()) count++;
         return count;

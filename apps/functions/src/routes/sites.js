@@ -471,6 +471,7 @@ router.get(
                     sp.date,
                     sp.status,
                     sp.locked,
+                    sp.study_procedure_tasks_json,
                     spd.display_name as definition_name,
                     u.first_name as evaluator_first_name,
                     u.last_name as evaluator_last_name,
@@ -487,28 +488,46 @@ router.get(
                 [eventId, limit, offset]
             );
 
-            const data = dataResult.rows.map(row => ({
-                id: row.id,
-                identifier: row.identifier,
-                name: row.name || row.definition_name,
-                date: formatDate(row.date),
-                status: row.status,
-                locked: row.locked,
-                evaluator:
-                    row.evaluator_first_name || row.evaluator_last_name
-                        ? {
-                              name: [
-                                  row.evaluator_first_name,
-                                  row.evaluator_last_name,
-                              ]
-                                  .filter(Boolean)
-                                  .join(' '),
-                          }
-                        : null,
-                stats: {
-                    assetCount: parseInt(row.asset_count) || 0,
-                },
-            }));
+            const data = dataResult.rows.map(row => {
+                const tasks = row.study_procedure_tasks_json?.tasks || [];
+                const totalTasks = tasks.length;
+                const completedTasks = tasks.filter(
+                    t => t.completed_date !== null
+                ).length;
+
+                return {
+                    id: row.id,
+                    identifier: row.identifier,
+                    name: row.name || row.definition_name,
+                    date: formatDate(row.date),
+                    status: row.status,
+                    locked: row.locked,
+                    evaluator:
+                        row.evaluator_first_name || row.evaluator_last_name
+                            ? {
+                                  name: [
+                                      row.evaluator_first_name,
+                                      row.evaluator_last_name,
+                                  ]
+                                      .filter(Boolean)
+                                      .join(' '),
+                              }
+                            : null,
+                    stats: {
+                        assetCount: parseInt(row.asset_count) || 0,
+                    },
+                    tasks: {
+                        total: totalTasks,
+                        completed: completedTasks,
+                        completionRate:
+                            totalTasks > 0
+                                ? Math.round(
+                                      (completedTasks / totalTasks) * 100
+                                  )
+                                : 0,
+                    },
+                };
+            });
 
             const pagination = buildPaginationResponse(
                 page,
@@ -576,14 +595,8 @@ router.get(
                     a.processed,
                     a.created_at,
                     a.s3_url,
-                    a.media_info,
-                    ar.reviewed,
-                    ar.review_date,
-                    reviewer.first_name as reviewer_first_name,
-                    reviewer.last_name as reviewer_last_name
+                    a.media_info
                 FROM assets a
-                LEFT JOIN asset_reviews ar ON ar.asset_id = a.id AND ar.deleted_at IS NULL
-                LEFT JOIN users reviewer ON ar.user_id = reviewer.id
                 WHERE a.study_procedure_id = $1 AND a.soft_deleted_at IS NULL
                 ORDER BY ${sortColumnMap[sort] || 'a.created_at'} ${order === 'asc' ? 'ASC' : 'DESC'}
                 LIMIT $2 OFFSET $3
@@ -610,19 +623,6 @@ router.get(
                     url: row.s3_url,
                     processed: row.processed || false,
                     createdAt: formatDateTime(row.created_at),
-                    review: {
-                        reviewed: row.reviewed || false,
-                        reviewDate: formatDate(row.review_date),
-                        reviewer:
-                            row.reviewer_first_name || row.reviewer_last_name
-                                ? [
-                                      row.reviewer_first_name,
-                                      row.reviewer_last_name,
-                                  ]
-                                      .filter(Boolean)
-                                      .join(' ')
-                                : null,
-                    },
                 };
             });
 
@@ -690,15 +690,12 @@ router.get('/:siteId/assets', async (req, res, next) => {
                 sp.display_name as procedure_name,
                 spd.display_name as procedure_definition,
                 se.display_name as event_name,
-                ss.number as subject_number,
-                ar.reviewed,
-                ar.review_date
+                ss.number as subject_number
             FROM assets a
             LEFT JOIN study_procedures sp ON a.study_procedure_id = sp.id
             LEFT JOIN study_procedure_definitions spd ON sp.study_procedure_definition_id = spd.id
             LEFT JOIN study_events se ON sp.study_event_id = se.id
             LEFT JOIN study_subjects ss ON se.study_subject_id = ss.id
-            LEFT JOIN asset_reviews ar ON ar.asset_id = a.id AND ar.deleted_at IS NULL
             WHERE a.trial_container_id = $1 AND a.soft_deleted_at IS NULL
             ORDER BY ${sortColumnMap[sort] || 'a.created_at'} ${order === 'asc' ? 'ASC' : 'DESC'}
             LIMIT $2 OFFSET $3
@@ -733,10 +730,6 @@ router.get('/:siteId/assets', async (req, res, next) => {
                           subjectNumber: row.subject_number,
                       }
                     : null,
-                review: {
-                    reviewed: row.reviewed || false,
-                    reviewDate: formatDate(row.review_date),
-                },
             };
         });
 

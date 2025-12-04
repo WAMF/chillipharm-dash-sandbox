@@ -41,11 +41,6 @@ export interface ApiAsset {
         subjectNumber: string;
         evaluator: string | null;
     } | null;
-    review: {
-        reviewed: boolean;
-        reviewDate: string | null;
-        reviewer: string | null;
-    };
     comments: string | null;
 }
 
@@ -66,10 +61,10 @@ export interface ApiStats {
     subjects: {
         total: number;
     };
-    reviews: {
-        reviewed: number;
+    tasks: {
+        completed: number;
         total: number;
-        reviewRate: number;
+        completionRate: number;
     };
     uploadTrend: Array<{
         date: string;
@@ -97,10 +92,7 @@ export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
         uploadedBy: asset.uploader?.name || asset.uploader?.email || '',
         processed: asset.processed ? 'Yes' : 'No',
         assetDuration: asset.duration || '',
-        reviewed: asset.review?.reviewed || false,
         comments: asset.comments || '',
-        reviewedBy: asset.review?.reviewer || '',
-        reviewedDate: asset.review?.reviewDate || '',
         fileSize: asset.filesizeFormatted || '',
         assetLink: asset.url || '',
     };
@@ -129,9 +121,6 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
             start: filters.dateRange.start || undefined,
             end: filters.dateRange.end || undefined,
         };
-    }
-    if (filters.reviewStatus !== 'all') {
-        queryFilter.reviewStatus = filters.reviewStatus;
     }
     if (filters.processedStatus !== 'all') {
         queryFilter.processedStatus = filters.processedStatus;

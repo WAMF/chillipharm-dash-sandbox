@@ -47,11 +47,6 @@ export function StudyAnalytics() {
                     data: studyEventData.slice(0, 10).map(e => e.count),
                     backgroundColor: 'rgba(200, 16, 46, 0.8)',
                 },
-                {
-                    label: 'Reviewed',
-                    data: studyEventData.slice(0, 10).map(e => e.reviewedCount),
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                },
             ],
         }),
         [studyEventData]

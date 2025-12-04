@@ -19,7 +19,6 @@ import type {
     StudyEventData,
     StudyProcedureData,
     VideoMetricsData,
-    ReviewPerformanceData,
     ProcedureLagData,
     CommentStats,
 } from '@cp/types';
@@ -33,7 +32,6 @@ import {
     getStudyEventBreakdown,
     getStudyProcedureBreakdown,
     getVideoMetrics,
-    getReviewPerformance,
     getProcedureLagAnalysis,
     getCommentStats,
     getFilterOptions,
@@ -77,7 +75,6 @@ interface DashboardContextValue {
     studyEventData: StudyEventData[];
     studyProcedureData: StudyProcedureData[];
     videoMetrics: VideoMetricsData | null;
-    reviewPerformance: ReviewPerformanceData | null;
     procedureLagData: ProcedureLagData[];
     commentStats: CommentStats | null;
     filterOptions: FilterOptions;
@@ -186,11 +183,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         return getVideoMetrics(filteredRecords);
     }, [filteredRecords]);
 
-    const reviewPerformance = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getReviewPerformance(filteredRecords);
-    }, [filteredRecords]);
-
     const procedureLagData = useMemo(() => {
         return getProcedureLagAnalysis(filteredRecords);
     }, [filteredRecords]);
@@ -227,7 +219,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 studyEventData,
                 studyProcedureData,
                 videoMetrics,
-                reviewPerformance,
                 procedureLagData,
                 commentStats,
                 filterOptions,

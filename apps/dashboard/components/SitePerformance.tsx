@@ -29,8 +29,8 @@ export function SitePerformance() {
                     backgroundColor: 'rgba(200, 16, 46, 0.8)',
                 },
                 {
-                    label: 'Reviewed',
-                    data: topSites.map(s => s.reviewedAssets),
+                    label: 'Processed',
+                    data: topSites.map(s => s.processedAssets),
                     backgroundColor: 'rgba(16, 185, 129, 0.8)',
                 },
             ],
@@ -165,7 +165,7 @@ export function SitePerformance() {
                                         Assets
                                     </th>
                                     <th className="text-left py-3 px-2 font-semibold text-neutral-700 border-b-2 border-neutral-200">
-                                        Review Rate
+                                        Task Rate
                                     </th>
                                     <th className="text-center py-3 px-2 font-semibold text-neutral-700 border-b-2 border-neutral-200">
                                         Trend
@@ -203,11 +203,11 @@ export function SitePerformance() {
                                                 <div
                                                     className="absolute h-full bg-gradient-to-r from-chilli-red to-pink-500 transition-all duration-300"
                                                     style={{
-                                                        width: `${site.reviewRate}%`,
+                                                        width: `${site.taskCompletionRate}%`,
                                                     }}
                                                 />
                                                 <span className="relative z-10 flex items-center justify-center h-full text-xs font-semibold text-neutral-700">
-                                                    {site.reviewRate.toFixed(0)}
+                                                    {site.taskCompletionRate.toFixed(0)}
                                                     %
                                                 </span>
                                             </div>

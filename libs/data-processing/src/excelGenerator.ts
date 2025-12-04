@@ -104,23 +104,10 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
     {
         key: 'processed',
         label: 'Processed',
-        category: 'Review Info',
+        category: 'Asset Info',
         width: 12,
     },
-    { key: 'reviewed', label: 'Reviewed', category: 'Review Info', width: 12 },
-    {
-        key: 'reviewedBy',
-        label: 'Reviewed By',
-        category: 'Review Info',
-        width: 20,
-    },
-    {
-        key: 'reviewedDate',
-        label: 'Reviewed Date',
-        category: 'Review Info',
-        width: 15,
-    },
-    { key: 'comments', label: 'Comments', category: 'Review Info', width: 50 },
+    { key: 'comments', label: 'Comments', category: 'Asset Info', width: 50 },
     { key: 'assetLink', label: 'Asset Link', category: 'Links', width: 50 },
 ];
 
@@ -130,7 +117,6 @@ export const COLUMN_CATEGORIES = [
     'Subject Info',
     'Study Info',
     'Asset Info',
-    'Review Info',
     'Links',
 ];
 
@@ -141,7 +127,7 @@ export const DEFAULT_COLUMNS: ColumnKey[] = [
     'studyProcedure',
     'assetTitle',
     'uploadDate',
-    'reviewed',
+    'processed',
     'assetLink',
 ];
 
@@ -185,11 +171,8 @@ function formatCellValue(
     switch (key) {
         case 'uploadDate':
             return formatDateTime(value as Date | string);
-        case 'reviewedDate':
         case 'studyProcedureDate':
             return formatDate(value as Date | string);
-        case 'reviewed':
-            return value ? 'Yes' : 'No';
         default: {
             const result = value as string | number | boolean;
             if (typeof result === 'string') {

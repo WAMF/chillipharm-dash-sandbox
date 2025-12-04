@@ -5,7 +5,6 @@ export { ExecutiveOverview } from './ExecutiveOverview';
 export { SitePerformance } from './SitePerformance';
 export { StudyAnalytics } from './StudyAnalytics';
 export { VideoMetrics } from './VideoMetrics';
-export { ReviewPerformance } from './ReviewPerformance';
 export { ComplianceMonitoring } from './ComplianceMonitoring';
 export { WorldMap } from './WorldMap';
 export { AssetListModal } from './AssetListModal';

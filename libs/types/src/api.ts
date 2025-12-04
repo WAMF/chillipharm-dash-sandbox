@@ -33,7 +33,6 @@ export interface QueryFilter {
     studyArms?: string[];
     procedures?: string[];
     dateRange?: { start?: string; end?: string };
-    reviewStatus?: 'all' | 'reviewed' | 'pending';
     processedStatus?: 'all' | 'yes' | 'no';
     searchTerm?: string;
     sortBy?: string;
@@ -61,6 +60,5 @@ export interface StatsResponse {
     totalSites: number;
     totalSubjects: number;
     totalTrials: number;
-    reviewedCount: number;
     processedCount: number;
 }

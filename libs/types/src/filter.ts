@@ -10,7 +10,6 @@ export interface FilterState {
         start: string | null;
         end: string | null;
     };
-    reviewStatus: 'all' | 'reviewed' | 'pending';
     processedStatus: 'all' | 'yes' | 'no';
     searchTerm: string;
     sortBy: keyof AssetRecord | '';
@@ -36,7 +35,6 @@ export const DEFAULT_FILTER_STATE: FilterState = {
     selectedStudyArms: [],
     selectedProcedures: [],
     dateRange: { start: null, end: null },
-    reviewStatus: 'all',
     processedStatus: 'all',
     searchTerm: '',
     sortBy: '',
