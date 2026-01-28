@@ -1,7 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
-import type { SitesStats } from '@cp/api-client';
+import { useMemo, useCallback } from 'react';
 import { useDashboard } from '../contexts/DashboardContext';
 import { MetricCard } from './MetricCard';
 import { Chart } from './Chart';
@@ -24,49 +23,9 @@ export function ExecutiveOverview() {
         metrics,
         timeSeriesData,
         isLoading,
-        dataLoader,
         filteredRecords,
         setSelectedAsset,
     } = useDashboard();
-
-    const [sitesStats, setSitesStats] = useState<SitesStats | null>(null);
-    const [statsLoading, setStatsLoading] = useState(false);
-    const [statsError, setStatsError] = useState<string | null>(null);
-    const [retryCount, setRetryCount] = useState(0);
-
-    const retryStatsLoad = useCallback(() => {
-        setStatsError(null);
-        setRetryCount(c => c + 1);
-    }, []);
-
-    useEffect(() => {
-        let cancelled = false;
-
-        async function loadSitesStats() {
-            if (!dataLoader) return;
-
-            setStatsLoading(true);
-            setStatsError(null);
-
-            try {
-                const sites = await dataLoader.fetchSitesStats();
-                if (!cancelled) setSitesStats(sites);
-            } catch (error_) {
-                if (!cancelled) {
-                    console.error('Failed to load sites stats:', error_);
-                    setStatsError('Failed to load statistics');
-                }
-            } finally {
-                if (!cancelled) setStatsLoading(false);
-            }
-        }
-
-        loadSitesStats();
-
-        return () => {
-            cancelled = true;
-        };
-    }, [dataLoader, retryCount]);
 
     const chartData = useMemo(
         () => ({
@@ -135,7 +94,7 @@ export function ExecutiveOverview() {
         [setSelectedAsset]
     );
 
-    if (isLoading || statsLoading) {
+    if (isLoading) {
         return (
             <div className="flex flex-col gap-6">
                 <div className="animate-pulse">
@@ -180,18 +139,6 @@ export function ExecutiveOverview() {
                 </p>
             </div>
 
-            {statsError && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
-                    <span className="text-red-700 text-sm">{statsError}</span>
-                    <button
-                        onClick={retryStatsLoad}
-                        className="px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200 text-sm font-medium"
-                    >
-                        Retry
-                    </button>
-                </div>
-            )}
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
                     title="Total Video Assets"
@@ -202,16 +149,14 @@ export function ExecutiveOverview() {
 
                 <MetricCard
                     title="Active Sites"
-                    value={sitesStats?.totalSites ?? metrics.totalSites}
+                    value={metrics.totalSites}
                     subtitle="Clinical trial locations"
                     icon="🏥"
                 />
 
                 <MetricCard
                     title="Total Subjects"
-                    value={
-                        sitesStats?.totalSubjects ?? metrics.totalSubjects
-                    }
+                    value={metrics.totalSubjects}
                     subtitle="Enrolled participants"
                     icon="👥"
                 />

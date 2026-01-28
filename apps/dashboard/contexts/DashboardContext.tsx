@@ -12,28 +12,12 @@ import {
 import type {
     AssetRecord,
     DashboardMetrics,
-    SitePerformance,
     TimeSeriesData,
-    ComplianceMetric,
-    StudyArmData,
-    StudyEventData,
-    StudyProcedureData,
-    VideoMetricsData,
-    ProcedureLagData,
-    CommentStats,
 } from '@cp/types';
 import { useAuth } from '@cp/firebase';
 import {
     calculateDashboardMetrics,
-    calculateSitePerformance,
     calculateTimeSeriesData,
-    calculateComplianceMetrics,
-    getStudyArmDistribution,
-    getStudyEventBreakdown,
-    getStudyProcedureBreakdown,
-    getVideoMetrics,
-    getProcedureLagAnalysis,
-    getCommentStats,
     getFilterOptions,
     getCountryDistribution,
     filterRecords,
@@ -69,15 +53,7 @@ interface DashboardContextValue {
     isLoading: boolean;
     error: string | null;
     metrics: DashboardMetrics | null;
-    sitePerformance: SitePerformance[];
     timeSeriesData: TimeSeriesData[];
-    complianceMetrics: ComplianceMetric[];
-    studyArmData: StudyArmData[];
-    studyEventData: StudyEventData[];
-    studyProcedureData: StudyProcedureData[];
-    videoMetrics: VideoMetricsData | null;
-    procedureLagData: ProcedureLagData[];
-    commentStats: CommentStats | null;
     filterOptions: FilterOptions;
     countryDistribution: CountryData[];
     refreshData: () => Promise<void>;
@@ -155,42 +131,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         return calculateDashboardMetrics(filteredRecords);
     }, [filteredRecords]);
 
-    const sitePerformance = useMemo(() => {
-        return calculateSitePerformance(filteredRecords);
-    }, [filteredRecords]);
-
     const timeSeriesData = useMemo(() => {
         return calculateTimeSeriesData(filteredRecords);
-    }, [filteredRecords]);
-
-    const complianceMetrics = useMemo(() => {
-        return calculateComplianceMetrics(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyArmData = useMemo(() => {
-        return getStudyArmDistribution(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyEventData = useMemo(() => {
-        return getStudyEventBreakdown(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyProcedureData = useMemo(() => {
-        return getStudyProcedureBreakdown(filteredRecords);
-    }, [filteredRecords]);
-
-    const videoMetrics = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getVideoMetrics(filteredRecords);
-    }, [filteredRecords]);
-
-    const procedureLagData = useMemo(() => {
-        return getProcedureLagAnalysis(filteredRecords);
-    }, [filteredRecords]);
-
-    const commentStats = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getCommentStats(filteredRecords);
     }, [filteredRecords]);
 
     const filterOptions = useMemo(() => {
@@ -213,15 +155,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 error,
                 metrics,
-                sitePerformance,
                 timeSeriesData,
-                complianceMetrics,
-                studyArmData,
-                studyEventData,
-                studyProcedureData,
-                videoMetrics,
-                procedureLagData,
-                commentStats,
                 filterOptions,
                 countryDistribution,
                 refreshData,

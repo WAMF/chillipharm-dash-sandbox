@@ -8,15 +8,9 @@ import type {
     EventDefinition,
     ProcedureDefinition,
     TaskDefinition,
-    FormRecord,
-    FormQueryFilter,
-    FormStats,
     SiteReportRecord,
 } from '@cp/types';
 import type { ApiClient } from './client';
-import type { SitesStats } from './endpoints/stats';
-
-export type { SitesStats };
 
 export interface ApiAsset {
     id: number;
@@ -52,35 +46,6 @@ export interface ApiAsset {
     } | null;
     comments: string | null;
 }
-
-export interface ApiStats {
-    assets: {
-        total: number;
-        processed: number;
-        processingRate: number;
-        totalSizeBytes: number;
-        totalSizeFormatted: string;
-    };
-    trials: {
-        total: number;
-    };
-    sites: {
-        total: number;
-    };
-    subjects: {
-        total: number;
-    };
-    tasks: {
-        completed: number;
-        total: number;
-        completionRate: number;
-    };
-    uploadTrend: Array<{
-        date: string;
-        uploads: number;
-    }>;
-}
-
 
 export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
     return {
@@ -277,23 +242,6 @@ export class DataLoader {
         return this.queryAllAssets(queryFilter);
     }
 
-    async fetchStats(trialId?: number): Promise<ApiStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
     async checkHealth(): Promise<{ status: string; timestamp: string }> {
         const response = await fetch(`${this.baseUrl}/api/health`);
 
@@ -302,23 +250,6 @@ export class DataLoader {
         }
 
         return response.json();
-    }
-
-    async fetchSitesStats(trialId?: number): Promise<SitesStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats/sites${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
     }
 
     async fetchSiteSubjects(
@@ -495,43 +426,6 @@ export class DataLoader {
         const response = await this.fetchWithAuth(
             `/api/v1/sites/${siteId}/procedure-definitions/${definitionId}/task-definitions`
         );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
-    async queryForms(
-        filters: FormQueryFilter
-    ): Promise<PaginatedResponse<FormRecord>> {
-        const response = await this.fetchWithAuth('/api/v1/forms/query', {
-            method: 'POST',
-            body: JSON.stringify(filters),
-        });
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        return response.json();
-    }
-
-    async fetchAllForms(): Promise<FormRecord[]> {
-        const response = await this.fetchWithAuth('/api/v1/forms/all');
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
-    async fetchFormStats(): Promise<FormStats> {
-        const response = await this.fetchWithAuth('/api/v1/stats/forms');
 
         if (!response.ok) {
             throw new Error(`API error: ${response.status}`);

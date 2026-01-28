@@ -1,4 +1,3 @@
-import { UsersApi } from './endpoints/users';
 import { TrialsApi } from './endpoints/trials';
 import { SubjectsApi } from './endpoints/subjects';
 import { StatsApi } from './endpoints/stats';
@@ -29,7 +28,6 @@ export class ApiClient {
     readonly subjects: SubjectsApi;
     readonly procedures: ProceduresApi;
     readonly events: EventsApi;
-    readonly users: UsersApi;
 
     constructor(config: ApiClientConfig) {
         this.config = config;
@@ -42,7 +40,6 @@ export class ApiClient {
         this.subjects = new SubjectsApi(this);
         this.procedures = new ProceduresApi(this);
         this.events = new EventsApi(this);
-        this.users = new UsersApi(this);
     }
 
     async request<T>(

@@ -13,13 +13,6 @@ import { AssetDetailModal } from '../../components/AssetDetailModal';
 const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
     { href: '/dashboard/browse', label: 'Browse', icon: 'folder-open' },
-    { href: '/dashboard/forms', label: 'Forms', icon: 'document-text' },
-    { href: '/dashboard/video-metrics', label: 'Video Metrics', icon: 'play' },
-    {
-        href: '/dashboard/compliance',
-        label: 'Compliance',
-        icon: 'shield-check',
-    },
 ];
 
 function NavIcon({ name }: { name: string }) {

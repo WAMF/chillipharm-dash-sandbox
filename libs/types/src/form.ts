@@ -1,9 +1,7 @@
-export type FormStatus = 'complete' | 'pending' | 'not_started';
-
 export interface FormRecord {
     formId: string;
     formName: string;
-    formStatus: FormStatus;
+    formStatus: string;
     submittedAt: string | null;
     siteName: string;
     siteId: number;
@@ -12,36 +10,16 @@ export interface FormRecord {
     studyArm: string;
     eventName: string;
     procedureName: string;
-    procedureDate: string;
+    procedureDate: string | null;
 }
 
 export interface FormQueryFilter {
-    sites?: string[];
-    procedures?: string[];
-    formStatus?: 'all' | FormStatus;
+    sites?: number[];
+    formStatus?: string;
     dateRange?: {
         start?: string;
         end?: string;
     };
     page?: number;
     limit?: number;
-}
-
-export interface FormStats {
-    total: number;
-    complete: number;
-    pending: number;
-    notStarted: number;
-    completionRate: number;
-    byProcedureType: Array<{
-        procedure: string;
-        total: number;
-        complete: number;
-    }>;
-    bySite: Array<{
-        siteId: number;
-        siteName: string;
-        total: number;
-        complete: number;
-    }>;
 }

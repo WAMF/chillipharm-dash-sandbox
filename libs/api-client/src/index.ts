@@ -7,7 +7,6 @@ export { ReviewsApi } from './endpoints/reviews';
 export { SubjectsApi } from './endpoints/subjects';
 export { ProceduresApi } from './endpoints/procedures';
 export { EventsApi } from './endpoints/events';
-export { UsersApi } from './endpoints/users';
 export type { ApiClientConfig, RequestOptions } from './client';
 export {
     DataLoader,
@@ -15,6 +14,4 @@ export {
     transformApiAssetToRecord,
     filterStateToQueryFilter,
     type ApiAsset,
-    type ApiStats,
-    type SitesStats,
 } from './data-loader';
