@@ -43,10 +43,6 @@ interface Asset {
     duration: string | null;
     processed: boolean;
     createdAt: string;
-    review: {
-        reviewed: boolean;
-        reviewDate: string | null;
-    };
 }
 
 interface ExpandedState {

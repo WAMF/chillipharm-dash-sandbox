@@ -3,6 +3,15 @@ import type {
     FilterState,
     QueryFilter,
     PaginatedResponse,
+    ProcedureDetail,
+    StudyArm,
+    EventDefinition,
+    ProcedureDefinition,
+    TaskDefinition,
+    FormRecord,
+    FormQueryFilter,
+    FormStats,
+    SiteReportRecord,
 } from '@cp/types';
 import type { ApiClient } from './client';
 import type { SitesStats } from './endpoints/stats';
@@ -409,11 +418,6 @@ export class DataLoader {
             url: string;
             processed: boolean;
             createdAt: string;
-            review: {
-                reviewed: boolean;
-                reviewDate: string | null;
-                reviewer: string | null;
-            };
         }>
     > {
         const response = await this.fetchWithAuth(
@@ -425,6 +429,127 @@ export class DataLoader {
         }
 
         return response.json();
+    }
+
+    async fetchProcedureDetail(
+        siteId: number,
+        subjectId: number,
+        eventId: number,
+        procedureId: number
+    ): Promise<ProcedureDetail> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/subjects/${subjectId}/events/${eventId}/procedures/${procedureId}`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchStudyArms(siteId: number): Promise<StudyArm[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/study-arms`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchEventDefinitions(siteId: number): Promise<EventDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/event-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchProcedureDefinitions(siteId: number): Promise<ProcedureDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/procedure-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchTaskDefinitions(
+        siteId: number,
+        definitionId: number
+    ): Promise<TaskDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/procedure-definitions/${definitionId}/task-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async queryForms(
+        filters: FormQueryFilter
+    ): Promise<PaginatedResponse<FormRecord>> {
+        const response = await this.fetchWithAuth('/api/v1/forms/query', {
+            method: 'POST',
+            body: JSON.stringify(filters),
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+    async fetchAllForms(): Promise<FormRecord[]> {
+        const response = await this.fetchWithAuth('/api/v1/forms/all');
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchFormStats(): Promise<FormStats> {
+        const response = await this.fetchWithAuth('/api/v1/stats/forms');
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchSiteReportData(): Promise<SiteReportRecord[]> {
+        const response = await this.fetchWithAuth('/api/v1/stats/sites/report');
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
     }
 }
 

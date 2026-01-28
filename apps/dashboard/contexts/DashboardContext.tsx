@@ -43,9 +43,10 @@ import { createDataLoader, DataLoader } from '@cp/api-client';
 import { useFilters } from './FilterContext';
 
 const API_BASE_URL =
-    process.env.NODE_ENV === 'production'
+    process.env.NEXT_PUBLIC_API_URL ||
+    (process.env.NODE_ENV === 'production'
         ? 'https://europe-west2-chillipharm-dashboard.cloudfunctions.net/api'
-        : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2/api';
+        : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2/api');
 
 interface FilterOptions {
     trials: string[];

@@ -1,8 +1,10 @@
 import * as XLSX from 'xlsx';
 import { format, parseISO } from 'date-fns';
-import type { AssetRecord } from '@cp/types';
+import type { AssetRecord, FormRecord, SiteReportRecord } from '@cp/types';
 
 const EXCEL_MAX_CELL_LENGTH = 32767;
+
+export type ReportType = 'asset' | 'form' | 'site';
 
 export interface ReportConfig {
     name: string;
@@ -109,6 +111,90 @@ export const COLUMN_DEFINITIONS: ColumnDefinition[] = [
     },
     { key: 'comments', label: 'Comments', category: 'Asset Info', width: 50 },
     { key: 'assetLink', label: 'Asset Link', category: 'Links', width: 50 },
+];
+
+export type FormColumnKey = keyof FormRecord;
+
+export interface FormColumnDefinition {
+    key: FormColumnKey;
+    label: string;
+    category: string;
+    width: number;
+}
+
+export const FORM_COLUMN_DEFINITIONS: FormColumnDefinition[] = [
+    { key: 'formName', label: 'Form Name', category: 'Form Info', width: 30 },
+    { key: 'formId', label: 'Form ID', category: 'Form Info', width: 20 },
+    { key: 'formStatus', label: 'Status', category: 'Form Info', width: 15 },
+    { key: 'submittedAt', label: 'Submitted At', category: 'Form Info', width: 20 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteId', label: 'Site ID', category: 'Site Info', width: 10 },
+    { key: 'siteCountry', label: 'Country', category: 'Site Info', width: 20 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'studyArm', label: 'Study Arm', category: 'Subject Info', width: 20 },
+    { key: 'eventName', label: 'Event', category: 'Study Info', width: 25 },
+    { key: 'procedureName', label: 'Procedure', category: 'Study Info', width: 25 },
+    { key: 'procedureDate', label: 'Procedure Date', category: 'Study Info', width: 15 },
+];
+
+export const FORM_COLUMN_CATEGORIES = [
+    'Form Info',
+    'Site Info',
+    'Subject Info',
+    'Study Info',
+];
+
+export const DEFAULT_FORM_COLUMNS: FormColumnKey[] = [
+    'formName',
+    'formStatus',
+    'submittedAt',
+    'siteName',
+    'subjectNumber',
+    'procedureName',
+    'procedureDate',
+];
+
+export type SiteColumnKey = keyof SiteReportRecord;
+
+export interface SiteColumnDefinition {
+    key: SiteColumnKey;
+    label: string;
+    category: string;
+    width: number;
+}
+
+export const SITE_COLUMN_DEFINITIONS: SiteColumnDefinition[] = [
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteId', label: 'Site ID', category: 'Site Info', width: 10 },
+    { key: 'country', label: 'Country', category: 'Site Info', width: 20 },
+    { key: 'subjectCount', label: 'Subject Count', category: 'Site Info', width: 15 },
+    { key: 'assetCount', label: 'Asset Count', category: 'Asset Stats', width: 15 },
+    { key: 'totalForms', label: 'Total Forms', category: 'Form Stats', width: 15 },
+    { key: 'completeForms', label: 'Complete Forms', category: 'Form Stats', width: 15 },
+    { key: 'formCompletionRate', label: 'Form Completion %', category: 'Form Stats', width: 18 },
+    { key: 'totalTasks', label: 'Total Tasks', category: 'Task Stats', width: 15 },
+    { key: 'completedTasks', label: 'Completed Tasks', category: 'Task Stats', width: 15 },
+    { key: 'taskCompletionRate', label: 'Task Completion %', category: 'Task Stats', width: 18 },
+    { key: 'openFlags', label: 'Open Flags', category: 'Flag Stats', width: 12 },
+    { key: 'resolvedFlags', label: 'Resolved Flags', category: 'Flag Stats', width: 15 },
+];
+
+export const SITE_COLUMN_CATEGORIES = [
+    'Site Info',
+    'Asset Stats',
+    'Form Stats',
+    'Task Stats',
+    'Flag Stats',
+];
+
+export const DEFAULT_SITE_COLUMNS: SiteColumnKey[] = [
+    'siteName',
+    'country',
+    'subjectCount',
+    'assetCount',
+    'formCompletionRate',
+    'taskCompletionRate',
+    'openFlags',
 ];
 
 export const COLUMN_CATEGORIES = [
@@ -313,4 +399,107 @@ export function getColumnsByCategory(): Map<string, ColumnDefinition[]> {
     }
 
     return categoryMap;
+}
+
+export function getFormColumnsByCategory(): Map<string, FormColumnDefinition[]> {
+    const categoryMap = new Map<string, FormColumnDefinition[]>();
+
+    for (const category of FORM_COLUMN_CATEGORIES) {
+        const columns = FORM_COLUMN_DEFINITIONS.filter(
+            col => col.category === category
+        );
+        categoryMap.set(category, columns);
+    }
+
+    return categoryMap;
+}
+
+export function getSiteColumnsByCategory(): Map<string, SiteColumnDefinition[]> {
+    const categoryMap = new Map<string, SiteColumnDefinition[]>();
+
+    for (const category of SITE_COLUMN_CATEGORIES) {
+        const columns = SITE_COLUMN_DEFINITIONS.filter(
+            col => col.category === category
+        );
+        categoryMap.set(category, columns);
+    }
+
+    return categoryMap;
+}
+
+export function generateFormExcel(
+    records: FormRecord[],
+    columns: FormColumnKey[],
+    reportName: string
+): void {
+    const selectedColumns = FORM_COLUMN_DEFINITIONS.filter(col =>
+        columns.includes(col.key)
+    );
+
+    const headers = selectedColumns.map(col => col.label);
+
+    const data = records.map(record => {
+        return selectedColumns.map(col => {
+            const value = record[col.key];
+            if (value === null || value === undefined) return '';
+            if (col.key === 'submittedAt' && value) {
+                return formatDateTime(value as string);
+            }
+            if (col.key === 'procedureDate' && value) {
+                return formatDate(value as string);
+            }
+            return String(value);
+        });
+    });
+
+    const worksheetData = [headers, ...data];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    const colWidths = selectedColumns.map(col => ({ wch: col.width }));
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Form Report');
+
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    const filename = `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+}
+
+export function generateSiteExcel(
+    records: SiteReportRecord[],
+    columns: SiteColumnKey[],
+    reportName: string
+): void {
+    const selectedColumns = SITE_COLUMN_DEFINITIONS.filter(col =>
+        columns.includes(col.key)
+    );
+
+    const headers = selectedColumns.map(col => col.label);
+
+    const data = records.map(record => {
+        return selectedColumns.map(col => {
+            const value = record[col.key];
+            if (value === null || value === undefined) return '';
+            if (col.key === 'formCompletionRate' || col.key === 'taskCompletionRate') {
+                return `${value}%`;
+            }
+            return typeof value === 'number' ? value : String(value);
+        });
+    });
+
+    const worksheetData = [headers, ...data];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+    const colWidths = selectedColumns.map(col => ({ wch: col.width }));
+    worksheet['!cols'] = colWidths;
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Site Report');
+
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    const filename = `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
 }

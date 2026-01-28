@@ -157,21 +157,6 @@ export default {
                     createdAt: { type: 'string', format: 'date-time' },
                 },
             },
-            Review: {
-                type: 'object',
-                properties: {
-                    id: { type: 'integer' },
-                    reviewed: { type: 'boolean' },
-                    reviewDate: {
-                        type: 'string',
-                        format: 'date',
-                        nullable: true,
-                    },
-                    asset: { type: 'object' },
-                    reviewer: { type: 'object', nullable: true },
-                    createdAt: { type: 'string', format: 'date-time' },
-                },
-            },
             Comment: {
                 type: 'object',
                 properties: {
@@ -222,12 +207,12 @@ export default {
                         type: 'object',
                         properties: { total: { type: 'integer' } },
                     },
-                    reviews: {
+                    tasks: {
                         type: 'object',
                         properties: {
-                            reviewed: { type: 'integer' },
+                            completed: { type: 'integer' },
                             total: { type: 'integer' },
-                            reviewRate: { type: 'integer' },
+                            completionRate: { type: 'integer' },
                         },
                     },
                     uploadTrend: {
@@ -239,6 +224,285 @@ export default {
                                 uploads: { type: 'integer' },
                             },
                         },
+                    },
+                },
+            },
+            Task: {
+                type: 'object',
+                properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    completed: { type: 'boolean' },
+                    completedDate: { type: 'string', format: 'date-time', nullable: true },
+                    completedById: { type: 'integer', nullable: true },
+                },
+            },
+            TaskSummary: {
+                type: 'object',
+                properties: {
+                    items: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/Task' },
+                    },
+                    total: { type: 'integer' },
+                    completed: { type: 'integer' },
+                    completionRate: { type: 'integer' },
+                },
+            },
+            FlaggedTask: {
+                type: 'object',
+                properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    status: { type: 'string', enum: ['open', 'resolved'] },
+                    priority: { type: 'string', enum: ['high', 'medium', 'low'] },
+                    createdAt: { type: 'string', format: 'date-time', nullable: true },
+                    resolvedAt: { type: 'string', format: 'date-time', nullable: true },
+                },
+            },
+            FlaggedTaskSummary: {
+                type: 'object',
+                properties: {
+                    items: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/FlaggedTask' },
+                    },
+                    total: { type: 'integer' },
+                    open: { type: 'integer' },
+                    resolved: { type: 'integer' },
+                },
+            },
+            Form: {
+                type: 'object',
+                properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    status: { type: 'string', enum: ['complete', 'pending', 'not_started'] },
+                    submittedAt: { type: 'string', format: 'date-time', nullable: true },
+                },
+            },
+            FormSummary: {
+                type: 'object',
+                properties: {
+                    items: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/Form' },
+                    },
+                    total: { type: 'integer' },
+                    complete: { type: 'integer' },
+                    pending: { type: 'integer' },
+                },
+            },
+            ProcedureDetail: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    identifier: { type: 'string' },
+                    name: { type: 'string' },
+                    date: { type: 'string', format: 'date' },
+                    status: { type: 'integer' },
+                    locked: { type: 'boolean' },
+                    definition: {
+                        type: 'object',
+                        nullable: true,
+                        properties: {
+                            id: { type: 'integer' },
+                            name: { type: 'string' },
+                        },
+                    },
+                    evaluator: {
+                        type: 'object',
+                        nullable: true,
+                        properties: {
+                            id: { type: 'integer' },
+                            name: { type: 'string' },
+                            email: { type: 'string' },
+                        },
+                    },
+                    context: {
+                        type: 'object',
+                        properties: {
+                            site: { type: 'string' },
+                            subject: { type: 'string' },
+                            event: { type: 'string' },
+                        },
+                    },
+                    tasks: { $ref: '#/components/schemas/TaskSummary' },
+                    flaggedTasks: { $ref: '#/components/schemas/FlaggedTaskSummary' },
+                    forms: { $ref: '#/components/schemas/FormSummary' },
+                    stats: {
+                        type: 'object',
+                        properties: {
+                            assetCount: { type: 'integer' },
+                        },
+                    },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                },
+            },
+            StudyArm: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    name: { type: 'string' },
+                    identifier: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    stats: {
+                        type: 'object',
+                        properties: {
+                            subjectCount: { type: 'integer' },
+                        },
+                    },
+                },
+            },
+            EventDefinition: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    name: { type: 'string' },
+                    identifier: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    stats: {
+                        type: 'object',
+                        properties: {
+                            eventCount: { type: 'integer' },
+                        },
+                    },
+                },
+            },
+            ProcedureDefinition: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    name: { type: 'string' },
+                    identifier: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    stats: {
+                        type: 'object',
+                        properties: {
+                            procedureCount: { type: 'integer' },
+                        },
+                    },
+                },
+            },
+            TaskDefinition: {
+                type: 'object',
+                properties: {
+                    id: { type: 'integer' },
+                    name: { type: 'string' },
+                    identifier: { type: 'string' },
+                    required: { type: 'boolean' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                },
+            },
+            FormRecord: {
+                type: 'object',
+                description: 'Form record for reporting',
+                properties: {
+                    formId: { type: 'string' },
+                    formName: { type: 'string' },
+                    formStatus: { type: 'string', enum: ['complete', 'pending', 'not_started'] },
+                    submittedAt: { type: 'string', format: 'date-time', nullable: true },
+                    siteName: { type: 'string' },
+                    siteId: { type: 'integer' },
+                    siteCountry: { type: 'string' },
+                    subjectNumber: { type: 'string' },
+                    studyArm: { type: 'string' },
+                    eventName: { type: 'string' },
+                    procedureName: { type: 'string' },
+                    procedureDate: { type: 'string', format: 'date' },
+                },
+            },
+            FormStats: {
+                type: 'object',
+                description: 'Form statistics',
+                properties: {
+                    total: { type: 'integer' },
+                    complete: { type: 'integer' },
+                    pending: { type: 'integer' },
+                    notStarted: { type: 'integer' },
+                    completionRate: { type: 'integer' },
+                    byProcedureType: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                procedure: { type: 'string' },
+                                total: { type: 'integer' },
+                                complete: { type: 'integer' },
+                            },
+                        },
+                    },
+                    bySite: {
+                        type: 'array',
+                        items: {
+                            type: 'object',
+                            properties: {
+                                siteId: { type: 'integer' },
+                                siteName: { type: 'string' },
+                                total: { type: 'integer' },
+                                complete: { type: 'integer' },
+                            },
+                        },
+                    },
+                },
+            },
+            SiteReportRecord: {
+                type: 'object',
+                description: 'Site report record with aggregated statistics',
+                properties: {
+                    siteId: { type: 'integer' },
+                    siteName: { type: 'string' },
+                    country: { type: 'string' },
+                    subjectCount: { type: 'integer' },
+                    assetCount: { type: 'integer' },
+                    totalForms: { type: 'integer' },
+                    completeForms: { type: 'integer' },
+                    formCompletionRate: { type: 'integer' },
+                    totalTasks: { type: 'integer' },
+                    completedTasks: { type: 'integer' },
+                    taskCompletionRate: { type: 'integer' },
+                    openFlags: { type: 'integer' },
+                    resolvedFlags: { type: 'integer' },
+                },
+            },
+            FormQueryFilter: {
+                type: 'object',
+                description: 'Filter criteria for querying forms',
+                properties: {
+                    sites: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Filter by site names',
+                    },
+                    procedures: {
+                        type: 'array',
+                        items: { type: 'string' },
+                        description: 'Filter by procedure names',
+                    },
+                    formStatus: {
+                        type: 'string',
+                        enum: ['all', 'complete', 'pending', 'not_started'],
+                        description: 'Filter by form status',
+                    },
+                    dateRange: {
+                        type: 'object',
+                        properties: {
+                            start: { type: 'string', format: 'date', nullable: true },
+                            end: { type: 'string', format: 'date', nullable: true },
+                        },
+                        description: 'Filter by procedure date range',
+                    },
+                    page: {
+                        type: 'integer',
+                        default: 1,
+                        description: 'Page number for pagination',
+                    },
+                    limit: {
+                        type: 'integer',
+                        default: 1000,
+                        maximum: 5000,
+                        description: 'Maximum items to return',
                     },
                 },
             },
@@ -286,11 +550,6 @@ export default {
                             },
                         },
                         description: 'Filter by upload date range',
-                    },
-                    reviewStatus: {
-                        type: 'string',
-                        enum: ['all', 'reviewed', 'pending'],
-                        description: 'Filter by review status',
                     },
                     processedStatus: {
                         type: 'string',
@@ -720,6 +979,64 @@ export default {
                     },
                 },
             },
+        '/api/v1/sites/{siteId}/subjects/{subjectId}/events/{eventId}/procedures/{procedureId}':
+            {
+                get: {
+                    summary: 'Get procedure detail with tasks, flags, and forms',
+                    description:
+                        'Returns detailed procedure information including embedded tasks, flagged tasks, and forms data from JSONB columns.',
+                    tags: ['Sites', 'Hierarchical Navigation', 'Procedures'],
+                    parameters: [
+                        {
+                            name: 'siteId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Site ID',
+                        },
+                        {
+                            name: 'subjectId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Subject ID',
+                        },
+                        {
+                            name: 'eventId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Event ID',
+                        },
+                        {
+                            name: 'procedureId',
+                            in: 'path',
+                            required: true,
+                            schema: { type: 'integer' },
+                            description: 'Procedure ID',
+                        },
+                    ],
+                    responses: {
+                        200: {
+                            description: 'Procedure detail with tasks, flags, and forms',
+                            content: {
+                                'application/json': {
+                                    schema: {
+                                        type: 'object',
+                                        properties: {
+                                            success: { type: 'boolean' },
+                                            data: { $ref: '#/components/schemas/ProcedureDetail' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        404: {
+                            description: 'Invalid hierarchy - any element in chain not found',
+                        },
+                    },
+                },
+            },
         '/api/v1/sites/{siteId}/assets': {
             get: {
                 summary: 'List all assets at a site (flat view)',
@@ -742,6 +1059,161 @@ export default {
                 responses: {
                     200: { description: 'List of all assets at the site' },
                     404: { description: 'Site not found' },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/study-arms': {
+            get: {
+                summary: 'List study arms for a trial',
+                description:
+                    'Returns all study arms configured for the trial that the site belongs to.',
+                tags: ['Sites', 'Study Structure'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: 'List of study arms',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: { $ref: '#/components/schemas/StudyArm' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    404: { description: 'Site not found' },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/event-definitions': {
+            get: {
+                summary: 'List event definitions for a trial',
+                description:
+                    'Returns all study event definitions configured for the trial.',
+                tags: ['Sites', 'Study Structure'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: 'List of event definitions',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: { $ref: '#/components/schemas/EventDefinition' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    404: { description: 'Site not found' },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/procedure-definitions': {
+            get: {
+                summary: 'List procedure definitions for a trial',
+                description:
+                    'Returns all study procedure definitions configured for the trial.',
+                tags: ['Sites', 'Study Structure'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: 'List of procedure definitions',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: { $ref: '#/components/schemas/ProcedureDefinition' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    404: { description: 'Site not found' },
+                },
+            },
+        },
+        '/api/v1/sites/{siteId}/procedure-definitions/{definitionId}/task-definitions': {
+            get: {
+                summary: 'List task definitions for a procedure definition',
+                description:
+                    'Returns all task definitions configured for a specific procedure definition.',
+                tags: ['Sites', 'Study Structure'],
+                parameters: [
+                    {
+                        name: 'siteId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Site ID',
+                    },
+                    {
+                        name: 'definitionId',
+                        in: 'path',
+                        required: true,
+                        schema: { type: 'integer' },
+                        description: 'Procedure Definition ID',
+                    },
+                ],
+                responses: {
+                    200: {
+                        description: 'List of task definitions',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: { $ref: '#/components/schemas/TaskDefinition' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    404: { description: 'Site or procedure definition not found' },
                 },
             },
         },
@@ -903,50 +1375,6 @@ export default {
                 },
             },
         },
-        '/api/v1/reviews': {
-            get: {
-                summary: 'List reviews',
-                tags: ['Reviews'],
-                parameters: [
-                    { $ref: '#/components/parameters/pageParam' },
-                    { $ref: '#/components/parameters/limitParam' },
-                    {
-                        name: 'asset_id',
-                        in: 'query',
-                        schema: { type: 'integer' },
-                    },
-                    {
-                        name: 'user_id',
-                        in: 'query',
-                        schema: { type: 'integer' },
-                    },
-                    {
-                        name: 'reviewed',
-                        in: 'query',
-                        schema: { type: 'boolean' },
-                    },
-                ],
-                responses: { 200: { description: 'List of reviews' } },
-            },
-        },
-        '/api/v1/reviews/{id}': {
-            get: {
-                summary: 'Get review by ID',
-                tags: ['Reviews'],
-                parameters: [
-                    {
-                        name: 'id',
-                        in: 'path',
-                        required: true,
-                        schema: { type: 'integer' },
-                    },
-                ],
-                responses: {
-                    200: { description: 'Review details' },
-                    404: { description: 'Review not found' },
-                },
-            },
-        },
         '/api/v1/comments': {
             get: {
                 summary: 'List comments',
@@ -1052,6 +1480,159 @@ export default {
                     },
                 ],
                 responses: { 200: { description: 'Site-centric statistics' } },
+            },
+        },
+        '/api/v1/stats/forms': {
+            get: {
+                summary: 'Get form statistics',
+                description:
+                    'Returns aggregate form statistics including completion rates, counts by status, breakdowns by site and procedure type',
+                tags: ['Stats', 'Forms'],
+                responses: {
+                    200: {
+                        description: 'Form statistics',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: { $ref: '#/components/schemas/FormStats' },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    401: { description: 'Unauthorized' },
+                },
+            },
+        },
+        '/api/v1/stats/sites/report': {
+            get: {
+                summary: 'Get site report data',
+                description:
+                    'Returns detailed site-level data for reporting, including subject counts, asset counts, form/task/flag statistics per site',
+                tags: ['Stats', 'Reports'],
+                responses: {
+                    200: {
+                        description: 'Site report data',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: { $ref: '#/components/schemas/SiteReportRecord' },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    401: { description: 'Unauthorized' },
+                },
+            },
+        },
+        '/api/v1/forms/query': {
+            post: {
+                summary: 'Query forms with filters',
+                description:
+                    'Advanced query endpoint for retrieving form data with filters. Returns flat form records with procedure context.',
+                tags: ['Forms'],
+                requestBody: {
+                    required: true,
+                    content: {
+                        'application/json': {
+                            schema: {
+                                $ref: '#/components/schemas/FormQueryFilter',
+                            },
+                            examples: {
+                                basicFilter: {
+                                    summary: 'Filter by form status',
+                                    value: {
+                                        formStatus: 'pending',
+                                        limit: 100,
+                                    },
+                                },
+                                complexFilter: {
+                                    summary: 'Complex multi-filter query',
+                                    value: {
+                                        sites: ['Site 001', 'Site 002'],
+                                        procedures: ['ECG', 'Blood Draw'],
+                                        formStatus: 'all',
+                                        dateRange: {
+                                            start: '2024-01-01',
+                                            end: '2024-12-31',
+                                        },
+                                        page: 1,
+                                        limit: 500,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                responses: {
+                    200: {
+                        description: 'Filtered list of forms with pagination',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: {
+                                                $ref: '#/components/schemas/FormRecord',
+                                            },
+                                        },
+                                        meta: {
+                                            $ref: '#/components/schemas/Pagination/properties/meta',
+                                        },
+                                        links: {
+                                            $ref: '#/components/schemas/Pagination/properties/links',
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    400: { description: 'Invalid filter parameters' },
+                    401: { description: 'Unauthorized' },
+                },
+            },
+        },
+        '/api/v1/forms/all': {
+            get: {
+                summary: 'Get all forms for reporting',
+                description:
+                    'Returns all forms as flat records for Excel export and reporting purposes',
+                tags: ['Forms', 'Reports'],
+                responses: {
+                    200: {
+                        description: 'All form records',
+                        content: {
+                            'application/json': {
+                                schema: {
+                                    type: 'object',
+                                    properties: {
+                                        success: { type: 'boolean' },
+                                        data: {
+                                            type: 'array',
+                                            items: {
+                                                $ref: '#/components/schemas/FormRecord',
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    401: { description: 'Unauthorized' },
+                },
             },
         },
         '/api/openapi.json': {

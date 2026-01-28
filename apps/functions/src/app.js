@@ -13,6 +13,7 @@ import eventsRouter from './routes/events.js';
 import commentsRouter from './routes/comments.js';
 import usersRouter from './routes/users.js';
 import statsRouter from './routes/stats.js';
+import formsRouter from './routes/forms.js';
 import openapiSpec from './openapi.js';
 
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api/v1/events', eventsRouter);
 app.use('/api/v1/comments', commentsRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/stats', statsRouter);
+app.use('/api/v1/forms', formsRouter);
 
 app.use((err, req, res, next) => {
     console.error('API Error:', err);

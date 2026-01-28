@@ -549,6 +549,184 @@ router.get(
 );
 
 router.get(
+    '/:siteId/subjects/:subjectId/events/:eventId/procedures/:procedureId',
+    async (req, res, next) => {
+        try {
+            const { siteId, subjectId, eventId, procedureId } = req.params;
+            const validation = await validateSiteHierarchy(
+                siteId,
+                subjectId,
+                eventId,
+                procedureId
+            );
+            if (!validation.valid) {
+                return res
+                    .status(validation.status)
+                    .json({ success: false, error: validation.error });
+            }
+
+            const result = await query(
+                `
+                SELECT
+                    sp.id,
+                    sp.identifier,
+                    sp.display_name as name,
+                    sp.date,
+                    sp.status,
+                    sp.locked,
+                    sp.created_at,
+                    sp.updated_at,
+                    sp.study_procedure_tasks_json,
+                    sp.study_procedure_flagged_tasks_json,
+                    sp.study_procedure_forms_json,
+                    spd.display_name as definition_name,
+                    spd.id as definition_id,
+                    u.id as evaluator_id,
+                    u.first_name as evaluator_first_name,
+                    u.last_name as evaluator_last_name,
+                    u.email as evaluator_email,
+                    se.display_name as event_name,
+                    ss.number as subject_number,
+                    tc.name as site_name,
+                    COUNT(DISTINCT a.id) as asset_count
+                FROM study_procedures sp
+                LEFT JOIN study_procedure_definitions spd ON sp.study_procedure_definition_id = spd.id
+                LEFT JOIN users u ON sp.evaluator_id = u.id
+                LEFT JOIN study_events se ON sp.study_event_id = se.id
+                LEFT JOIN study_subjects ss ON se.study_subject_id = ss.id
+                LEFT JOIN trial_containers tc ON ss.site_id = tc.id
+                LEFT JOIN assets a ON a.study_procedure_id = sp.id AND a.soft_deleted_at IS NULL
+                WHERE sp.id = $1 AND sp.deleted_at IS NULL
+                GROUP BY sp.id, spd.display_name, spd.id, u.id, u.first_name, u.last_name, u.email, se.display_name, ss.number, tc.name
+                `,
+                [procedureId]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Procedure not found',
+                });
+            }
+
+            const row = result.rows[0];
+
+            const tasksJson = row.study_procedure_tasks_json || {};
+            const tasks = tasksJson.tasks || [];
+            const completedTasks = tasks.filter(
+                t => t.completed_date !== null
+            ).length;
+
+            const flaggedTasksJson = row.study_procedure_flagged_tasks_json || {};
+            const flaggedTasks = flaggedTasksJson.flagged_tasks || [];
+            const openFlags = flaggedTasks.filter(
+                f => f.status === 'open' || !f.resolved_at
+            ).length;
+            const resolvedFlags = flaggedTasks.length - openFlags;
+
+            const formsJson = row.study_procedure_forms_json || {};
+            const forms = formsJson.forms || [];
+            const completeForms = forms.filter(
+                f => f.status === 'complete' || f.submitted_at
+            ).length;
+            const pendingForms = forms.length - completeForms;
+
+            res.json({
+                success: true,
+                data: {
+                    id: row.id,
+                    identifier: row.identifier,
+                    name: row.name || row.definition_name,
+                    date: formatDate(row.date),
+                    status: row.status,
+                    locked: row.locked,
+                    definition: row.definition_id
+                        ? {
+                              id: row.definition_id,
+                              name: row.definition_name,
+                          }
+                        : null,
+                    evaluator:
+                        row.evaluator_id
+                            ? {
+                                  id: row.evaluator_id,
+                                  name: [
+                                      row.evaluator_first_name,
+                                      row.evaluator_last_name,
+                                  ]
+                                      .filter(Boolean)
+                                      .join(' '),
+                                  email: row.evaluator_email,
+                              }
+                            : null,
+                    context: {
+                        site: row.site_name,
+                        subject: row.subject_number,
+                        event: row.event_name,
+                    },
+                    tasks: {
+                        items: tasks.map(t => ({
+                            id: t.id,
+                            name: t.name || t.display_name,
+                            completed: t.completed_date !== null,
+                            completedDate: t.completed_date
+                                ? formatDateTime(t.completed_date)
+                                : null,
+                            completedById: t.completed_by_id || null,
+                        })),
+                        total: tasks.length,
+                        completed: completedTasks,
+                        completionRate:
+                            tasks.length > 0
+                                ? Math.round(
+                                      (completedTasks / tasks.length) * 100
+                                  )
+                                : 0,
+                    },
+                    flaggedTasks: {
+                        items: flaggedTasks.map(f => ({
+                            id: f.id,
+                            name: f.name || f.description,
+                            status: f.resolved_at ? 'resolved' : (f.status || 'open'),
+                            priority: f.priority || 'medium',
+                            createdAt: f.created_at
+                                ? formatDateTime(f.created_at)
+                                : null,
+                            resolvedAt: f.resolved_at
+                                ? formatDateTime(f.resolved_at)
+                                : null,
+                        })),
+                        total: flaggedTasks.length,
+                        open: openFlags,
+                        resolved: resolvedFlags,
+                    },
+                    forms: {
+                        items: forms.map(f => ({
+                            id: f.id,
+                            name: f.name || f.display_name,
+                            status: f.submitted_at ? 'complete' : (f.status || 'pending'),
+                            submittedAt: f.submitted_at
+                                ? formatDateTime(f.submitted_at)
+                                : null,
+                        })),
+                        total: forms.length,
+                        complete: completeForms,
+                        pending: pendingForms,
+                    },
+                    stats: {
+                        assetCount: parseInt(row.asset_count) || 0,
+                    },
+                    createdAt: formatDateTime(row.created_at),
+                    updatedAt: formatDateTime(row.updated_at),
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+router.get(
     '/:siteId/subjects/:subjectId/events/:eventId/procedures/:procedureId/assets',
     async (req, res, next) => {
         try {
@@ -745,6 +923,196 @@ router.get('/:siteId/assets', async (req, res, next) => {
             success: true,
             data,
             ...pagination,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/:siteId/study-arms', async (req, res, next) => {
+    try {
+        const { siteId } = req.params;
+        const validation = await validateSiteHierarchy(siteId);
+        if (!validation.valid) {
+            return res
+                .status(validation.status)
+                .json({ success: false, error: validation.error });
+        }
+
+        const siteResult = await query(
+            `SELECT account_id FROM trial_containers WHERE id = $1`,
+            [siteId]
+        );
+        const accountId = siteResult.rows[0]?.account_id;
+
+        const result = await query(
+            `
+            SELECT
+                sa.id,
+                sa.display_name as name,
+                sa.identifier,
+                sa.created_at,
+                COUNT(DISTINCT ss.id) as subject_count
+            FROM study_arms sa
+            LEFT JOIN study_subjects ss ON ss.study_arm_id = sa.id
+            WHERE sa.account_id = $1
+            GROUP BY sa.id
+            ORDER BY sa.display_name ASC
+            `,
+            [accountId]
+        );
+
+        res.json({
+            success: true,
+            data: result.rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                identifier: row.identifier,
+                createdAt: formatDateTime(row.created_at),
+                stats: {
+                    subjectCount: parseInt(row.subject_count) || 0,
+                },
+            })),
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/:siteId/event-definitions', async (req, res, next) => {
+    try {
+        const { siteId } = req.params;
+        const validation = await validateSiteHierarchy(siteId);
+        if (!validation.valid) {
+            return res
+                .status(validation.status)
+                .json({ success: false, error: validation.error });
+        }
+
+        const siteResult = await query(
+            `SELECT account_id FROM trial_containers WHERE id = $1`,
+            [siteId]
+        );
+        const accountId = siteResult.rows[0]?.account_id;
+
+        const result = await query(
+            `
+            SELECT
+                sed.id,
+                sed.display_name as name,
+                sed.identifier,
+                sed.created_at,
+                COUNT(DISTINCT se.id) as event_count
+            FROM study_event_definitions sed
+            LEFT JOIN study_events se ON se.study_event_definition_id = sed.id AND se.deleted_at IS NULL
+            WHERE sed.account_id = $1
+            GROUP BY sed.id
+            ORDER BY sed.display_name ASC
+            `,
+            [accountId]
+        );
+
+        res.json({
+            success: true,
+            data: result.rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                identifier: row.identifier,
+                createdAt: formatDateTime(row.created_at),
+                stats: {
+                    eventCount: parseInt(row.event_count) || 0,
+                },
+            })),
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/:siteId/procedure-definitions', async (req, res, next) => {
+    try {
+        const { siteId } = req.params;
+        const validation = await validateSiteHierarchy(siteId);
+        if (!validation.valid) {
+            return res
+                .status(validation.status)
+                .json({ success: false, error: validation.error });
+        }
+
+        const siteResult = await query(
+            `SELECT account_id FROM trial_containers WHERE id = $1`,
+            [siteId]
+        );
+        const accountId = siteResult.rows[0]?.account_id;
+
+        const result = await query(
+            `
+            SELECT
+                spd.id,
+                spd.display_name as name,
+                spd.identifier,
+                spd.created_at,
+                COUNT(DISTINCT sp.id) as procedure_count
+            FROM study_procedure_definitions spd
+            LEFT JOIN study_procedures sp ON sp.study_procedure_definition_id = spd.id AND sp.deleted_at IS NULL
+            WHERE spd.account_id = $1
+            GROUP BY spd.id
+            ORDER BY spd.display_name ASC
+            `,
+            [accountId]
+        );
+
+        res.json({
+            success: true,
+            data: result.rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                identifier: row.identifier,
+                createdAt: formatDateTime(row.created_at),
+                stats: {
+                    procedureCount: parseInt(row.procedure_count) || 0,
+                },
+            })),
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.get('/:siteId/procedure-definitions/:definitionId/task-definitions', async (req, res, next) => {
+    try {
+        const { siteId, definitionId } = req.params;
+        const validation = await validateSiteHierarchy(siteId);
+        if (!validation.valid) {
+            return res
+                .status(validation.status)
+                .json({ success: false, error: validation.error });
+        }
+
+        const result = await query(
+            `
+            SELECT
+                std.id,
+                std.display_name as name,
+                std.identifier,
+                std.required,
+                std.created_at
+            FROM study_task_definitions std
+            WHERE std.study_procedure_definition_id = $1
+            ORDER BY std.display_name ASC
+            `,
+            [definitionId]
+        );
+
+        res.json({
+            success: true,
+            data: result.rows.map(row => ({
+                id: row.id,
+                name: row.name,
+                identifier: row.identifier,
+                required: row.required || false,
+                createdAt: formatDateTime(row.created_at),
+            })),
         });
     } catch (error) {
         next(error);
