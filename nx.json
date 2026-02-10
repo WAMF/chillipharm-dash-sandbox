@@ -1,34 +1,55 @@
 {
-  "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
-    "production": [
-      "default",
-      "!{projectRoot}/**/*.spec.ts",
-      "!{projectRoot}/**/*.spec.tsx",
-      "!{projectRoot}/**/*.test.ts",
-      "!{projectRoot}/**/*.test.tsx"
+    "$schema": "./node_modules/nx/schemas/nx-schema.json",
+    "namedInputs": {
+        "default": ["{projectRoot}/**/*", "sharedGlobals"],
+        "production": [
+            "default",
+            "!{projectRoot}/**/*.spec.ts",
+            "!{projectRoot}/**/*.spec.tsx",
+            "!{projectRoot}/**/*.test.ts",
+            "!{projectRoot}/**/*.test.tsx"
+        ],
+        "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json"]
+    },
+    "targetDefaults": {
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["production", "^production"],
+            "cache": true
+        },
+        "lint": {
+            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
+            "cache": true
+        },
+        "test": {
+            "inputs": ["default", "^production"],
+            "cache": true
+        }
+    },
+    "workspaceLayout": {
+        "appsDir": "apps",
+        "libsDir": "libs"
+    },
+    "defaultProject": "dashboard",
+    "plugins": [
+        {
+            "plugin": "@nx/next/plugin",
+            "options": {
+                "startTargetName": "start",
+                "buildTargetName": "next:build",
+                "devTargetName": "next:dev",
+                "serveStaticTargetName": "serve-static",
+                "buildDepsTargetName": "build-deps",
+                "watchDepsTargetName": "watch-deps"
+            }
+        }
     ],
-    "sharedGlobals": ["{workspaceRoot}/tsconfig.base.json"]
-  },
-  "targetDefaults": {
-    "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"],
-      "cache": true
-    },
-    "lint": {
-      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
-      "cache": true
-    },
-    "test": {
-      "inputs": ["default", "^production"],
-      "cache": true
+    "generators": {
+        "@nx/next": {
+            "application": {
+                "style": "css",
+                "linter": "none"
+            }
+        }
     }
-  },
-  "workspaceLayout": {
-    "appsDir": "apps",
-    "libsDir": "libs"
-  },
-  "defaultProject": "dashboard"
 }

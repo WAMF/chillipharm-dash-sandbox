@@ -6,3 +6,4 @@ export * from './task';
 export * from './site';
 export * from './form';
 export * from './report-template';
+export * from './videoservices';
