@@ -17,12 +17,23 @@ import openapiSpec from './openapi.js';
 
 const app = express();
 
-// Rate limiting for documentation and OpenAPI endpoints to prevent abuse
-const expressRateLimit = require('express-rate-limit');
-const docsRateLimiter = expressRateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-});
+const docsRateLimit = new Map();
+function docsRateLimiter(req, res, next) {
+    const ip = req.ip;
+    const now = Date.now();
+    const window = 15 * 60 * 1000;
+    const max = 100;
+    const entry = docsRateLimit.get(ip);
+    if (!entry || now - entry.start > window) {
+        docsRateLimit.set(ip, { start: now, count: 1 });
+        return next();
+    }
+    entry.count++;
+    if (entry.count > max) {
+        return res.status(429).json({ success: false, error: 'Too many requests' });
+    }
+    next();
+}
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
