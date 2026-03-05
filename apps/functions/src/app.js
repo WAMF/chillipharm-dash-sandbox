@@ -17,11 +17,19 @@ import openapiSpec from './openapi.js';
 
 const app = express();
 
+// Rate limiting for documentation and OpenAPI endpoints to prevent abuse
+const expressRateLimit = require('express-rate-limit');
+const docsRateLimiter = expressRateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+});
+
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.use(
     '/docs',
+    docsRateLimiter,
     cookieParser(),
     verifyDocsAuth,
     swaggerUi.serve,
@@ -31,9 +39,15 @@ app.use(
     })
 );
 
-app.get('/openapi.json', cookieParser(), verifyDocsAuth, (req, res) => {
-    res.json(openapiSpec);
-});
+app.get(
+    '/openapi.json',
+    docsRateLimiter,
+    cookieParser(),
+    verifyDocsAuth,
+    (req, res) => {
+        res.json(openapiSpec);
+    }
+);
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
