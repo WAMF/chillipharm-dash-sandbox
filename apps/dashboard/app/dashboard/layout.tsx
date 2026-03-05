@@ -9,17 +9,12 @@ import { ReportWizardWrapper } from '../../components/ReportWizardWrapper';
 import { HeaderActions } from '../../components/HeaderActions';
 import { AssetListModal } from '../../components/AssetListModal';
 import { AssetDetailModal } from '../../components/AssetDetailModal';
+import { ReportProvider } from '../../contexts/ReportContext';
 
 const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
     { href: '/dashboard/browse', label: 'Browse', icon: 'folder-open' },
-    { href: '/dashboard/video-metrics', label: 'Video Metrics', icon: 'play' },
-    { href: '/dashboard/reviews', label: 'Reviews', icon: 'check-circle' },
-    {
-        href: '/dashboard/compliance',
-        label: 'Compliance',
-        icon: 'shield-check',
-    },
+    { href: '/dashboard/reports', label: 'Reports', icon: 'document-text' },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -126,6 +121,21 @@ function NavIcon({ name }: { name: string }) {
                 />
             </svg>
         ),
+        'document-text': (
+            <svg
+                className="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+            >
+                <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+            </svg>
+        ),
     };
     return icons[name] || null;
 }
@@ -141,6 +151,7 @@ export default function DashboardLayout({
         <AuthProvider>
             <FilterProvider>
                 <DashboardProvider>
+                <ReportProvider>
                     <div className="min-h-screen bg-neutral-50">
                         <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white">
                             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -195,6 +206,7 @@ export default function DashboardLayout({
                         <AssetDetailModal />
                         <ReportWizardWrapper />
                     </div>
+                </ReportProvider>
                 </DashboardProvider>
             </FilterProvider>
         </AuthProvider>

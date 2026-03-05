@@ -2,7 +2,8 @@
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { format, subDays, subMonths } from 'date-fns';
-import type { AssetRecord } from '@cp/types';
+import type { AssetRecord, ReportTemplate } from '@cp/types';
+import { REPORT_TEMPLATES, CUSTOM_REPORT_TEMPLATE } from '@cp/types';
 import {
     type ReportConfig,
     type ColumnKey,
@@ -23,7 +24,7 @@ interface ReportWizardProps {
     onClose: () => void;
 }
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 export function ReportWizard({
     records,
@@ -33,6 +34,7 @@ export function ReportWizard({
     onClose,
 }: ReportWizardProps) {
     const [currentStep, setCurrentStep] = useState(1);
+    const [selectedTemplate, setSelectedTemplate] = useState<ReportTemplate | null>(null);
     const [reportName, setReportName] = useState('Asset Report');
     const [dateRangeStart, setDateRangeStart] = useState('');
     const [dateRangeEnd, setDateRangeEnd] = useState('');
@@ -57,6 +59,22 @@ export function ReportWizard({
 
     const fileTypes = useMemo(() => getFileTypes(records), [records]);
     const columnsByCategory = useMemo(() => getColumnsByCategory(), []);
+
+    const allTemplates = useMemo(() => [...REPORT_TEMPLATES, CUSTOM_REPORT_TEMPLATE], []);
+
+    const handleTemplateSelect = useCallback((template: ReportTemplate) => {
+        setSelectedTemplate(template);
+        setReportName(template.name);
+
+        if (template.id !== 'custom') {
+            const templateColumns = template.defaultColumns.filter(
+                col => COLUMN_DEFINITIONS.some(def => def.key === col)
+            ) as ColumnKey[];
+            setSelectedColumns(new Set(templateColumns.length > 0 ? templateColumns : DEFAULT_COLUMNS));
+        } else {
+            setSelectedColumns(new Set(DEFAULT_COLUMNS));
+        }
+    }, []);
 
     const config: ReportConfig = useMemo(
         () => ({
@@ -98,8 +116,9 @@ export function ReportWizard({
         [filteredRecords]
     );
 
-    const step1Valid = reportName.trim().length > 0;
-    const step3Valid = selectedColumns.size > 0;
+    const step1Valid = selectedTemplate !== null;
+    const step2Valid = reportName.trim().length > 0;
+    const step4Valid = selectedColumns.size > 0;
 
     useEffect(() => {
         function handleKeydown(e: KeyboardEvent) {
@@ -235,6 +254,15 @@ export function ReportWizard({
         );
     };
 
+    const canProceed = () => {
+        switch (currentStep) {
+            case 1: return step1Valid;
+            case 2: return step2Valid;
+            case 4: return step4Valid;
+            default: return true;
+        }
+    };
+
     return (
         <div
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[2000] p-4"
@@ -287,7 +315,7 @@ export function ReportWizard({
                                   : 'text-neutral-400 text-xs'
                         }
                     >
-                        Configuration
+                        Template
                     </span>
                     <span
                         className={
@@ -298,7 +326,7 @@ export function ReportWizard({
                                   : 'text-neutral-400 text-xs'
                         }
                     >
-                        Filters
+                        Configuration
                     </span>
                     <span
                         className={
@@ -309,11 +337,22 @@ export function ReportWizard({
                                   : 'text-neutral-400 text-xs'
                         }
                     >
-                        Columns
+                        Filters
                     </span>
                     <span
                         className={
                             currentStep === 4
+                                ? 'text-chilli-red font-medium text-xs'
+                                : currentStep > 4
+                                  ? 'text-green-600 text-xs'
+                                  : 'text-neutral-400 text-xs'
+                        }
+                    >
+                        Columns
+                    </span>
+                    <span
+                        className={
+                            currentStep === 5
                                 ? 'text-chilli-red font-medium text-xs'
                                 : 'text-neutral-400 text-xs'
                         }
@@ -324,6 +363,73 @@ export function ReportWizard({
 
                 <div className="flex-1 overflow-y-auto p-6">
                     {currentStep === 1 && (
+                        <div>
+                            <h3 className="text-lg font-medium text-neutral-800 mb-2">
+                                Select Report Template
+                            </h3>
+                            <p className="text-sm text-neutral-500 mb-6">
+                                Choose a pre-configured report template or create a custom report.
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {allTemplates.map(template => (
+                                    <div
+                                        key={template.id}
+                                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                                            selectedTemplate?.id === template.id
+                                                ? 'border-chilli-red bg-chilli-red/5'
+                                                : 'border-neutral-200 hover:border-neutral-300 hover:bg-neutral-50'
+                                        }`}
+                                        onClick={() => handleTemplateSelect(template)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleTemplateSelect(template);
+                                            }
+                                        }}
+                                        tabIndex={0}
+                                        role="button"
+                                    >
+                                        <div className="flex items-start gap-3">
+                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                                                selectedTemplate?.id === template.id
+                                                    ? 'border-chilli-red'
+                                                    : 'border-neutral-300'
+                                            }`}>
+                                                {selectedTemplate?.id === template.id && (
+                                                    <div className="w-2.5 h-2.5 rounded-full bg-chilli-red" />
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className={`font-medium text-sm ${
+                                                    selectedTemplate?.id === template.id
+                                                        ? 'text-chilli-red'
+                                                        : 'text-neutral-800'
+                                                }`}>
+                                                    {template.name}
+                                                </h4>
+                                                <p className="text-xs text-neutral-500 mt-1">
+                                                    {template.description}
+                                                </p>
+                                                {template.id !== 'custom' && (
+                                                    <div className="mt-2 flex flex-wrap gap-1">
+                                                        <span className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                                                            {template.defaultColumns.length} columns
+                                                        </span>
+                                                        <span className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded">
+                                                            Row: {template.rowEntity}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {currentStep === 2 && (
                         <div>
                             <h3 className="text-lg font-medium text-neutral-800 mb-2">
                                 Report Configuration
@@ -428,7 +534,7 @@ export function ReportWizard({
                         </div>
                     )}
 
-                    {currentStep === 2 && (
+                    {currentStep === 3 && (
                         <div>
                             <h3 className="text-lg font-medium text-neutral-800 mb-2">
                                 Apply Filters
@@ -683,13 +789,18 @@ export function ReportWizard({
                         </div>
                     )}
 
-                    {currentStep === 3 && (
+                    {currentStep === 4 && (
                         <div>
                             <h3 className="text-lg font-medium text-neutral-800 mb-2">
                                 Select Columns
                             </h3>
                             <p className="text-sm text-neutral-500 mb-6">
                                 Choose which columns to include in the report.
+                                {selectedTemplate && selectedTemplate.id !== 'custom' && (
+                                    <span className="text-chilli-red ml-1">
+                                        (Pre-configured for {selectedTemplate.name})
+                                    </span>
+                                )}
                             </p>
 
                             <div className="flex items-center gap-3 mb-4">
@@ -762,7 +873,7 @@ export function ReportWizard({
                         </div>
                     )}
 
-                    {currentStep === 4 && (
+                    {currentStep === 5 && (
                         <div>
                             <h3 className="text-lg font-medium text-neutral-800 mb-2">
                                 Preview & Download
@@ -806,9 +917,12 @@ export function ReportWizard({
 
                             <div className="bg-neutral-50 rounded-md p-4 mb-6">
                                 <h4 className="text-sm font-medium text-neutral-800 mb-3">
-                                    Applied Filters
+                                    Report Details
                                 </h4>
                                 <ul className="text-xs text-neutral-600 space-y-1 list-disc pl-5">
+                                    <li>
+                                        Template: {selectedTemplate?.name || 'Custom'}
+                                    </li>
                                     <li>
                                         Trials:{' '}
                                         {trialFilter === 'all'
@@ -884,11 +998,6 @@ export function ReportWizard({
                                                                               'dd/MM/yyyy'
                                                                           )
                                                                         : colKey ===
-                                                                            'reviewed'
-                                                                          ? record.reviewed
-                                                                              ? 'Yes'
-                                                                              : 'No'
-                                                                          : colKey ===
                                                                               'assetLink'
                                                                             ? record.assetLink
                                                                                 ? 'Link'
@@ -939,10 +1048,7 @@ export function ReportWizard({
                             <button
                                 className="px-5 py-2.5 bg-chilli-red text-white rounded-md text-sm font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 onClick={nextStep}
-                                disabled={
-                                    (currentStep === 1 && !step1Valid) ||
-                                    (currentStep === 3 && !step3Valid)
-                                }
+                                disabled={!canProceed()}
                             >
                                 Next
                             </button>

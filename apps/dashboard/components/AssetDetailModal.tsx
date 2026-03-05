@@ -239,47 +239,6 @@ export function AssetDetailModal() {
                                         </span>
                                     </dd>
                                 </div>
-                                <div className="flex justify-between items-start py-1.5 gap-2 border-b border-neutral-100">
-                                    <dt className="text-xs text-neutral-500 flex-shrink-0">
-                                        Reviewed
-                                    </dt>
-                                    <dd>
-                                        <span
-                                            className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${
-                                                selectedAsset.reviewed
-                                                    ? 'bg-green-100 text-green-700'
-                                                    : 'bg-orange-100 text-orange-700'
-                                            }`}
-                                        >
-                                            {selectedAsset.reviewed
-                                                ? 'Yes'
-                                                : 'Pending'}
-                                        </span>
-                                    </dd>
-                                </div>
-                                {selectedAsset.reviewed && (
-                                    <>
-                                        <div className="flex justify-between items-start py-1.5 gap-2 border-b border-neutral-100">
-                                            <dt className="text-xs text-neutral-500 flex-shrink-0">
-                                                Reviewed By
-                                            </dt>
-                                            <dd className="text-sm text-neutral-800 text-right break-words">
-                                                {selectedAsset.reviewedBy ||
-                                                    '-'}
-                                            </dd>
-                                        </div>
-                                        <div className="flex justify-between items-start py-1.5 gap-2">
-                                            <dt className="text-xs text-neutral-500 flex-shrink-0">
-                                                Review Date
-                                            </dt>
-                                            <dd className="text-sm text-neutral-800 text-right break-words">
-                                                {formatDateOnly(
-                                                    selectedAsset.reviewedDate
-                                                )}
-                                            </dd>
-                                        </div>
-                                    </>
-                                )}
                             </dl>
                         </section>
                     </div>

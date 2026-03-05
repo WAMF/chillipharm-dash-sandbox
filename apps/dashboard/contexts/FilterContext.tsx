@@ -13,13 +13,11 @@ import type { FilterState, FilterPreset } from '@cp/types';
 const STORAGE_KEY = 'chillipharm-filters';
 const PRESETS_KEY = 'chillipharm-filter-presets';
 const VERSION_KEY = 'chillipharm-version';
-const CURRENT_VERSION = '4';
+const CURRENT_VERSION = '5';
 
 const defaultFilterState: FilterState = {
-    dataViewMode: 'all',
     selectedTrials: [],
     selectedSites: [],
-    selectedLibraries: [],
     selectedCountries: [],
     selectedStudyArms: [],
     selectedProcedures: [],
@@ -27,7 +25,6 @@ const defaultFilterState: FilterState = {
         start: null,
         end: null,
     },
-    reviewStatus: 'all',
     processedStatus: 'all',
     searchTerm: '',
     sortBy: '',
@@ -48,7 +45,6 @@ type FilterAction =
 type ArrayFilterKey =
     | 'selectedTrials'
     | 'selectedSites'
-    | 'selectedLibraries'
     | 'selectedCountries'
     | 'selectedStudyArms'
     | 'selectedProcedures';
@@ -125,19 +121,19 @@ function getDefaultPresets(): FilterPreset[] {
             },
         },
         {
-            id: 'pending-review',
-            name: 'Pending Review',
+            id: 'not-processed',
+            name: 'Not Processed',
             filters: {
                 ...defaultFilterState,
-                reviewStatus: 'pending',
+                processedStatus: 'no',
             },
         },
         {
-            id: 'reviewed',
-            name: 'Reviewed Only',
+            id: 'processed',
+            name: 'Processed Only',
             filters: {
                 ...defaultFilterState,
-                reviewStatus: 'reviewed',
+                processedStatus: 'yes',
             },
         },
     ];
@@ -261,12 +257,10 @@ export function FilterProvider({ children }: { children: ReactNode }) {
         let count = 0;
         if (filters.selectedTrials.length > 0) count++;
         if (filters.selectedSites.length > 0) count++;
-        if (filters.selectedLibraries.length > 0) count++;
         if (filters.selectedCountries.length > 0) count++;
         if (filters.selectedStudyArms.length > 0) count++;
         if (filters.selectedProcedures.length > 0) count++;
         if (filters.dateRange.start || filters.dateRange.end) count++;
-        if (filters.reviewStatus !== 'all') count++;
         if (filters.processedStatus !== 'all') count++;
         if (filters.searchTerm.trim()) count++;
         return count;

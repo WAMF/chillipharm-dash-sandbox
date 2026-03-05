@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type { SitesStats } from '@cp/api-client';
+import React, { useState, useMemo, useCallback } from 'react';
 import type { AssetRecord } from '@cp/types';
 import { useDashboard } from '../../../../contexts/DashboardContext';
 import { Chart } from '../../../../components/Chart';
@@ -43,10 +42,6 @@ interface Asset {
     duration: string | null;
     processed: boolean;
     createdAt: string;
-    review: {
-        reviewed: boolean;
-        reviewDate: string | null;
-    };
 }
 
 interface ExpandedState {
@@ -62,6 +57,12 @@ interface HierarchyContext {
     subjectNumber?: string;
     eventId?: number;
     eventName?: string;
+}
+
+interface SiteStats {
+    siteId: number;
+    siteName: string;
+    count: number;
 }
 
 const CHART_COLORS = [
@@ -83,10 +84,6 @@ export default function BrowseSitesPage() {
         setAssetListRecords,
     } = useDashboard();
 
-    const [stats, setStats] = useState<SitesStats | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
     const [expanded, setExpanded] = useState<ExpandedState>({
         sites: new Set(),
         subjects: new Set(),
@@ -107,26 +104,37 @@ export default function BrowseSitesPage() {
         assets: new Set(),
     });
 
-    useEffect(() => {
-        async function loadStats() {
-            if (!dataLoader) return;
+    const stats = useMemo(() => {
+        const siteMap = new Map<number, { siteName: string; count: number }>();
 
-            setIsLoading(true);
-            setError(null);
-
-            try {
-                const sitesStats = await dataLoader.fetchSitesStats();
-                setStats(sitesStats);
-            } catch (error_) {
-                console.error('Failed to load sites stats:', error_);
-                setError(error_ instanceof Error ? error_.message : 'Failed to load statistics');
-            } finally {
-                setIsLoading(false);
+        filteredRecords.forEach(record => {
+            if (record.siteId) {
+                const existing = siteMap.get(record.siteId);
+                if (existing) {
+                    existing.count++;
+                } else {
+                    siteMap.set(record.siteId, {
+                        siteName: record.siteName || 'Unknown',
+                        count: 1,
+                    });
+                }
             }
-        }
+        });
 
-        loadStats();
-    }, [dataLoader]);
+        const assetsPerSite: SiteStats[] = Array.from(siteMap.entries())
+            .map(([siteId, data]) => ({
+                siteId,
+                siteName: data.siteName,
+                count: data.count,
+            }))
+            .sort((a, b) => b.count - a.count);
+
+        return {
+            totalSites: siteMap.size,
+            totalAssets: filteredRecords.length,
+            assetsPerSite,
+        };
+    }, [filteredRecords]);
 
     const handleCountryClick = useCallback(
         (country: string) => {
@@ -325,9 +333,6 @@ export default function BrowseSitesPage() {
                     assetDuration: asset.duration || '',
                     fileSize: asset.filesizeFormatted,
                     processed: asset.processed ? 'Yes' : 'No',
-                    reviewed: asset.review.reviewed,
-                    reviewedBy: '',
-                    reviewedDate: asset.review.reviewDate || '',
                     evaluator: procedure.evaluator?.name || '',
                     comments: '',
                     assetLink: '',
@@ -355,7 +360,7 @@ export default function BrowseSitesPage() {
     );
 
     const chartData = useMemo(() => {
-        if (!stats || stats.assetsPerSite.length === 0) {
+        if (stats.assetsPerSite.length === 0) {
             return { labels: [], datasets: [] };
         }
         const topSites = stats.assetsPerSite.slice(0, 5);
@@ -373,7 +378,6 @@ export default function BrowseSitesPage() {
 
     const handleChartClick = useCallback(
         (data: { label: string; index: number; value: number }) => {
-            if (!stats) return;
             const site = stats.assetsPerSite[data.index];
             if (site) {
                 handleSiteClick(site.siteId, site.siteName);
@@ -583,7 +587,7 @@ export default function BrowseSitesPage() {
         });
     };
 
-    if (dashboardLoading || isLoading) {
+    if (dashboardLoading) {
         return (
             <div className="bg-white rounded-lg shadow-sm p-8">
                 <div className="flex items-center justify-center">
@@ -593,19 +597,11 @@ export default function BrowseSitesPage() {
         );
     }
 
-    if (error) {
-        return (
-            <div className="bg-white rounded-lg shadow-sm p-8">
-                <div className="text-center text-red-600">{error}</div>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
                 <span className="text-sm text-neutral-500">
-                    {stats?.totalSites ?? 0} sites · {stats?.totalAssets ?? 0} assets
+                    {stats.totalSites} sites · {stats.totalAssets} assets
                 </span>
             </div>
 
@@ -618,7 +614,7 @@ export default function BrowseSitesPage() {
                 <div className="bg-white rounded-lg shadow-sm p-6">
                     <h4 className="text-sm font-semibold text-neutral-700 mb-1">Top Sites by Assets</h4>
                     <p className="text-xs text-neutral-500 mb-3">Click to expand in explorer</p>
-                    {stats && stats.assetsPerSite.length > 0 ? (
+                    {stats.assetsPerSite.length > 0 ? (
                         <Chart
                             type="bar"
                             data={chartData}
@@ -645,7 +641,7 @@ export default function BrowseSitesPage() {
                     </p>
                 </div>
                 <div className="overflow-x-auto">
-                    {!stats || stats.assetsPerSite.length === 0 ? (
+                    {stats.assetsPerSite.length === 0 ? (
                         <div className="p-8 text-center text-neutral-500">No sites found</div>
                     ) : (
                         <table className="min-w-full divide-y divide-neutral-200">

@@ -12,30 +12,12 @@ import {
 import type {
     AssetRecord,
     DashboardMetrics,
-    SitePerformance,
     TimeSeriesData,
-    ComplianceMetric,
-    StudyArmData,
-    StudyEventData,
-    StudyProcedureData,
-    VideoMetricsData,
-    ReviewPerformanceData,
-    ProcedureLagData,
-    CommentStats,
 } from '@cp/types';
 import { useAuth } from '@cp/firebase';
 import {
     calculateDashboardMetrics,
-    calculateSitePerformance,
     calculateTimeSeriesData,
-    calculateComplianceMetrics,
-    getStudyArmDistribution,
-    getStudyEventBreakdown,
-    getStudyProcedureBreakdown,
-    getVideoMetrics,
-    getReviewPerformance,
-    getProcedureLagAnalysis,
-    getCommentStats,
     getFilterOptions,
     getCountryDistribution,
     filterRecords,
@@ -45,14 +27,14 @@ import { createDataLoader, DataLoader } from '@cp/api-client';
 import { useFilters } from './FilterContext';
 
 const API_BASE_URL =
-    process.env.NODE_ENV === 'production'
+    process.env.NEXT_PUBLIC_API_URL ||
+    (process.env.NODE_ENV === 'production'
         ? 'https://europe-west2-chillipharm-dashboard.cloudfunctions.net/api'
-        : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2/api';
+        : 'http://127.0.0.1:5002/chillipharm-dashboard/europe-west2/api');
 
 interface FilterOptions {
     trials: string[];
     sites: string[];
-    libraries: string[];
     countries: string[];
     studyArms: string[];
     procedures: string[];
@@ -71,16 +53,7 @@ interface DashboardContextValue {
     isLoading: boolean;
     error: string | null;
     metrics: DashboardMetrics | null;
-    sitePerformance: SitePerformance[];
     timeSeriesData: TimeSeriesData[];
-    complianceMetrics: ComplianceMetric[];
-    studyArmData: StudyArmData[];
-    studyEventData: StudyEventData[];
-    studyProcedureData: StudyProcedureData[];
-    videoMetrics: VideoMetricsData | null;
-    reviewPerformance: ReviewPerformanceData | null;
-    procedureLagData: ProcedureLagData[];
-    commentStats: CommentStats | null;
     filterOptions: FilterOptions;
     countryDistribution: CountryData[];
     refreshData: () => Promise<void>;
@@ -158,47 +131,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         return calculateDashboardMetrics(filteredRecords);
     }, [filteredRecords]);
 
-    const sitePerformance = useMemo(() => {
-        return calculateSitePerformance(filteredRecords);
-    }, [filteredRecords]);
-
     const timeSeriesData = useMemo(() => {
         return calculateTimeSeriesData(filteredRecords);
-    }, [filteredRecords]);
-
-    const complianceMetrics = useMemo(() => {
-        return calculateComplianceMetrics(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyArmData = useMemo(() => {
-        return getStudyArmDistribution(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyEventData = useMemo(() => {
-        return getStudyEventBreakdown(filteredRecords);
-    }, [filteredRecords]);
-
-    const studyProcedureData = useMemo(() => {
-        return getStudyProcedureBreakdown(filteredRecords);
-    }, [filteredRecords]);
-
-    const videoMetrics = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getVideoMetrics(filteredRecords);
-    }, [filteredRecords]);
-
-    const reviewPerformance = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getReviewPerformance(filteredRecords);
-    }, [filteredRecords]);
-
-    const procedureLagData = useMemo(() => {
-        return getProcedureLagAnalysis(filteredRecords);
-    }, [filteredRecords]);
-
-    const commentStats = useMemo(() => {
-        if (filteredRecords.length === 0) return null;
-        return getCommentStats(filteredRecords);
     }, [filteredRecords]);
 
     const filterOptions = useMemo(() => {
@@ -221,16 +155,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 error,
                 metrics,
-                sitePerformance,
                 timeSeriesData,
-                complianceMetrics,
-                studyArmData,
-                studyEventData,
-                studyProcedureData,
-                videoMetrics,
-                reviewPerformance,
-                procedureLagData,
-                commentStats,
                 filterOptions,
                 countryDistribution,
                 refreshData,

@@ -1,0 +1,63 @@
+{
+    "name": "videoservices",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/videoservices",
+    "projectType": "application",
+    "tags": ["scope:app", "type:app"],
+    "targets": {
+        "build": {
+            "executor": "@nx/next:build",
+            "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
+            "options": {
+                "outputPath": "dist/apps/videoservices"
+            },
+            "configurations": {
+                "development": {
+                    "outputPath": "apps/videoservices"
+                },
+                "production": {}
+            }
+        },
+        "serve": {
+            "executor": "@nx/next:server",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "videoservices:build",
+                "dev": true
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "videoservices:build:development",
+                    "dev": true
+                },
+                "production": {
+                    "buildTarget": "videoservices:build:production",
+                    "dev": false
+                }
+            }
+        },
+        "dev": {
+            "executor": "@nx/next:server",
+            "defaultConfiguration": "development",
+            "options": {
+                "buildTarget": "videoservices:build",
+                "dev": true,
+                "port": 3001
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "videoservices:build:development",
+                    "dev": true
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["apps/videoservices/**/*.{ts,tsx,js,jsx}"]
+            }
+        }
+    }
+}

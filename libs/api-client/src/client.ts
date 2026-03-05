@@ -1,11 +1,9 @@
-import { UsersApi } from './endpoints/users';
 import { TrialsApi } from './endpoints/trials';
 import { SubjectsApi } from './endpoints/subjects';
 import { StatsApi } from './endpoints/stats';
 import { SitesApi } from './endpoints/sites';
 import { ReviewsApi } from './endpoints/reviews';
 import { ProceduresApi } from './endpoints/procedures';
-import { LibrariesApi } from './endpoints/libraries';
 import { EventsApi } from './endpoints/events';
 import { AssetsApi } from './endpoints/assets';
 
@@ -24,28 +22,24 @@ export class ApiClient {
 
     readonly assets: AssetsApi;
     readonly sites: SitesApi;
-    readonly libraries: LibrariesApi;
     readonly trials: TrialsApi;
     readonly stats: StatsApi;
     readonly reviews: ReviewsApi;
     readonly subjects: SubjectsApi;
     readonly procedures: ProceduresApi;
     readonly events: EventsApi;
-    readonly users: UsersApi;
 
     constructor(config: ApiClientConfig) {
         this.config = config;
 
         this.assets = new AssetsApi(this);
         this.sites = new SitesApi(this);
-        this.libraries = new LibrariesApi(this);
         this.trials = new TrialsApi(this);
         this.stats = new StatsApi(this);
         this.reviews = new ReviewsApi(this);
         this.subjects = new SubjectsApi(this);
         this.procedures = new ProceduresApi(this);
         this.events = new EventsApi(this);
-        this.users = new UsersApi(this);
     }
 
     async request<T>(

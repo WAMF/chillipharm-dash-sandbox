@@ -3,11 +3,20 @@ import type {
     FilterState,
     QueryFilter,
     PaginatedResponse,
+    ProcedureDetail,
+    StudyArm,
+    EventDefinition,
+    ProcedureDefinition,
+    TaskDefinition,
+    SiteReportRecord,
+    SavedReportTemplate,
+    SavedReportFilters,
+    EmailList,
+    ReportSchedule,
+    ReportRowEntity,
+    ReportCadence,
 } from '@cp/types';
 import type { ApiClient } from './client';
-import type { SitesStats, LibrariesStats } from './endpoints/stats';
-
-export type { SitesStats, LibrariesStats };
 
 export interface ApiAsset {
     id: number;
@@ -28,10 +37,6 @@ export interface ApiAsset {
         country: string;
         countryCode: string;
     } | null;
-    library: {
-        id: number;
-        name: string;
-    } | null;
     uploader: {
         email: string;
         name: string | null;
@@ -45,42 +50,8 @@ export interface ApiAsset {
         subjectNumber: string;
         evaluator: string | null;
     } | null;
-    review: {
-        reviewed: boolean;
-        reviewDate: string | null;
-        reviewer: string | null;
-    };
     comments: string | null;
 }
-
-export interface ApiStats {
-    assets: {
-        total: number;
-        processed: number;
-        processingRate: number;
-        totalSizeBytes: number;
-        totalSizeFormatted: string;
-    };
-    trials: {
-        total: number;
-    };
-    sites: {
-        total: number;
-    };
-    subjects: {
-        total: number;
-    };
-    reviews: {
-        reviewed: number;
-        total: number;
-        reviewRate: number;
-    };
-    uploadTrend: Array<{
-        date: string;
-        uploads: number;
-    }>;
-}
-
 
 export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
     return {
@@ -101,31 +72,20 @@ export function transformApiAssetToRecord(asset: ApiAsset): AssetRecord {
         uploadedBy: asset.uploader?.name || asset.uploader?.email || '',
         processed: asset.processed ? 'Yes' : 'No',
         assetDuration: asset.duration || '',
-        reviewed: asset.review?.reviewed || false,
         comments: asset.comments || '',
-        reviewedBy: asset.review?.reviewer || '',
-        reviewedDate: asset.review?.reviewDate || '',
         fileSize: asset.filesizeFormatted || '',
         assetLink: asset.url || '',
-        libraryId: asset.library?.id,
-        libraryName: asset.library?.name,
     };
 }
 
 export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
     const queryFilter: QueryFilter = {};
 
-    if (filters.dataViewMode && filters.dataViewMode !== 'all') {
-        queryFilter.dataViewMode = filters.dataViewMode;
-    }
     if (filters.selectedTrials.length > 0) {
         queryFilter.trials = filters.selectedTrials;
     }
     if (filters.selectedSites.length > 0) {
         queryFilter.sites = filters.selectedSites;
-    }
-    if (filters.selectedLibraries.length > 0) {
-        queryFilter.libraries = filters.selectedLibraries;
     }
     if (filters.selectedCountries.length > 0) {
         queryFilter.countries = filters.selectedCountries;
@@ -141,9 +101,6 @@ export function filterStateToQueryFilter(filters: FilterState): QueryFilter {
             start: filters.dateRange.start || undefined,
             end: filters.dateRange.end || undefined,
         };
-    }
-    if (filters.reviewStatus !== 'all') {
-        queryFilter.reviewStatus = filters.reviewStatus;
     }
     if (filters.processedStatus !== 'all') {
         queryFilter.processedStatus = filters.processedStatus;
@@ -291,23 +248,6 @@ export class DataLoader {
         return this.queryAllAssets(queryFilter);
     }
 
-    async fetchStats(trialId?: number): Promise<ApiStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
     async checkHealth(): Promise<{ status: string; timestamp: string }> {
         const response = await fetch(`${this.baseUrl}/api/health`);
 
@@ -316,40 +256,6 @@ export class DataLoader {
         }
 
         return response.json();
-    }
-
-    async fetchSitesStats(trialId?: number): Promise<SitesStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats/sites${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
-    }
-
-    async fetchLibrariesStats(trialId?: number): Promise<LibrariesStats> {
-        const searchParams = new URLSearchParams();
-        if (trialId) searchParams.set('trial_id', String(trialId));
-
-        const query = searchParams.toString();
-        const response = await this.fetchWithAuth(
-            `/api/v1/stats/libraries${query ? `?${query}` : ''}`
-        );
-
-        if (!response.ok) {
-            throw new Error(`API error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        return result.data;
     }
 
     async fetchSiteSubjects(
@@ -449,11 +355,6 @@ export class DataLoader {
             url: string;
             processed: boolean;
             createdAt: string;
-            review: {
-                reviewed: boolean;
-                reviewDate: string | null;
-                reviewer: string | null;
-            };
         }>
     > {
         const response = await this.fetchWithAuth(
@@ -467,37 +368,252 @@ export class DataLoader {
         return response.json();
     }
 
-    async fetchLibraryAssets(
-        libraryId: number,
-        page = 1,
-        limit = 50
-    ): Promise<
-        PaginatedResponse<{
-            id: number;
-            filename: string;
-            filesize: number;
-            filesizeFormatted: string;
-            duration: string | null;
-            url: string;
-            processed: boolean;
-            createdAt: string;
-            uploader: { email: string; name: string | null } | null;
-            review: {
-                reviewed: boolean;
-                reviewDate: string | null;
-                reviewer: string | null;
-            };
-        }>
-    > {
+    async fetchProcedureDetail(
+        siteId: number,
+        subjectId: number,
+        eventId: number,
+        procedureId: number
+    ): Promise<ProcedureDetail> {
         const response = await this.fetchWithAuth(
-            `/api/v1/libraries/${libraryId}/assets?page=${page}&limit=${limit}`
+            `/api/v1/sites/${siteId}/subjects/${subjectId}/events/${eventId}/procedures/${procedureId}`
         );
 
         if (!response.ok) {
             throw new Error(`API error: ${response.status}`);
         }
 
-        return response.json();
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchStudyArms(siteId: number): Promise<StudyArm[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/study-arms`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchEventDefinitions(siteId: number): Promise<EventDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/event-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchProcedureDefinitions(siteId: number): Promise<ProcedureDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/procedure-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchTaskDefinitions(
+        siteId: number,
+        definitionId: number
+    ): Promise<TaskDefinition[]> {
+        const response = await this.fetchWithAuth(
+            `/api/v1/sites/${siteId}/procedure-definitions/${definitionId}/task-definitions`
+        );
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    async fetchSiteReportData(): Promise<SiteReportRecord[]> {
+        const response = await this.fetchWithAuth('/api/v1/stats/sites/report');
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+        }
+
+        const result = await response.json();
+        return result.data;
+    }
+
+    // -----------------------------------------------------------------------
+    // Report Templates
+    // -----------------------------------------------------------------------
+
+    async fetchSavedTemplates(): Promise<SavedReportTemplate[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/templates');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createSavedTemplate(template: {
+        name: string;
+        description: string;
+        baseTemplateId: string;
+        rowEntity: ReportRowEntity;
+        columns: string[];
+        filters: SavedReportFilters;
+    }): Promise<SavedReportTemplate> {
+        const response = await this.fetchWithAuth('/api/v1/reports/templates', {
+            method: 'POST',
+            body: JSON.stringify(template),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateSavedTemplate(
+        id: string,
+        template: Partial<{
+            name: string;
+            description: string;
+            columns: string[];
+            filters: SavedReportFilters;
+        }>
+    ): Promise<SavedReportTemplate> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/templates/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(template),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteSavedTemplate(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/templates/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    // -----------------------------------------------------------------------
+    // Report Data
+    // -----------------------------------------------------------------------
+
+    async fetchReportData(
+        rowEntity: ReportRowEntity,
+        filters: SavedReportFilters
+    ): Promise<{ data: unknown[]; totalRows: number }> {
+        const response = await this.fetchWithAuth('/api/v1/reports/data', {
+            method: 'POST',
+            body: JSON.stringify({ rowEntity, filters }),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return { data: result.data, totalRows: result.totalRows };
+    }
+
+    // -----------------------------------------------------------------------
+    // Email Lists
+    // -----------------------------------------------------------------------
+
+    async fetchEmailLists(): Promise<EmailList[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/email-lists');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createEmailList(list: { name: string; emails: string[] }): Promise<EmailList> {
+        const response = await this.fetchWithAuth('/api/v1/reports/email-lists', {
+            method: 'POST',
+            body: JSON.stringify(list),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateEmailList(
+        id: string,
+        list: { name?: string; emails?: string[] }
+    ): Promise<EmailList> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/email-lists/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(list),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteEmailList(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/email-lists/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    // -----------------------------------------------------------------------
+    // Schedules
+    // -----------------------------------------------------------------------
+
+    async fetchSchedules(): Promise<ReportSchedule[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/schedules');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createSchedule(schedule: {
+        savedTemplateId: string;
+        emailListId: string;
+        cadence: ReportCadence;
+        enabled?: boolean;
+    }): Promise<ReportSchedule> {
+        const response = await this.fetchWithAuth('/api/v1/reports/schedules', {
+            method: 'POST',
+            body: JSON.stringify(schedule),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateSchedule(
+        id: string,
+        patch: Partial<{ cadence: ReportCadence; emailListId: string; enabled: boolean }>
+    ): Promise<ReportSchedule> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(patch),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteSchedule(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    async runSchedule(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}/run`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
     }
 }
 

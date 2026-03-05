@@ -49,9 +49,7 @@ export interface AggregatedMetrics {
     total: number;
     processed: number;
     pending: number;
-    reviewed: number;
     processedRate: number;
-    reviewedRate: number;
     totalFileSize: number;
     totalDuration: number;
 }
@@ -61,11 +59,9 @@ export function aggregateAssetMetrics(
 ): AggregatedMetrics {
     const total = assets.length;
     const processed = countBy(assets, a => a.processed === 'Yes');
-    const reviewed = countBy(assets, a => a.reviewed === true);
     const pending = total - processed;
 
     const processedRate = total > 0 ? (processed / total) * 100 : 0;
-    const reviewedRate = total > 0 ? (reviewed / total) * 100 : 0;
 
     const totalFileSize = 0;
     const totalDuration = 0;
@@ -74,9 +70,7 @@ export function aggregateAssetMetrics(
         total,
         processed,
         pending,
-        reviewed,
         processedRate,
-        reviewedRate,
         totalFileSize,
         totalDuration,
     };
@@ -102,31 +96,3 @@ export function aggregateByDate<T>(
         .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export interface LibraryData {
-    name: string;
-    assetCount: number;
-    reviewedCount: number;
-    processedCount: number;
-}
-
-export function getLibraryDistribution(records: AssetRecord[]): LibraryData[] {
-    const libraryRecords = records.filter(r => r.libraryName);
-    const grouped = groupBy(libraryRecords, r => r.libraryName || 'Unknown');
-
-    return grouped.map(group => ({
-        name: group.key,
-        assetCount: group.count,
-        reviewedCount: countBy(group.items, a => a.reviewed === true),
-        processedCount: countBy(group.items, a => a.processed === 'Yes'),
-    }));
-}
-
-export function getLibraryFilterOptions(records: AssetRecord[]): string[] {
-    const libraries = new Set<string>();
-    records.forEach(r => {
-        if (r.libraryName) {
-            libraries.add(r.libraryName);
-        }
-    });
-    return Array.from(libraries).sort();
-}

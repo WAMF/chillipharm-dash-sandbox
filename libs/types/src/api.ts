@@ -27,15 +27,12 @@ export interface ApiResponse<T> {
 }
 
 export interface QueryFilter {
-    dataViewMode?: 'sites' | 'library' | 'all';
     trials?: string[];
     sites?: string[];
-    libraries?: string[];
     countries?: string[];
     studyArms?: string[];
     procedures?: string[];
     dateRange?: { start?: string; end?: string };
-    reviewStatus?: 'all' | 'reviewed' | 'pending';
     processedStatus?: 'all' | 'yes' | 'no';
     searchTerm?: string;
     sortBy?: string;
@@ -63,6 +60,5 @@ export interface StatsResponse {
     totalSites: number;
     totalSubjects: number;
     totalTrials: number;
-    reviewedCount: number;
     processedCount: number;
 }
