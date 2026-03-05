@@ -12,6 +12,7 @@ import proceduresRouter from './routes/procedures.js';
 import eventsRouter from './routes/events.js';
 import commentsRouter from './routes/comments.js';
 import statsRouter from './routes/stats.js';
+import reportsRouter from './routes/reports.js';
 import openapiSpec from './openapi.js';
 
 const app = express();
@@ -48,6 +49,7 @@ app.use('/api/v1/procedures', proceduresRouter);
 app.use('/api/v1/events', eventsRouter);
 app.use('/api/v1/comments', commentsRouter);
 app.use('/api/v1/stats', statsRouter);
+app.use('/api/v1/reports', reportsRouter);
 
 app.use((err, req, res, next) => {
     console.error('API Error:', err);

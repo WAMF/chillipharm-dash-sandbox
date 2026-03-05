@@ -5,6 +5,8 @@ export type ReportRowEntity =
     | 'asset'
     | 'subject';
 
+export type ReportCadence = 'hourly' | 'daily' | 'weekly' | 'monthly';
+
 export interface ReportTemplate {
     id: string;
     name: string;
@@ -13,6 +15,61 @@ export interface ReportTemplate {
     defaultColumns: string[];
     requiredFilters: string[];
     optionalFilters: string[];
+}
+
+export interface TaskStatusFilter {
+    taskName: string;
+    status: 'complete' | 'incomplete';
+}
+
+export interface SavedReportFilters {
+    trialIds?: number[];
+    siteIds?: number[];
+    formStatus?: string;
+    procedureStatus?: string;
+    taskStatusFilters?: TaskStatusFilter[];
+    exceptionDaysThreshold?: number;
+    includeResolved?: boolean;
+    dateRange?: {
+        start: string | null;
+        end: string | null;
+    };
+}
+
+export interface SavedReportTemplate {
+    id: string;
+    name: string;
+    description: string;
+    baseTemplateId: string;
+    rowEntity: ReportRowEntity;
+    columns: string[];
+    filters: SavedReportFilters;
+    createdBy: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface EmailList {
+    id: string;
+    name: string;
+    emails: string[];
+    createdBy: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ReportSchedule {
+    id: string;
+    savedTemplateId: string;
+    templateName?: string;
+    emailListId: string;
+    emailListName?: string;
+    cadence: ReportCadence;
+    enabled: boolean;
+    lastRunAt: string | null;
+    nextRunAt: string | null;
+    createdBy: string;
+    createdAt: string;
 }
 
 export const REPORT_TEMPLATES: ReportTemplate[] = [

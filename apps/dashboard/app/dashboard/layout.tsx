@@ -9,10 +9,12 @@ import { ReportWizardWrapper } from '../../components/ReportWizardWrapper';
 import { HeaderActions } from '../../components/HeaderActions';
 import { AssetListModal } from '../../components/AssetListModal';
 import { AssetDetailModal } from '../../components/AssetDetailModal';
+import { ReportProvider } from '../../contexts/ReportContext';
 
 const NAVIGATION_ITEMS = [
     { href: '/dashboard', label: 'Overview', icon: 'chart-bar' },
     { href: '/dashboard/browse', label: 'Browse', icon: 'folder-open' },
+    { href: '/dashboard/reports', label: 'Reports', icon: 'document-text' },
 ];
 
 function NavIcon({ name }: { name: string }) {
@@ -149,6 +151,7 @@ export default function DashboardLayout({
         <AuthProvider>
             <FilterProvider>
                 <DashboardProvider>
+                <ReportProvider>
                     <div className="min-h-screen bg-neutral-50">
                         <header className="sticky top-0 z-50 border-b border-neutral-200 bg-white">
                             <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -203,6 +206,7 @@ export default function DashboardLayout({
                         <AssetDetailModal />
                         <ReportWizardWrapper />
                     </div>
+                </ReportProvider>
                 </DashboardProvider>
             </FilterProvider>
         </AuthProvider>

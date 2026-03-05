@@ -1,6 +1,16 @@
 import * as XLSX from 'xlsx';
 import { format, parseISO } from 'date-fns';
-import type { AssetRecord, FormRecord, SiteReportRecord } from '@cp/types';
+import type {
+    AssetRecord,
+    FormRecord,
+    SiteReportRecord,
+    ReportRowEntity,
+    StudyProcedureRow,
+    FlaggedTaskRow,
+    SubjectRow,
+    FormRow,
+    AssetReportRow,
+} from '@cp/types';
 
 const EXCEL_MAX_CELL_LENGTH = 32767;
 
@@ -502,4 +512,285 @@ export function generateSiteExcel(
     const filename = `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.xlsx`;
 
     XLSX.writeFile(workbook, filename);
+}
+
+// ---------------------------------------------------------------------------
+// Entity-Specific Column Definitions
+// ---------------------------------------------------------------------------
+
+export interface GenericColumnDefinition {
+    key: string;
+    label: string;
+    category: string;
+    width: number;
+}
+
+export const PROCEDURE_COLUMN_DEFINITIONS: GenericColumnDefinition[] = [
+    { key: 'trialName', label: 'Trial', category: 'Trial Info', width: 25 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteNumber', label: 'Site Number', category: 'Site Info', width: 15 },
+    { key: 'siteCountry', label: 'Site Country', category: 'Site Info', width: 15 },
+    { key: 'trialConfigName', label: 'Trial Configuration', category: 'Trial Info', width: 20 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'studyEventName', label: 'Study Event', category: 'Study Info', width: 25 },
+    { key: 'studyEventArm', label: 'SE Arm', category: 'Study Info', width: 20 },
+    { key: 'studyEventStatus', label: 'SE Status', category: 'Study Info', width: 12 },
+    { key: 'studyEventDate', label: 'SE Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureName', label: 'Study Procedure', category: 'Study Info', width: 25 },
+    { key: 'studyProcedureDate', label: 'SP Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureStatus', label: 'SP Status', category: 'Study Info', width: 12 },
+    { key: 'clinicalEvaluator', label: 'Clinical Evaluator', category: 'Study Info', width: 20 },
+    { key: 'studyProcedureLink', label: 'SP Link', category: 'Links', width: 50 },
+    { key: 'studyProcedureUpdates', label: 'SP Updates', category: 'Study Info', width: 20 },
+];
+
+export const PROCEDURE_COLUMN_CATEGORIES = [
+    'Trial Info',
+    'Site Info',
+    'Subject Info',
+    'Study Info',
+    'Links',
+];
+
+export const FORM_REPORT_COLUMN_DEFINITIONS: GenericColumnDefinition[] = [
+    { key: 'trialName', label: 'Trial', category: 'Trial Info', width: 25 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteNumber', label: 'Site Number', category: 'Site Info', width: 15 },
+    { key: 'siteCountry', label: 'Site Country', category: 'Site Info', width: 15 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'studyEventName', label: 'Study Event', category: 'Study Info', width: 25 },
+    { key: 'studyEventArm', label: 'SE Arm', category: 'Study Info', width: 20 },
+    { key: 'studyEventStatus', label: 'SE Status', category: 'Study Info', width: 12 },
+    { key: 'studyEventDate', label: 'SE Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureName', label: 'Study Procedure', category: 'Study Info', width: 25 },
+    { key: 'studyProcedureDate', label: 'SP Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureStatus', label: 'SP Status', category: 'Study Info', width: 12 },
+    { key: 'clinicalEvaluator', label: 'Clinical Evaluator', category: 'Study Info', width: 20 },
+    { key: 'formName', label: 'Form Name', category: 'Form Info', width: 25 },
+    { key: 'formStatus', label: 'Form Status', category: 'Form Info', width: 15 },
+    { key: 'submittedAt', label: 'Submitted At', category: 'Form Info', width: 20 },
+    { key: 'formLink', label: 'Form Link', category: 'Links', width: 50 },
+];
+
+export const FORM_REPORT_COLUMN_CATEGORIES = [
+    'Trial Info',
+    'Site Info',
+    'Subject Info',
+    'Study Info',
+    'Form Info',
+    'Links',
+];
+
+export const FLAGGED_TASK_COLUMN_DEFINITIONS: GenericColumnDefinition[] = [
+    { key: 'trialName', label: 'Trial', category: 'Trial Info', width: 25 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteNumber', label: 'Site Number', category: 'Site Info', width: 15 },
+    { key: 'siteCountry', label: 'Site Country', category: 'Site Info', width: 15 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'studyEventName', label: 'Study Event', category: 'Study Info', width: 25 },
+    { key: 'studyEventArm', label: 'SE Arm', category: 'Study Info', width: 20 },
+    { key: 'studyEventStatus', label: 'SE Status', category: 'Study Info', width: 12 },
+    { key: 'studyEventDate', label: 'SE Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureName', label: 'Study Procedure', category: 'Study Info', width: 25 },
+    { key: 'studyProcedureDate', label: 'SP Date', category: 'Study Info', width: 12 },
+    { key: 'studyProcedureStatus', label: 'SP Status', category: 'Study Info', width: 12 },
+    { key: 'clinicalEvaluator', label: 'Clinical Evaluator', category: 'Study Info', width: 20 },
+    { key: 'actionRequiredReason', label: 'AR Reason', category: 'Action Required', width: 30 },
+    { key: 'actionRequiredCreationDate', label: 'AR Created', category: 'Action Required', width: 20 },
+    { key: 'actionRequiredCreator', label: 'AR Creator', category: 'Action Required', width: 20 },
+    { key: 'flagStatus', label: 'Status', category: 'Action Required', width: 12 },
+    { key: 'priority', label: 'Priority', category: 'Action Required', width: 12 },
+    { key: 'actionRequiredLink', label: 'AR Link', category: 'Links', width: 50 },
+];
+
+export const FLAGGED_TASK_COLUMN_CATEGORIES = [
+    'Trial Info',
+    'Site Info',
+    'Subject Info',
+    'Study Info',
+    'Action Required',
+    'Links',
+];
+
+export const SUBJECT_COLUMN_DEFINITIONS: GenericColumnDefinition[] = [
+    { key: 'trialName', label: 'Trial', category: 'Trial Info', width: 25 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteNumber', label: 'Site Number', category: 'Site Info', width: 15 },
+    { key: 'siteCountry', label: 'Site Country', category: 'Site Info', width: 15 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'subjectStatus', label: 'Status', category: 'Subject Info', width: 12 },
+    { key: 'subjectStatusReason', label: 'Reason', category: 'Subject Info', width: 30 },
+];
+
+export const SUBJECT_COLUMN_CATEGORIES = [
+    'Trial Info',
+    'Site Info',
+    'Subject Info',
+];
+
+export const ASSET_REPORT_COLUMN_DEFINITIONS: GenericColumnDefinition[] = [
+    { key: 'trialName', label: 'Trial', category: 'Trial Info', width: 25 },
+    { key: 'siteName', label: 'Site Name', category: 'Site Info', width: 30 },
+    { key: 'siteNumber', label: 'Site Number', category: 'Site Info', width: 15 },
+    { key: 'siteCountry', label: 'Site Country', category: 'Site Info', width: 15 },
+    { key: 'subjectNumber', label: 'Subject Number', category: 'Subject Info', width: 15 },
+    { key: 'studyArm', label: 'Study Arm', category: 'Subject Info', width: 20 },
+    { key: 'studyEvent', label: 'Study Event', category: 'Study Info', width: 25 },
+    { key: 'studyProcedure', label: 'Study Procedure', category: 'Study Info', width: 25 },
+    { key: 'studyProcedureDate', label: 'SP Date', category: 'Study Info', width: 12 },
+    { key: 'evaluator', label: 'Evaluator', category: 'Study Info', width: 20 },
+    { key: 'assetId', label: 'Asset ID', category: 'Asset Info', width: 10 },
+    { key: 'assetTitle', label: 'Asset Title', category: 'Asset Info', width: 40 },
+    { key: 'uploadDate', label: 'Upload Date', category: 'Asset Info', width: 18 },
+    { key: 'uploadedBy', label: 'Uploaded By', category: 'Asset Info', width: 20 },
+    { key: 'processed', label: 'Processed', category: 'Asset Info', width: 12 },
+    { key: 'fileSize', label: 'File Size', category: 'Asset Info', width: 12 },
+    { key: 'assetLink', label: 'Asset Link', category: 'Links', width: 50 },
+    { key: 'containsPii', label: 'Contains PII', category: 'Asset Info', width: 12 },
+    { key: 'piiProcessed', label: 'PII Processed', category: 'Asset Info', width: 12 },
+];
+
+export const ASSET_REPORT_COLUMN_CATEGORIES = [
+    'Trial Info',
+    'Site Info',
+    'Subject Info',
+    'Study Info',
+    'Asset Info',
+    'Links',
+];
+
+// ---------------------------------------------------------------------------
+// Column definitions map by entity
+// ---------------------------------------------------------------------------
+
+export function getColumnDefinitionsForEntity(entity: ReportRowEntity): {
+    columns: GenericColumnDefinition[];
+    categories: string[];
+} {
+    switch (entity) {
+        case 'studyProcedure':
+            return { columns: PROCEDURE_COLUMN_DEFINITIONS, categories: PROCEDURE_COLUMN_CATEGORIES };
+        case 'form':
+            return { columns: FORM_REPORT_COLUMN_DEFINITIONS, categories: FORM_REPORT_COLUMN_CATEGORIES };
+        case 'actionRequired':
+            return { columns: FLAGGED_TASK_COLUMN_DEFINITIONS, categories: FLAGGED_TASK_COLUMN_CATEGORIES };
+        case 'subject':
+            return { columns: SUBJECT_COLUMN_DEFINITIONS, categories: SUBJECT_COLUMN_CATEGORIES };
+        case 'asset':
+            return { columns: ASSET_REPORT_COLUMN_DEFINITIONS, categories: ASSET_REPORT_COLUMN_CATEGORIES };
+        default:
+            return { columns: ASSET_REPORT_COLUMN_DEFINITIONS, categories: ASSET_REPORT_COLUMN_CATEGORIES };
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Entity-Specific Excel Generators
+// ---------------------------------------------------------------------------
+
+function buildGenericExcel(
+    rows: Record<string, unknown>[],
+    columnDefs: GenericColumnDefinition[],
+    selectedColumnKeys: string[],
+    sheetName: string,
+    reportName: string,
+    taskNames?: string[],
+): void {
+    const selectedColumns = columnDefs.filter(col =>
+        selectedColumnKeys.includes(col.key)
+    );
+
+    const headers = selectedColumns.map(col => col.label);
+    const colWidths = selectedColumns.map(col => ({ wch: col.width }));
+
+    if (taskNames?.length) {
+        for (const taskName of taskNames) {
+            headers.push(taskName, `${taskName} Status`);
+            colWidths.push({ wch: 20 }, { wch: 15 });
+        }
+    }
+
+    if (selectedColumnKeys.includes('assetLinks')) {
+        headers.push('Assets');
+        colWidths.push({ wch: 50 });
+    }
+
+    const data = rows.map(row => {
+        const values = selectedColumns.map(col => {
+            const value = row[col.key];
+            if (value === null || value === undefined) return '';
+            return String(value);
+        });
+
+        if (taskNames?.length) {
+            const tasks = (row['tasks'] as Array<{ name: string; completedDate: string | null }>) || [];
+            for (const taskName of taskNames) {
+                const task = tasks.find(t => t.name.toLowerCase().includes(taskName.toLowerCase()));
+                values.push(task ? task.name : '');
+                values.push(task ? (task.completedDate ? 'Complete' : 'Incomplete') : 'N/A');
+            }
+        }
+
+        if (selectedColumnKeys.includes('assetLinks')) {
+            const links = (row['assetLinks'] as string[]) || [];
+            values.push(links.join(', '));
+        }
+
+        return values;
+    });
+
+    const worksheetData = [headers, ...data];
+    const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+    worksheet['!cols'] = colWidths;
+
+    const linkColumns = selectedColumns
+        .map((col, idx) => ({ key: col.key, idx }))
+        .filter(c => c.key.toLowerCase().includes('link'));
+
+    for (const linkCol of linkColumns) {
+        rows.forEach((row, rowIndex) => {
+            const value = row[linkCol.key];
+            if (value && typeof value === 'string' && value.startsWith('http')) {
+                const cellRef = XLSX.utils.encode_cell({ r: rowIndex + 1, c: linkCol.idx });
+                if (worksheet[cellRef]) {
+                    worksheet[cellRef].l = { Target: value, Tooltip: 'Open' };
+                }
+            }
+        });
+    }
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
+
+    const dateStr = format(new Date(), 'yyyy-MM-dd');
+    const filename = `${reportName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.xlsx`;
+
+    XLSX.writeFile(workbook, filename);
+}
+
+export function generateReportExcel(
+    entity: ReportRowEntity,
+    rows: unknown[],
+    options: {
+        columns: string[];
+        taskNames?: string[];
+        reportName: string;
+    }
+): void {
+    const { columns: columnDefs } = getColumnDefinitionsForEntity(entity);
+    const sheetNames: Record<ReportRowEntity, string> = {
+        studyProcedure: 'Study Procedures',
+        form: 'Forms',
+        actionRequired: 'Action Required',
+        subject: 'Subjects',
+        asset: 'Assets',
+    };
+
+    buildGenericExcel(
+        rows as Record<string, unknown>[],
+        columnDefs,
+        options.columns,
+        sheetNames[entity],
+        options.reportName,
+        options.taskNames,
+    );
 }

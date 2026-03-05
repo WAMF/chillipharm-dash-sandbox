@@ -9,6 +9,12 @@ import type {
     ProcedureDefinition,
     TaskDefinition,
     SiteReportRecord,
+    SavedReportTemplate,
+    SavedReportFilters,
+    EmailList,
+    ReportSchedule,
+    ReportRowEntity,
+    ReportCadence,
 } from '@cp/types';
 import type { ApiClient } from './client';
 
@@ -444,6 +450,169 @@ export class DataLoader {
 
         const result = await response.json();
         return result.data;
+    }
+
+    // -----------------------------------------------------------------------
+    // Report Templates
+    // -----------------------------------------------------------------------
+
+    async fetchSavedTemplates(): Promise<SavedReportTemplate[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/templates');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createSavedTemplate(template: {
+        name: string;
+        description: string;
+        baseTemplateId: string;
+        rowEntity: ReportRowEntity;
+        columns: string[];
+        filters: SavedReportFilters;
+    }): Promise<SavedReportTemplate> {
+        const response = await this.fetchWithAuth('/api/v1/reports/templates', {
+            method: 'POST',
+            body: JSON.stringify(template),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateSavedTemplate(
+        id: string,
+        template: Partial<{
+            name: string;
+            description: string;
+            columns: string[];
+            filters: SavedReportFilters;
+        }>
+    ): Promise<SavedReportTemplate> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/templates/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(template),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteSavedTemplate(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/templates/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    // -----------------------------------------------------------------------
+    // Report Data
+    // -----------------------------------------------------------------------
+
+    async fetchReportData(
+        rowEntity: ReportRowEntity,
+        filters: SavedReportFilters
+    ): Promise<{ data: unknown[]; totalRows: number }> {
+        const response = await this.fetchWithAuth('/api/v1/reports/data', {
+            method: 'POST',
+            body: JSON.stringify({ rowEntity, filters }),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        return response.json();
+    }
+
+    // -----------------------------------------------------------------------
+    // Email Lists
+    // -----------------------------------------------------------------------
+
+    async fetchEmailLists(): Promise<EmailList[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/email-lists');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createEmailList(list: { name: string; emails: string[] }): Promise<EmailList> {
+        const response = await this.fetchWithAuth('/api/v1/reports/email-lists', {
+            method: 'POST',
+            body: JSON.stringify(list),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateEmailList(
+        id: string,
+        list: { name?: string; emails?: string[] }
+    ): Promise<EmailList> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/email-lists/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(list),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteEmailList(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/email-lists/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    // -----------------------------------------------------------------------
+    // Schedules
+    // -----------------------------------------------------------------------
+
+    async fetchSchedules(): Promise<ReportSchedule[]> {
+        const response = await this.fetchWithAuth('/api/v1/reports/schedules');
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async createSchedule(schedule: {
+        savedTemplateId: string;
+        emailListId: string;
+        cadence: ReportCadence;
+        enabled?: boolean;
+    }): Promise<ReportSchedule> {
+        const response = await this.fetchWithAuth('/api/v1/reports/schedules', {
+            method: 'POST',
+            body: JSON.stringify(schedule),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async updateSchedule(
+        id: string,
+        patch: Partial<{ cadence: ReportCadence; emailListId: string; enabled: boolean }>
+    ): Promise<ReportSchedule> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(patch),
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const result = await response.json();
+        return result.data;
+    }
+
+    async deleteSchedule(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}`, {
+            method: 'DELETE',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+    }
+
+    async runSchedule(id: string): Promise<void> {
+        const response = await this.fetchWithAuth(`/api/v1/reports/schedules/${id}/run`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
     }
 }
 
