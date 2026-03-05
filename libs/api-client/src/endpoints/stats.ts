@@ -50,13 +50,6 @@ export class StatsApi extends BaseApi {
         return this.client.get('/api/stats/assets-timeline', filters, options);
     }
 
-    async getTaskTimeline(
-        filters?: StatsFilters,
-        options?: RequestOptions
-    ): Promise<TimeSeriesDataPoint[]> {
-        return this.client.get('/api/stats/tasks-timeline', filters, options);
-    }
-
     async getSitesStats(
         filters?: { trial_id?: string },
         options?: RequestOptions

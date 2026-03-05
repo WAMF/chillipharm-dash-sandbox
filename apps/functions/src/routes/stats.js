@@ -95,7 +95,7 @@ router.get('/sites/report', async (req, res, next) => {
                 SELECT
                     tc.id as site_id,
                     COUNT(f.id) as total_forms,
-                    COUNT(f.id) as complete_forms
+                    COUNT(f.id) FILTER (WHERE f.status = 'complete') as complete_forms
                 FROM trial_containers tc
                 LEFT JOIN study_subjects ss ON ss.site_id = tc.id
                 LEFT JOIN assets a ON a.study_subject_id = ss.id

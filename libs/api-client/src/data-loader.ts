@@ -518,7 +518,8 @@ export class DataLoader {
             body: JSON.stringify({ rowEntity, filters }),
         });
         if (!response.ok) throw new Error(`API error: ${response.status}`);
-        return response.json();
+        const result = await response.json();
+        return { data: result.data, totalRows: result.totalRows };
     }
 
     // -----------------------------------------------------------------------
