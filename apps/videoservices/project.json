@@ -10,12 +10,10 @@
             "outputs": ["{options.outputPath}"],
             "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/videoservices"
+                "outputPath": "apps/videoservices"
             },
             "configurations": {
-                "development": {
-                    "outputPath": "apps/videoservices"
-                },
+                "development": {},
                 "production": {}
             }
         },
