@@ -94,18 +94,23 @@ router.get('/sites/report', async (req, res, next) => {
             site_forms AS (
                 SELECT
                     tc.id as site_id,
-                    COUNT(f.id) as total_forms,
-                    COUNT(f.id) FILTER (WHERE f.status = 'complete') as complete_forms
+                    COUNT(DISTINCT f.id) as total_forms,
+                    COUNT(DISTINCT f.id) FILTER (WHERE f.status = 'complete') as complete_forms
                 FROM trial_containers tc
                 LEFT JOIN study_subjects ss ON ss.site_id = tc.id
                 LEFT JOIN assets a ON a.study_subject_id = ss.id
-                LEFT JOIN forms f ON (f.asset_id = a.id OR (f.form_container_type = 'Study::Procedure' AND f.form_container_id IN (
-                    SELECT sp.id FROM study_procedures sp
-                    JOIN study_events se ON sp.study_event_id = se.id
-                    WHERE se.study_subject_id = ss.id
-                )))
+                LEFT JOIN forms f ON (
+                    f.deleted_at IS NULL AND
+                    (
+                        f.asset_id = a.id OR
+                        (f.form_container_type = 'Study::Procedure' AND f.form_container_id IN (
+                            SELECT sp.id FROM study_procedures sp
+                            JOIN study_events se ON sp.study_event_id = se.id
+                            WHERE se.study_subject_id = ss.id
+                        ))
+                    )
+                )
                 WHERE tc.type = 'Site' AND tc.deleted_at IS NULL
-                AND f.deleted_at IS NULL
                 ${trialFilter}
                 GROUP BY tc.id
             ),
