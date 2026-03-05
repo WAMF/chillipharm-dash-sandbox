@@ -19,10 +19,10 @@ const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(cookieParser());
 
 app.use(
     '/docs',
+    cookieParser(),
     verifyDocsAuth,
     swaggerUi.serve,
     swaggerUi.setup(openapiSpec, {
@@ -31,7 +31,7 @@ app.use(
     })
 );
 
-app.get('/openapi.json', verifyDocsAuth, (req, res) => {
+app.get('/openapi.json', cookieParser(), verifyDocsAuth, (req, res) => {
     res.json(openapiSpec);
 });
 
