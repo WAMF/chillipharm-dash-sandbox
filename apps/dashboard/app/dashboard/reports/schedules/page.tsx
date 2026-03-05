@@ -24,6 +24,7 @@ export default function SchedulesPage() {
     } = useReports();
 
     const [showModal, setShowModal] = useState(false);
+    const [editingSchedule, setEditingSchedule] = useState<ReportSchedule | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [runningId, setRunningId] = useState<string | null>(null);
 
@@ -72,7 +73,7 @@ export default function SchedulesPage() {
                     {schedules.length} schedule{schedules.length !== 1 ? 's' : ''}
                 </p>
                 <button
-                    onClick={() => setShowModal(true)}
+                    onClick={() => { setEditingSchedule(null); setShowModal(true); }}
                     disabled={savedTemplates.length === 0 || emailLists.length === 0}
                     className="rounded-md bg-chilli-red px-4 py-2 text-sm font-medium text-white hover:bg-chilli-red-dark disabled:opacity-50 transition-colors"
                     title={savedTemplates.length === 0 ? 'Create a template first' : emailLists.length === 0 ? 'Create an email list first' : ''}
@@ -146,6 +147,12 @@ export default function SchedulesPage() {
                                                 {runningId === schedule.id ? 'Running...' : 'Run Now'}
                                             </button>
                                             <button
+                                                onClick={() => { setEditingSchedule(schedule); setShowModal(true); }}
+                                                className="rounded px-3 py-1.5 text-xs font-medium text-neutral-600 border border-neutral-300 hover:bg-neutral-50 transition-colors"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
                                                 onClick={() => handleDelete(schedule.id)}
                                                 disabled={deletingId === schedule.id}
                                                 className="rounded px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50 transition-colors"
@@ -162,13 +169,19 @@ export default function SchedulesPage() {
             )}
 
             {showModal && (
-                <CreateScheduleModal
+                <ScheduleModal
+                    existingSchedule={editingSchedule}
                     templates={savedTemplates}
                     emailLists={emailLists}
-                    onClose={() => setShowModal(false)}
+                    onClose={() => { setShowModal(false); setEditingSchedule(null); }}
                     onSave={async (data) => {
-                        await createSchedule(data);
+                        if (editingSchedule) {
+                            await updateSchedule(editingSchedule.id, data);
+                        } else {
+                            await createSchedule(data);
+                        }
                         setShowModal(false);
+                        setEditingSchedule(null);
                     }}
                 />
             )}
@@ -177,10 +190,11 @@ export default function SchedulesPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Create Schedule Modal
+// Schedule Modal (Create / Edit)
 // ---------------------------------------------------------------------------
 
-interface CreateScheduleModalProps {
+interface ScheduleModalProps {
+    existingSchedule: ReportSchedule | null;
     templates: { id: string; name: string }[];
     emailLists: { id: string; name: string }[];
     onClose: () => void;
@@ -192,12 +206,14 @@ interface CreateScheduleModalProps {
     }) => Promise<void>;
 }
 
-function CreateScheduleModal({ templates, emailLists, onClose, onSave }: CreateScheduleModalProps) {
-    const [templateId, setTemplateId] = useState('');
-    const [emailListId, setEmailListId] = useState('');
-    const [cadence, setCadence] = useState<ReportCadence>('daily');
-    const [enabled, setEnabled] = useState(true);
+function ScheduleModal({ existingSchedule, templates, emailLists, onClose, onSave }: ScheduleModalProps) {
+    const [templateId, setTemplateId] = useState(existingSchedule?.savedTemplateId || '');
+    const [emailListId, setEmailListId] = useState(existingSchedule?.emailListId || '');
+    const [cadence, setCadence] = useState<ReportCadence>(existingSchedule?.cadence || 'daily');
+    const [enabled, setEnabled] = useState(existingSchedule?.enabled ?? true);
     const [saving, setSaving] = useState(false);
+
+    const isEditing = !!existingSchedule;
 
     const handleSave = async () => {
         setSaving(true);
@@ -218,7 +234,9 @@ function CreateScheduleModal({ templates, emailLists, onClose, onSave }: CreateS
                 onClick={e => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between border-b border-neutral-200 px-6 py-4">
-                    <h2 className="text-lg font-semibold text-neutral-900">Create Schedule</h2>
+                    <h2 className="text-lg font-semibold text-neutral-900">
+                        {isEditing ? 'Edit Schedule' : 'Create Schedule'}
+                    </h2>
                     <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600">
                         <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -275,7 +293,7 @@ function CreateScheduleModal({ templates, emailLists, onClose, onSave }: CreateS
                             checked={enabled}
                             onChange={e => setEnabled(e.target.checked)}
                         />
-                        Enable immediately
+                        {isEditing ? 'Enabled' : 'Enable immediately'}
                     </label>
                 </div>
 
@@ -291,7 +309,7 @@ function CreateScheduleModal({ templates, emailLists, onClose, onSave }: CreateS
                         disabled={saving || !templateId || !emailListId}
                         className="rounded-md bg-chilli-red px-4 py-2 text-sm font-medium text-white hover:bg-chilli-red-dark disabled:opacity-50 transition-colors"
                     >
-                        {saving ? 'Creating...' : 'Create Schedule'}
+                        {saving ? 'Saving...' : isEditing ? 'Update Schedule' : 'Create Schedule'}
                     </button>
                 </div>
             </div>
