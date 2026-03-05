@@ -7,7 +7,7 @@ runConfig:
 
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    secret: FIREBASE_API_KEY
+    value: AIzaSyAudqbkOI2z0uoYy3fvhA8oaYHSNYIPprs
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
     value: chillipharm-dashboard.firebaseapp.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
@@ -15,8 +15,8 @@ env:
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
     value: chillipharm-dashboard.firebasestorage.app
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    secret: FIREBASE_MESSAGING_SENDER_ID
+    value: "336772253694"
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    secret: FIREBASE_APP_ID
+    value: 1:336772253694:web:d9fcc4475657f90e8722af
   - variable: NEXT_PUBLIC_API_URL
     value: /api/v1
