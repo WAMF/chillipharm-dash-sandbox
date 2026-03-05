@@ -5,7 +5,37 @@ import type {
     TaskMember,
     TaskInput,
     VSAsset,
+    AssetFilters,
 } from '@cp/types';
+
+export interface MockUser {
+    user_id: string;
+    user_name: string;
+    user_email: string;
+}
+
+export const mockUsers: MockUser[] = [
+    {
+        user_id: 'user-001',
+        user_name: 'Sarah Jenkins',
+        user_email: 'sarah.jenkins@chillipharm.com',
+    },
+    {
+        user_id: 'user-002',
+        user_name: 'Stevie Hall',
+        user_email: 'stevie.hall@chillipharm.com',
+    },
+    {
+        user_id: 'user-003',
+        user_name: 'Jaq Aguila',
+        user_email: 'jaq.aguila@chillipharm.com',
+    },
+    {
+        user_id: 'user-004',
+        user_name: 'Pavlos Georgiou',
+        user_email: 'pavlos.georgiou@chillipharm.com',
+    },
+];
 
 export interface Site {
     site_id: string;
@@ -158,6 +188,118 @@ export const mockAssets: VSAsset[] = [
             Assessment: 'End of study',
         },
     },
+    {
+        asset_id: 'asset-006',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20308 Visit Week 4.mp4',
+        file_type: 'video/mp4',
+        file_size: 178257920,
+        duration: '00:06:22',
+        thumbnail_url: '/thumbnails/thumb-006.jpg',
+        created_at: '2024-02-01T08:15:00Z',
+        metadata: {
+            subject_id: '20308',
+            visit_date: '2024-02-01',
+            visit_type: 'Visit Week 4',
+            Assessment: 'Standard',
+        },
+    },
+    {
+        asset_id: 'asset-007',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20313 Screening.mp4',
+        file_type: 'video/mp4',
+        file_size: 94371840,
+        duration: '00:03:45',
+        thumbnail_url: '/thumbnails/thumb-007.jpg',
+        created_at: '2024-02-05T10:00:00Z',
+        metadata: {
+            subject_id: '20313',
+            visit_date: '2024-02-05',
+            visit_type: 'Screening',
+            Assessment: 'Initial',
+        },
+    },
+    {
+        asset_id: 'asset-008',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20314 Baseline Week 0.mp4',
+        file_type: 'video/mp4',
+        file_size: 402653184,
+        duration: '00:14:50',
+        thumbnail_url: '/thumbnails/thumb-008.jpg',
+        created_at: '2024-02-10T13:30:00Z',
+        metadata: {
+            subject_id: '20314',
+            visit_date: '2024-02-10',
+            visit_type: 'Baseline Week 0',
+            Assessment: 'Initial',
+        },
+    },
+    {
+        asset_id: 'asset-009',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20309 Refill Week 8.mp4',
+        file_type: 'video/mp4',
+        file_size: 209715200,
+        duration: '00:07:30',
+        thumbnail_url: '/thumbnails/thumb-009.jpg',
+        created_at: '2024-02-15T09:45:00Z',
+        metadata: {
+            subject_id: '20309',
+            visit_date: '2024-02-15',
+            visit_type: 'Refill Week 8',
+            Assessment: 'Standard',
+        },
+    },
+    {
+        asset_id: 'asset-010',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20315 Early Termination.mp4',
+        file_type: 'video/mp4',
+        file_size: 524288000,
+        duration: '00:19:05',
+        thumbnail_url: '/thumbnails/thumb-010.jpg',
+        created_at: '2024-02-20T15:00:00Z',
+        metadata: {
+            subject_id: '20315',
+            visit_date: '2024-02-20',
+            visit_type: 'Early Termination',
+            Assessment: 'End of study',
+        },
+    },
+    {
+        asset_id: 'asset-011',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20310 Unscheduled.mp4',
+        file_type: 'video/mp4',
+        file_size: 157286400,
+        duration: '00:05:18',
+        thumbnail_url: '/thumbnails/thumb-011.jpg',
+        created_at: '2024-03-01T11:20:00Z',
+        metadata: {
+            subject_id: '20310',
+            visit_date: '2024-03-01',
+            visit_type: 'Unscheduled',
+            Assessment: 'Follow-up',
+        },
+    },
+    {
+        asset_id: 'asset-012',
+        site_id: 'site-001',
+        name: 'WR42221-366044-Subject 20316 Visit Week 24.mp4',
+        file_type: 'video/mp4',
+        file_size: 838860800,
+        duration: '00:30:10',
+        thumbnail_url: '/thumbnails/thumb-012.jpg',
+        created_at: '2024-03-10T14:00:00Z',
+        metadata: {
+            subject_id: '20316',
+            visit_date: '2024-03-10',
+            visit_type: 'Visit Week 24',
+            Assessment: 'Extended',
+        },
+    },
 ];
 
 const mockQADestination: WorkflowDestination = {
@@ -190,8 +332,6 @@ export const mockWorkflows: Workflow[] = [
         name: 'Redaction',
         trial_id: 'trial-001',
         trial_name: 'WR42221 - Velodrome',
-        source_site_id: 'site-001',
-        source_site_name: 'Library: 336160 - Sunderland Eye Infirmary - GBR',
         qa_destination: mockQADestination,
         destinations: mockDestinations,
         created_by: 'user-001',
@@ -269,6 +409,20 @@ const mockInputSubject20311: TaskInput[] = [
     },
 ];
 
+const mockInputSubject20312: TaskInput[] = [
+    {
+        task_input_id: 'ti-005',
+        task_id: 'task-002',
+        asset_id: 'asset-005',
+        site_id: 'site-001',
+        asset_name: 'WR42221-366044-Subject 20312 Visit Week 48.mp4',
+        duration: '00:22:10',
+        file_size: 628318208,
+        sequence_order: 0,
+        created_at: '2024-01-29T09:05:00Z',
+    },
+];
+
 export const mockTasks: VSTask[] = [
     {
         task_id: 'task-001',
@@ -281,6 +435,8 @@ export const mockTasks: VSTask[] = [
         inputs: mockInputSubject20308,
         source_site_id: 'site-001',
         source_site_name: 'Library: 336160 - Sunderland Eye Infirmary - GBR',
+        assigned_to: 'user-002',
+        assigned_to_name: 'Stevie Hall',
         created_by: 'user-001',
         created_at: '2024-01-28T10:00:00Z',
         updated_at: '2024-01-28T10:05:00Z',
@@ -293,7 +449,7 @@ export const mockTasks: VSTask[] = [
         description: 'WR42221-366044 — Redact end-of-study visit recording. Final filename to be confirmed.',
         status: 'todo',
         members: mockMembers,
-        inputs: [],
+        inputs: mockInputSubject20312,
         source_site_id: 'site-001',
         source_site_name: 'Library: 336160 - Sunderland Eye Infirmary - GBR',
         created_by: 'user-001',
@@ -311,6 +467,8 @@ export const mockTasks: VSTask[] = [
         inputs: mockInputSubject20309,
         source_site_id: 'site-001',
         source_site_name: 'Library: 336160 - Sunderland Eye Infirmary - GBR',
+        assigned_to: 'user-003',
+        assigned_to_name: 'Jaq Aguila',
         created_by: 'user-001',
         created_at: '2024-01-27T14:00:00Z',
         updated_at: '2024-01-30T11:00:00Z',
@@ -351,6 +509,8 @@ export const mockTasks: VSTask[] = [
         source_site_name: 'Library: 336160 - Sunderland Eye Infirmary - GBR',
         output_file_name: 'WR42221-366044-Subject 20311 Refill Week 24 — Redacted.mp4',
         output_file_size: 248000000,
+        assigned_to: 'user-004',
+        assigned_to_name: 'Pavlos Georgiou',
         created_by: 'user-001',
         created_at: '2024-01-15T10:00:00Z',
         updated_at: '2024-01-20T16:00:00Z',
@@ -363,14 +523,43 @@ export const mockTasks: VSTask[] = [
     },
 ];
 
-let workflows = [...mockWorkflows];
-let tasks = [...mockTasks];
+function parseDurationToSeconds(duration: string): number {
+    const parts = duration.split(':').map(Number);
+    return (parts[0] ?? 0) * 3600 + (parts[1] ?? 0) * 60 + (parts[2] ?? 0);
+}
+
+interface MockStore {
+    workflows: Workflow[];
+    tasks: VSTask[];
+}
+
+const globalStore = globalThis as unknown as { __mockStore?: MockStore };
+
+if (!globalStore.__mockStore) {
+    globalStore.__mockStore = {
+        workflows: [...mockWorkflows],
+        tasks: [...mockTasks],
+    };
+}
+
+const store = globalStore.__mockStore;
 
 function generateId(prefix: string): string {
     return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
 export const mockDatabase = {
+    users: {
+        getAll: () => [...mockUsers],
+        getById: (id: string) => mockUsers.find((u) => u.user_id === id),
+        search: (query: string) =>
+            mockUsers.filter(
+                (u) =>
+                    u.user_name.toLowerCase().includes(query.toLowerCase()) ||
+                    u.user_email.toLowerCase().includes(query.toLowerCase())
+            ),
+    },
+
     sites: {
         getAll: () => [...mockSites],
         getById: (id: string) => mockSites.find((s) => s.site_id === id),
@@ -389,15 +578,88 @@ export const mockDatabase = {
                     a.site_id === siteId &&
                     a.name.toLowerCase().includes(query.toLowerCase())
             ),
+        query: (siteId: string, filters: AssetFilters) => {
+            let results = mockAssets.filter((a) => a.site_id === siteId);
+
+            if (filters.search) {
+                const term = filters.search.toLowerCase();
+                results = results.filter((a) =>
+                    a.name.toLowerCase().includes(term)
+                );
+            }
+
+            if (filters.file_type) {
+                results = results.filter((a) => a.file_type === filters.file_type);
+            }
+
+            if (filters.visit_type) {
+                results = results.filter(
+                    (a) => a.metadata?.visit_type === filters.visit_type
+                );
+            }
+
+            if (filters.assessment) {
+                results = results.filter(
+                    (a) => a.metadata?.Assessment === filters.assessment
+                );
+            }
+
+            if (filters.subject_id) {
+                results = results.filter(
+                    (a) => a.metadata?.subject_id === filters.subject_id
+                );
+            }
+
+            if (filters.visit_date_from) {
+                results = results.filter(
+                    (a) =>
+                        typeof a.metadata?.visit_date === 'string' &&
+                        a.metadata.visit_date >= filters.visit_date_from!
+                );
+            }
+
+            if (filters.visit_date_to) {
+                results = results.filter(
+                    (a) =>
+                        typeof a.metadata?.visit_date === 'string' &&
+                        a.metadata.visit_date <= filters.visit_date_to!
+                );
+            }
+
+            const sortField = filters.sort_by ?? 'created_at';
+            const sortDir = filters.sort_dir === 'asc' ? 1 : -1;
+
+            results.sort((a, b) => {
+                let comparison = 0;
+                switch (sortField) {
+                    case 'name':
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case 'created_at':
+                        comparison = a.created_at.localeCompare(b.created_at);
+                        break;
+                    case 'file_size':
+                        comparison = a.file_size - b.file_size;
+                        break;
+                    case 'duration':
+                        comparison =
+                            parseDurationToSeconds(a.duration ?? '00:00:00') -
+                            parseDurationToSeconds(b.duration ?? '00:00:00');
+                        break;
+                }
+                return comparison * sortDir;
+            });
+
+            return results;
+        },
     },
 
     workflows: {
-        getAll: () => [...workflows],
-        getById: (id: string) => workflows.find((w) => w.workflow_id === id),
+        getAll: () => [...store.workflows],
+        getById: (id: string) => store.workflows.find((w) => w.workflow_id === id),
         create: (data: {
             name: string;
             trial_id: string;
-            source_site_id: string;
             qa_destination?: {
                 site_id: string;
                 field_mapping: { mode: string; fields?: string[] };
@@ -409,9 +671,6 @@ export const mockDatabase = {
                 display_order?: number;
             }>;
         }): Workflow => {
-            const sourceSite = mockSites.find(
-                (s) => s.site_id === data.source_site_id
-            );
             const trial = mockSites.find((s) => s.trial_id === data.trial_id);
             const workflowId = generateId('wf');
 
@@ -455,8 +714,6 @@ export const mockDatabase = {
                 name: data.name,
                 trial_id: data.trial_id,
                 trial_name: trial?.trial_name || 'Unknown Trial',
-                source_site_id: data.source_site_id,
-                source_site_name: sourceSite?.name || 'Unknown',
                 qa_destination: qaDestination,
                 destinations,
                 created_by: 'current-user',
@@ -464,42 +721,50 @@ export const mockDatabase = {
                 updated_at: new Date().toISOString(),
             };
 
-            workflows.push(workflow);
+            store.workflows.push(workflow);
             return workflow;
         },
         update: (id: string, data: Partial<Workflow>): Workflow | null => {
-            const index = workflows.findIndex((w) => w.workflow_id === id);
+            const index = store.workflows.findIndex((w) => w.workflow_id === id);
             if (index === -1) return null;
 
-            workflows[index] = {
-                ...workflows[index],
+            store.workflows[index] = {
+                ...store.workflows[index],
                 ...data,
                 updated_at: new Date().toISOString(),
             };
-            return workflows[index];
+            return store.workflows[index];
         },
         delete: (id: string): boolean => {
-            const index = workflows.findIndex((w) => w.workflow_id === id);
+            const index = store.workflows.findIndex((w) => w.workflow_id === id);
             if (index === -1) return false;
-            workflows.splice(index, 1);
+            store.workflows.splice(index, 1);
             return true;
         },
     },
 
     tasks: {
-        getAll: () => [...tasks],
-        getById: (id: string) => tasks.find((t) => t.task_id === id),
+        getAll: () => [...store.tasks],
+        getById: (id: string) => store.tasks.find((t) => t.task_id === id),
         getByWorkflow: (workflowId: string) =>
-            tasks.filter((t) => t.workflow_id === workflowId),
+            store.tasks.filter((t) => t.workflow_id === workflowId),
         create: (data: {
             workflow_id: string;
             name: string;
             description?: string;
+            assigned_to?: string;
+            source_site_id: string;
         }): VSTask => {
-            const workflow = workflows.find(
+            const workflow = store.workflows.find(
                 (w) => w.workflow_id === data.workflow_id
             );
+            const sourceSite = mockSites.find(
+                (s) => s.site_id === data.source_site_id
+            );
             const taskId = generateId('task');
+            const assignee = data.assigned_to
+                ? mockUsers.find((u) => u.user_id === data.assigned_to)
+                : undefined;
 
             const task: VSTask = {
                 task_id: taskId,
@@ -521,59 +786,75 @@ export const mockDatabase = {
                     },
                 ],
                 inputs: [],
-                source_site_id: workflow?.source_site_id || '',
-                source_site_name: workflow?.source_site_name || 'Unknown',
+                source_site_id: data.source_site_id,
+                source_site_name: sourceSite?.name || 'Unknown',
+                assigned_to: assignee?.user_id,
+                assigned_to_name: assignee?.user_name,
                 created_by: 'current-user',
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString(),
             };
 
-            tasks.push(task);
+            store.tasks.push(task);
             return task;
         },
         update: (id: string, data: Partial<VSTask>): VSTask | null => {
-            const index = tasks.findIndex((t) => t.task_id === id);
+            const index = store.tasks.findIndex((t) => t.task_id === id);
             if (index === -1) return null;
 
-            tasks[index] = {
-                ...tasks[index],
+            if ('assigned_to' in data) {
+                if (!data.assigned_to) {
+                    data.assigned_to = undefined;
+                    data.assigned_to_name = undefined;
+                } else {
+                    const assignee = mockUsers.find(
+                        (u) => u.user_id === data.assigned_to
+                    );
+                    data.assigned_to_name = assignee?.user_name;
+                }
+            }
+
+            store.tasks[index] = {
+                ...store.tasks[index],
                 ...data,
                 updated_at: new Date().toISOString(),
             };
-            return tasks[index];
+            return store.tasks[index];
         },
         addInputs: (
             taskId: string,
             assetIds: string[]
         ): TaskInput[] => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return [];
 
-            const assetId = assetIds[0];
-            const asset = mockAssets.find((a) => a.asset_id === assetId);
-            const input: TaskInput = {
-                task_input_id: generateId('ti'),
-                task_id: taskId,
-                asset_id: assetId,
-                site_id: asset?.site_id || '',
-                asset_name: asset?.name || 'Unknown Asset',
-                duration: asset?.duration,
-                file_size: asset?.file_size,
-                sequence_order: 0,
-                created_at: new Date().toISOString(),
-            };
+            const newInputs: TaskInput[] = assetIds
+                .map((assetId, index) => {
+                    const asset = mockAssets.find((a) => a.asset_id === assetId);
+                    return {
+                        task_input_id: generateId('ti'),
+                        task_id: taskId,
+                        asset_id: assetId,
+                        site_id: asset?.site_id || '',
+                        asset_name: asset?.name || 'Unknown Asset',
+                        duration: asset?.duration,
+                        file_size: asset?.file_size,
+                        sequence_order: task.inputs.length + index,
+                        created_at: new Date().toISOString(),
+                    };
+                });
 
-            task.inputs = [input];
+            task.inputs.push(...newInputs);
             task.status = 'in_progress';
             task.updated_at = new Date().toISOString();
 
-            return [input];
+            return newInputs;
         },
         addInputsFromFiles: (
             taskId: string,
             files: Array<{ name: string; size: number }>
         ): TaskInput[] => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return [];
 
             const newInputs: TaskInput[] = files.map((file, index) => ({
@@ -594,7 +875,7 @@ export const mockDatabase = {
             return newInputs;
         },
         removeInput: (taskId: string, inputId: string): boolean => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return false;
 
             const index = task.inputs.findIndex(
@@ -615,7 +896,7 @@ export const mockDatabase = {
             return true;
         },
         complete: (taskId: string): VSTask | null => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return null;
 
             task.status = 'done';
@@ -626,7 +907,7 @@ export const mockDatabase = {
             return task;
         },
         submitToQA: (taskId: string): VSTask | null => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return null;
 
             task.status = 'qa';
@@ -639,7 +920,7 @@ export const mockDatabase = {
             return task;
         },
         approveQA: (taskId: string): VSTask | null => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return null;
 
             task.status = 'approved';
@@ -650,7 +931,7 @@ export const mockDatabase = {
             return task;
         },
         rejectQA: (taskId: string): VSTask | null => {
-            const task = tasks.find((t) => t.task_id === taskId);
+            const task = store.tasks.find((t) => t.task_id === taskId);
             if (!task) return null;
 
             task.status = 'in_progress';
@@ -663,15 +944,15 @@ export const mockDatabase = {
             return task;
         },
         delete: (id: string): boolean => {
-            const index = tasks.findIndex((t) => t.task_id === id);
+            const index = store.tasks.findIndex((t) => t.task_id === id);
             if (index === -1) return false;
-            tasks.splice(index, 1);
+            store.tasks.splice(index, 1);
             return true;
         },
     },
 
     reset: () => {
-        workflows = [...mockWorkflows];
-        tasks = [...mockTasks];
+        store.workflows = [...mockWorkflows];
+        store.tasks = [...mockTasks];
     },
 };

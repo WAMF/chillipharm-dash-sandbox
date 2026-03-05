@@ -22,8 +22,6 @@ export interface Workflow {
     name: string;
     trial_id: string;
     trial_name: string;
-    source_site_id: string;
-    source_site_name: string;
     qa_destination?: WorkflowDestination;
     destinations: WorkflowDestination[];
     created_by: string;
@@ -68,6 +66,8 @@ export interface VSTask {
     inputs: TaskInput[];
     source_site_id: string;
     source_site_name: string;
+    assigned_to?: string;
+    assigned_to_name?: string;
     created_by: string;
     created_at: string;
     updated_at: string;
@@ -127,7 +127,6 @@ export interface CompletionResult {
 export interface CreateWorkflowRequest {
     name: string;
     trial_id: string;
-    source_site_id: string;
     qa_destination?: CreateDestinationRequest;
     destinations: CreateDestinationRequest[];
 }
@@ -156,6 +155,8 @@ export interface CreateTaskRequest {
     name: string;
     description?: string;
     reference_url?: string;
+    assigned_to?: string;
+    source_site_id: string;
 }
 
 export interface UpdateTaskRequest {
@@ -163,6 +164,7 @@ export interface UpdateTaskRequest {
     description?: string;
     reference_url?: string;
     status?: TaskStatus;
+    assigned_to?: string | null;
 }
 
 export interface WorkflowFilters {
@@ -194,9 +196,19 @@ export interface VSAsset {
     metadata?: Record<string, unknown>;
 }
 
+export type AssetSortField = 'name' | 'created_at' | 'file_size' | 'duration';
+export type SortDirection = 'asc' | 'desc';
+
 export interface AssetFilters {
     search?: string;
     file_type?: string;
+    visit_type?: string;
+    assessment?: string;
+    subject_id?: string;
+    visit_date_from?: string;
+    visit_date_to?: string;
+    sort_by?: AssetSortField;
+    sort_dir?: SortDirection;
 }
 
 export interface QASubmissionResult {

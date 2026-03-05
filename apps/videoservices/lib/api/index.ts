@@ -16,3 +16,6 @@ export type { AssetListResponse, DownloadUrlResponse } from './endpoints/assets'
 
 export { CorrelationsApi } from './endpoints/correlations';
 export type { CorrelationListResponse } from './endpoints/correlations';
+
+export { UsersApi } from './endpoints/users';
+export type { UserListResponse } from './endpoints/users';

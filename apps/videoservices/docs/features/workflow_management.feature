@@ -11,75 +11,53 @@ Feature: Workflow Management
   # --- Workflow Creation ---
 
   @create @smoke
-  Scenario: Create a new Transform workflow
+  Scenario: Create a new workflow with QA destination
     Given I am on the workflow administration page
     When I click "Create Workflow"
     And I enter the following workflow details:
-      | Field         | Value                          |
-      | Name          | Scholar Rock VHOT Redaction    |
-      | Trial         | SR-2025-001                    |
-      | Workflow Type | Transform                      |
-      | Source Site   | Main Collection Site           |
-    And I add a destination with the following details:
+      | Field       | Value                                            |
+      | Name        | Redaction                                        |
+      | Trial       | WR42221 - Velodrome                              |
+      | Source Site  | Library: 336160 - Sunderland Eye Infirmary - GBR |
+    And I configure a QA destination:
       | Field              | Value                          |
-      | Site               | Reviewer Site Alpha            |
-      | Is Primary         | Yes                            |
+      | Site               | Velodrome Sponsor QC Library   |
       | Field Mapping Mode | Include                        |
-      | Fields             | subject_id, assessment_type    |
+      | Fields             | subject_id, visit_date, visit_type, Assessment |
+    And I add a delivery destination with the following details:
+      | Field              | Value                              |
+      | Site               | Velodrome Sponsor/Review Library   |
+      | Is Primary         | Yes                                |
+      | Field Mapping Mode | All                                |
     And I click "Save Workflow"
-    Then the workflow "Scholar Rock VHOT Redaction" should be created
-    And the workflow status should be "Active"
-    And the workflow should appear in the workflow list
+    Then the workflow "Redaction" should be created
+    And the workflow should have a QA destination
+    And the workflow should have 1 delivery destination
 
   @create
-  Scenario: Create a Distribute workflow with multiple destinations
+  Scenario: Create a workflow without QA destination
     Given I am on the workflow administration page
     When I click "Create Workflow"
     And I enter the following workflow details:
-      | Field         | Value                     |
-      | Name          | Trial ABC Multi-Review    |
-      | Trial         | ABC-2025-002              |
-      | Workflow Type | Distribute                |
-      | Source Site   | Clinical Site Alpha       |
-    And I add a destination with the following details:
-      | Field              | Value                          |
-      | Site               | Reviewer Site Alpha            |
-      | Is Primary         | Yes                            |
-      | Field Mapping Mode | Include                        |
-      | Fields             | subject_id, assessment_type    |
-    And I add a destination with the following details:
-      | Field              | Value               |
-      | Site               | Reviewer Site Beta  |
-      | Is Primary         | No                  |
-      | Field Mapping Mode | None                |
-    And I add a destination with the following details:
-      | Field              | Value         |
-      | Site               | Archive Site  |
-      | Is Primary         | No            |
-      | Field Mapping Mode | All           |
+      | Field       | Value                    |
+      | Name        | Simple Distribution      |
+      | Trial       | WR42221 - Velodrome      |
+      | Source Site  | London Central           |
+    And I add a delivery destination with the following details:
+      | Field              | Value                              |
+      | Site               | Velodrome Sponsor/Review Library   |
+      | Is Primary         | Yes                                |
+      | Field Mapping Mode | Include                            |
+      | Fields             | subject_id, assessment_type        |
+    And I add a delivery destination with the following details:
+      | Field              | Value                              |
+      | Site               | Velodrome Sponsor QC Library       |
+      | Is Primary         | No                                 |
+      | Field Mapping Mode | None                               |
     And I click "Save Workflow"
-    Then the workflow "Trial ABC Multi-Review" should be created
-    And the workflow should have 3 destinations
-
-  @create
-  Scenario: Create a Combine workflow
-    Given I am on the workflow administration page
-    When I click "Create Workflow"
-    And I enter the following workflow details:
-      | Field         | Value                    |
-      | Name          | Trial XYZ Compilation    |
-      | Trial         | XYZ-2025-003             |
-      | Workflow Type | Combine                  |
-      | Source Site   | Recording Site           |
-    And I add a destination with the following details:
-      | Field              | Value              |
-      | Site               | Compilation Store  |
-      | Is Primary         | Yes                |
-      | Field Mapping Mode | Include            |
-      | Fields             | subject_id         |
-    And I click "Save Workflow"
-    Then the workflow "Trial XYZ Compilation" should be created
-    And the workflow type should be "Combine"
+    Then the workflow "Simple Distribution" should be created
+    And the workflow should not have a QA destination
+    And the workflow should have 2 delivery destinations
 
   # --- Workflow Validation ---
 
@@ -88,11 +66,10 @@ Feature: Workflow Management
     Given I am on the create workflow page
     When I click "Save Workflow" without entering any details
     Then I should see validation errors for:
-      | Field         |
-      | Name          |
-      | Trial         |
-      | Workflow Type |
-      | Source Site   |
+      | Field       |
+      | Name        |
+      | Trial       |
+      | Source Site  |
     And the workflow should not be created
 
   @validation @negative
@@ -107,8 +84,8 @@ Feature: Workflow Management
   @validation @negative
   Scenario: Cannot add duplicate destination sites
     Given I am on the create workflow page
-    And I have added a destination for "Reviewer Site Alpha"
-    When I try to add another destination for "Reviewer Site Alpha"
+    And I have added a destination for "Velodrome Sponsor/Review Library"
+    When I try to add another destination for "Velodrome Sponsor/Review Library"
     Then I should see an error "This site is already a destination"
     And the duplicate destination should not be added
 
@@ -116,67 +93,59 @@ Feature: Workflow Management
 
   @edit
   Scenario: Edit an existing workflow
-    Given a workflow "Scholar Rock VHOT Redaction" exists
+    Given a workflow "Redaction" exists
     And I am on the workflow administration page
-    When I click "Edit" on the workflow "Scholar Rock VHOT Redaction"
-    And I change the workflow name to "Scholar Rock VHOT Redaction v2"
+    When I click "Edit" on the workflow "Redaction"
+    And I change the workflow name to "Redaction v2"
     And I click "Save Workflow"
-    Then the workflow name should be updated to "Scholar Rock VHOT Redaction v2"
+    Then the workflow name should be updated to "Redaction v2"
 
   @edit
   Scenario: Add a destination to an existing workflow
-    Given a workflow "Scholar Rock VHOT Redaction" exists with 1 destination
+    Given a workflow "Redaction" exists with 1 delivery destination
     When I edit the workflow
-    And I add a destination with the following details:
+    And I add a delivery destination with the following details:
       | Field              | Value               |
-      | Site               | Reviewer Site Beta  |
+      | Site               | London Central      |
       | Is Primary         | No                  |
       | Field Mapping Mode | None                |
     And I click "Save Workflow"
-    Then the workflow should have 2 destinations
+    Then the workflow should have 2 delivery destinations
 
   @edit
   Scenario: Remove a destination from a workflow
-    Given a workflow "Trial ABC Multi-Review" exists with 3 destinations
+    Given a workflow exists with 2 delivery destinations
     When I edit the workflow
-    And I remove the destination "Reviewer Site Beta"
+    And I remove one destination
     And I click "Save Workflow"
-    Then the workflow should have 2 destinations
-    And "Reviewer Site Beta" should not be a destination
+    Then the workflow should have 1 delivery destination
 
   @edit
   Scenario: Edit destination field mapping
-    Given a workflow exists with a destination "Reviewer Site Alpha"
-    And the destination has field mapping mode "Include" with fields "subject_id"
+    Given a workflow exists with a destination "Velodrome Sponsor/Review Library"
+    And the destination has field mapping mode "All"
     When I edit the workflow
-    And I edit the destination "Reviewer Site Alpha"
-    And I change the field mapping mode to "Exclude"
-    And I set the fields to "internal_notes"
+    And I edit the destination "Velodrome Sponsor/Review Library"
+    And I change the field mapping mode to "Include"
+    And I set the fields to "subject_id, visit_date"
     And I save the destination
     And I click "Save Workflow"
-    Then the destination "Reviewer Site Alpha" should have field mapping mode "Exclude"
-    And the destination should have fields "internal_notes"
+    Then the destination should have field mapping mode "Include"
+    And the destination should have fields "subject_id, visit_date"
 
-  # --- Workflow Status ---
+  @edit
+  Scenario: Add QA destination to existing workflow
+    Given a workflow "Simple Distribution" exists without a QA destination
+    When I edit the workflow
+    And I configure a QA destination
+    And I click "Save Workflow"
+    Then the workflow should have a QA destination
 
-  @status
-  Scenario: Deactivate a workflow
-    Given an active workflow "Scholar Rock VHOT Redaction" exists
-    When I click "Deactivate" on the workflow
-    And I confirm the deactivation
-    Then the workflow status should be "Inactive"
-    And the workflow should not appear in operator workflow lists
-
-  @status
-  Scenario: Reactivate an inactive workflow
-    Given an inactive workflow "Old Trial Workflow" exists
-    When I click "Activate" on the workflow
-    Then the workflow status should be "Active"
-    And the workflow should appear in operator workflow lists
+  # --- Workflow Deletion ---
 
   @delete @negative
   Scenario: Cannot delete a workflow with existing tasks
-    Given a workflow "Scholar Rock VHOT Redaction" exists
+    Given a workflow "Redaction" exists
     And tasks exist that use this workflow
     When I try to delete the workflow
     Then I should see an error "Cannot delete workflow with existing tasks"

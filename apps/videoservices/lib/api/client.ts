@@ -3,6 +3,7 @@ import { TasksApi } from './endpoints/tasks';
 import { SitesApi } from './endpoints/sites';
 import { CorrelationsApi } from './endpoints/correlations';
 import { AssetsApi } from './endpoints/assets';
+import { UsersApi } from './endpoints/users';
 
 export interface ApiClientConfig {
     baseUrl: string;
@@ -22,6 +23,7 @@ export class VideoservicesApiClient {
     readonly assets: AssetsApi;
     readonly correlations: CorrelationsApi;
     readonly sites: SitesApi;
+    readonly users: UsersApi;
 
     constructor(config: ApiClientConfig) {
         this.config = config;
@@ -31,6 +33,7 @@ export class VideoservicesApiClient {
         this.assets = new AssetsApi(this);
         this.correlations = new CorrelationsApi(this);
         this.sites = new SitesApi(this);
+        this.users = new UsersApi(this);
     }
 
     async request<T>(

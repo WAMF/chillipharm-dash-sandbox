@@ -93,11 +93,11 @@ function CloseIcon() {
 function FieldMappingEditor({
     fieldMapping,
     onChange,
-    sourceSite,
+    site,
 }: {
     fieldMapping: { mode: FieldMappingMode; fields?: string[] };
     onChange: (mapping: { mode: FieldMappingMode; fields?: string[] }) => void;
-    sourceSite?: Site;
+    site?: Site;
 }) {
     return (
         <div>
@@ -119,13 +119,13 @@ function FieldMappingEditor({
             </select>
 
             {(fieldMapping.mode === 'include' || fieldMapping.mode === 'exclude') &&
-                sourceSite && (
+                site && (
                     <div className="mt-3">
                         <p className="text-xs text-neutral-500 mb-2">
-                            Available fields from source:
+                            Available fields:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {sourceSite.available_fields.map(field => {
+                            {site.available_fields.map(field => {
                                 const isSelected =
                                     fieldMapping.fields?.includes(field);
                                 return (
@@ -176,7 +176,6 @@ export default function WorkflowDetailPage() {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const [name, setName] = useState('');
-    const [sourceSiteId, setSourceSiteId] = useState('');
     const [qaDestination, setQADestination] = useState<QADestinationConfig | null>(null);
     const [destinations, setDestinations] = useState<DestinationConfig[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -187,7 +186,6 @@ export default function WorkflowDetailPage() {
                 const data = await getWorkflow(workflowId);
                 setWorkflow(data);
                 setName(data.name);
-                setSourceSiteId(data.source_site_id);
                 if (data.qa_destination) {
                     setQADestination({
                         site_id: data.qa_destination.site_id,
@@ -227,15 +225,12 @@ export default function WorkflowDetailPage() {
         loadSites();
     }, [apiClient]);
 
-    const sourceSite = sites.find(s => s.site_id === sourceSiteId);
     const qaSiteId = qaDestination?.site_id;
     const availableDestinationSites = sites.filter(
-        s => s.site_id !== sourceSiteId && s.site_id !== qaSiteId
+        s => s.site_id !== qaSiteId
     );
     const availableQASites = sites.filter(
-        s =>
-            s.site_id !== sourceSiteId &&
-            !destinations.some(d => d.site_id === s.site_id)
+        s => !destinations.some(d => d.site_id === s.site_id)
     );
 
     const addQADestination = () => {
@@ -327,7 +322,6 @@ export default function WorkflowDetailPage() {
     const handleCancel = () => {
         if (workflow) {
             setName(workflow.name);
-            setSourceSiteId(workflow.source_site_id);
             if (workflow.qa_destination) {
                 setQADestination({
                     site_id: workflow.qa_destination.site_id,
@@ -465,18 +459,6 @@ export default function WorkflowDetailPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
-                            Source
-                        </label>
-                        <div className="rounded-md bg-neutral-50 border border-neutral-200 px-3 py-2 text-sm text-neutral-700">
-                            {workflow.source_site_name}
-                        </div>
-                        <p className="mt-1 text-xs text-neutral-500">
-                            Source cannot be changed after creation
-                        </p>
-                    </div>
-
-                    <div>
                         <div className="flex items-center justify-between mb-3">
                             <div>
                                 <label className="block text-sm font-medium text-neutral-700">
@@ -550,8 +532,8 @@ export default function WorkflowDetailPage() {
                                             field_mapping: mapping,
                                         })
                                     }
-                                    sourceSite={sourceSite}
-                                />
+                                    site={sites.find(s => s.site_id === qaDestination.site_id)}
+                                    />
                             </div>
                         )}
                     </div>
@@ -661,8 +643,8 @@ export default function WorkflowDetailPage() {
                                                     field_mapping: mapping,
                                                 })
                                             }
-                                            sourceSite={sourceSite}
-                                        />
+                                            site={sites.find(s => s.site_id === destination.site_id)}
+                                                    />
                                     </div>
                                 ))}
                             </div>
@@ -697,14 +679,6 @@ export default function WorkflowDetailPage() {
                 <div className="space-y-6">
                     <div className="rounded-lg border border-neutral-200 bg-white p-6">
                         <dl className="space-y-4">
-                            <div>
-                                <dt className="text-sm font-medium text-neutral-500">
-                                    Source
-                                </dt>
-                                <dd className="mt-1 text-sm text-neutral-900">
-                                    {workflow.source_site_name}
-                                </dd>
-                            </div>
                             <div>
                                 <dt className="text-sm font-medium text-neutral-500">Trial</dt>
                                 <dd className="mt-1 text-sm text-neutral-900">

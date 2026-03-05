@@ -7,10 +7,10 @@ Feature: Authentication and Authorization
   # --- Authentication ---
 
   @authentication
-  Scenario: Login via Auth0
+  Scenario: Login via Firebase
     Given I am not logged in
     When I navigate to the application
-    Then I should be redirected to Auth0 login
+    Then I should be redirected to Firebase login
     When I authenticate successfully
     Then I should be redirected to the task dashboard
 
@@ -19,7 +19,7 @@ Feature: Authentication and Authorization
     Given I am logged in
     And my session has expired
     When I try to perform an action
-    Then I should be redirected to Auth0 login
+    Then I should be redirected to Firebase login
     And I should be returned to my previous location after login
 
   # --- Admin Mode Access ---

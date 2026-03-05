@@ -189,11 +189,11 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     }
 
     return (
-        <div className="h-screen bg-neutral-50 overflow-hidden">
+        <div className="h-screen bg-neutral-50">
             <Sidebar />
             <div className="md:pl-60 flex flex-col h-full">
                 <MobileHeader />
-                <main className="flex-1 flex flex-col px-4 py-6 pb-20 md:pb-6 md:px-6 lg:px-8 min-h-0 overflow-hidden">
+                <main className="flex-1 px-4 py-6 pb-20 md:pb-6 md:px-6 lg:px-8 overflow-auto">
                     {children}
                 </main>
                 <BottomNav />

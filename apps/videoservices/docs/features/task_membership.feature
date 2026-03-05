@@ -14,26 +14,26 @@ Feature: Task Membership
   Scenario: View task members
     Given the task has the following members:
       | Name           | Role    |
-      | Stevie Jones   | Creator |
-      | Sarah Mitchell | Member  |
+      | Sarah Jenkins  | Creator |
+      | Stevie Hall    | Member  |
     When I click "Manage Members"
-    Then I should see "Stevie Jones" marked as creator
-    And I should see "Sarah Mitchell" as a member
+    Then I should see "Sarah Jenkins" marked as creator
+    And I should see "Stevie Hall" as a member
 
   # --- Adding Members ---
 
   @add
   Scenario: Add a member to a task
     Given I am on the manage members modal
-    When I search for user "John Smith"
-    And I select "John Smith" from the results
-    Then "John Smith" should be added as a task member
-    And "John Smith" should be able to see and work on the task
+    When I search for user "Jaq Aguila"
+    And I select "Jaq Aguila" from the results
+    Then "Jaq Aguila" should be added as a task member
+    And "Jaq Aguila" should be able to see and work on the task
 
   @add @negative
   Scenario: Cannot add the same user twice
-    Given "Sarah Mitchell" is already a member of the task
-    When I try to add "Sarah Mitchell" again
+    Given "Stevie Hall" is already a member of the task
+    When I try to add "Stevie Hall" again
     Then I should see an error "User is already a member"
     And the member list should not change
 
@@ -48,17 +48,17 @@ Feature: Task Membership
 
   @remove
   Scenario: Remove a member from a task
-    Given "Sarah Mitchell" is a member of the task
-    And "Sarah Mitchell" is not the creator
-    When I click "Remove" next to "Sarah Mitchell"
-    Then "Sarah Mitchell" should be removed from the task
-    And "Sarah Mitchell" should no longer be able to see the task
+    Given "Stevie Hall" is a member of the task
+    And "Stevie Hall" is not the creator
+    When I click "Remove" next to "Stevie Hall"
+    Then "Stevie Hall" should be removed from the task
+    And "Stevie Hall" should no longer be able to see the task
 
   @remove @negative
   Scenario: Cannot remove the task creator
-    Given "Stevie Jones" is the creator of the task
+    Given "Sarah Jenkins" is the creator of the task
     When I view the manage members modal
-    Then I should not see a "Remove" button next to "Stevie Jones"
+    Then I should not see a "Remove" button next to "Sarah Jenkins"
 
   @remove @negative
   Scenario: Cannot remove yourself if you are the only member
@@ -77,20 +77,20 @@ Feature: Task Membership
   @permissions
   Scenario: Any member can remove other members
     Given I am a member but not the creator of the task
-    And "John Smith" is also a member
+    And "Jaq Aguila" is also a member
     When I click "Manage Members"
-    Then I should be able to remove "John Smith"
+    Then I should be able to remove "Jaq Aguila"
 
   @permissions
   Scenario: Any member can complete the task
     Given I am a member but not the creator of the task
     And the task has assets selected and a file staged
-    When I click "Complete"
+    When I click "Done"
     Then I should be able to complete the task
 
   @permissions
   Scenario: Any member can delete the task
     Given I am a member but not the creator of the task
-    And the task status is not "Complete"
+    And the task status is not "Done"
     When I click "Delete"
     Then I should be able to delete the task

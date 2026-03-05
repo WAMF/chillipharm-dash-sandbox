@@ -10,7 +10,7 @@ export async function GET() {
 export async function POST(request: Request) {
     const body = await request.json();
 
-    if (!body.name || !body.trial_id || !body.source_site_id || !body.destinations?.length) {
+    if (!body.name || !body.trial_id || !body.destinations?.length) {
         return NextResponse.json(
             { error: 'Missing required fields' },
             { status: 400 }
@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     const workflow = mockDatabase.workflows.create({
         name: body.name,
         trial_id: body.trial_id,
-        source_site_id: body.source_site_id,
         qa_destination: body.qa_destination,
         destinations: body.destinations,
     });

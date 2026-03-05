@@ -2,25 +2,10 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import type { VSTask, TaskStatus } from '@cp/types';
+import type { VSTask } from '@cp/types';
 
 import { useTasks } from '../../../contexts/TaskContext';
 import { useWorkflows } from '../../../contexts/WorkflowContext';
-
-interface KanbanColumn {
-    id: TaskStatus;
-    label: string;
-    color: string;
-    bgColor: string;
-}
-
-const KANBAN_COLUMNS: KanbanColumn[] = [
-    { id: 'todo', label: 'LIVE', color: 'text-neutral-700', bgColor: 'bg-neutral-100' },
-    { id: 'in_progress', label: 'WITH VIDEO SOLUTIONS', color: 'text-amber-700', bgColor: 'bg-amber-100' },
-    { id: 'qa', label: 'IN QC', color: 'text-red-700', bgColor: 'bg-red-100' },
-    { id: 'approved', label: 'PASSED QC', color: 'text-green-700', bgColor: 'bg-green-100' },
-    { id: 'done', label: 'DELIVERED', color: 'text-emerald-800', bgColor: 'bg-emerald-100' },
-];
 
 function SearchIcon() {
     return (
@@ -40,87 +25,33 @@ function SearchIcon() {
     );
 }
 
-function KanbanCard({ task }: { task: VSTask }) {
+function TaskRow({ task }: { task: VSTask }) {
     return (
         <Link
             href={`/tasks/${task.task_id}`}
-            className="block relative bg-white rounded-lg border border-neutral-200 hover:shadow-md transition-shadow flex flex-col min-h-[140px]"
+            className="flex items-center gap-4 rounded-lg border border-neutral-200 bg-white px-4 py-3 hover:border-chilli-red/50 hover:shadow-md transition-all"
         >
-            <div className="p-3 pb-0 flex-1">
-                <div className="mb-2">
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
                     <span className="inline-flex items-center rounded bg-chilli-red/10 px-1.5 py-0.5 text-[11px] font-medium text-chilli-red">
                         {task.workflow_name}
                     </span>
-                </div>
-                <h4 className="font-medium text-neutral-900 text-sm line-clamp-1">
-                    {task.name}
-                </h4>
-                <p className="mt-1 text-xs text-neutral-600 line-clamp-2 h-8 overflow-hidden">
-                    {task.description || '\u00A0'}
-                </p>
-            </div>
-
-            <div className="px-3 pt-3 flex items-center flex-shrink-0">
-                <span className="text-xs text-neutral-500">
-                    {task.inputs.length > 0 ? task.inputs[0].asset_name : 'No asset'}
-                </span>
-            </div>
-
-            <div className="mx-3 mt-2 mb-3 pt-2 border-t border-neutral-100 flex items-center justify-between flex-shrink-0">
-                <span className="text-xs text-neutral-400">
-                    {new Date(task.created_at).toLocaleDateString()}
-                </span>
-                {task.members.length > 0 && (
-                    <div className="flex -space-x-1">
-                        {task.members.slice(0, 2).map(member => (
-                            <div
-                                key={member.task_member_id}
-                                className="h-5 w-5 rounded-full bg-chilli-red text-white flex items-center justify-center text-[10px] font-medium ring-1 ring-white"
-                                title={member.user_name}
-                            >
-                                {member.user_name.charAt(0).toUpperCase()}
-                            </div>
-                        ))}
-                        {task.members.length > 2 && (
-                            <div className="h-5 w-5 rounded-full bg-neutral-200 text-neutral-600 flex items-center justify-center text-[10px] font-medium ring-1 ring-white">
-                                +{task.members.length - 2}
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-        </Link>
-    );
-}
-
-function KanbanColumnComponent({
-    column,
-    tasks,
-}: {
-    column: KanbanColumn;
-    tasks: VSTask[];
-}) {
-    return (
-        <div className="flex-shrink-0 w-72 md:w-auto md:flex-1 md:min-w-[240px] md:max-w-[320px] border border-neutral-200 rounded-lg overflow-hidden flex flex-col h-full">
-            <div className={`px-3 py-2 ${column.bgColor} border-b border-neutral-200 flex-shrink-0`}>
-                <div className="flex items-center justify-between">
-                    <h3 className={`font-medium text-sm ${column.color}`}>{column.label}</h3>
-                    <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full bg-white/50 ${column.color}`}
-                    >
-                        {tasks.length}
+                    <span className="text-xs text-neutral-400">&bull;</span>
+                    <span className="text-xs text-neutral-500">
+                        {task.source_site_name}
                     </span>
                 </div>
+                <h4 className="font-medium text-neutral-900 text-sm truncate">
+                    {task.name}
+                </h4>
             </div>
-            <div className="bg-neutral-50 p-2 flex-1 overflow-y-auto space-y-2">
-                {tasks.map(task => (
-                    <KanbanCard key={task.task_id} task={task} />
-                ))}
-                {tasks.length === 0 && (
-                    <div className="text-center py-8 text-neutral-400 text-sm">No tasks</div>
-                )}
-            </div>
-        </div>
+            <span className="hidden sm:block text-xs text-neutral-500 truncate max-w-[200px]">
+                {task.inputs.length > 0 ? task.inputs[0].asset_name : 'No asset'}
+            </span>
+            <span className="shrink-0 text-xs text-neutral-400">
+                {new Date(task.created_at).toLocaleDateString()}
+            </span>
+        </Link>
     );
 }
 
@@ -150,24 +81,6 @@ export default function TasksPage() {
         });
     }, [tasks, searchQuery, workflowFilter]);
 
-    const tasksByStatus = useMemo(() => {
-        const grouped: Record<TaskStatus, VSTask[]> = {
-            todo: [],
-            in_progress: [],
-            qa: [],
-            approved: [],
-            done: [],
-        };
-
-        filteredTasks.forEach(task => {
-            if (grouped[task.status]) {
-                grouped[task.status].push(task);
-            }
-        });
-
-        return grouped;
-    }, [filteredTasks]);
-
     const hasFilters = searchQuery !== '' || workflowFilter !== '';
 
     const clearFilters = () => {
@@ -176,8 +89,8 @@ export default function TasksPage() {
     };
 
     return (
-        <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex items-center justify-between mb-6 flex-shrink-0">
+        <div>
+            <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold text-neutral-900">Tasks</h1>
                     <p className="mt-1 text-sm text-neutral-500">
@@ -200,7 +113,7 @@ export default function TasksPage() {
                 </Link>
             </div>
 
-            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center flex-shrink-0">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="relative flex-1 max-w-md">
                     <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <SearchIcon />
@@ -239,7 +152,7 @@ export default function TasksPage() {
             </div>
 
             {error && (
-                <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 flex-shrink-0">
+                <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4">
                     <p className="text-sm text-red-700">{error}</p>
                 </div>
             )}
@@ -248,18 +161,46 @@ export default function TasksPage() {
                 <div className="flex items-center justify-center py-12">
                     <div className="h-8 w-8 border-4 border-chilli-red border-t-transparent rounded-full animate-spin" />
                 </div>
+            ) : filteredTasks.length === 0 ? (
+                <div className="rounded-lg border-2 border-dashed border-neutral-200 p-12 text-center">
+                    <h3 className="text-lg font-medium text-neutral-900">
+                        {hasFilters ? 'No matching tasks' : 'No tasks yet'}
+                    </h3>
+                    <p className="mt-2 text-sm text-neutral-500">
+                        {hasFilters
+                            ? 'Try adjusting your filters or search query'
+                            : 'Create a task to get started'}
+                    </p>
+                    {hasFilters ? (
+                        <button
+                            type="button"
+                            onClick={clearFilters}
+                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200 transition-colors"
+                        >
+                            Clear Filters
+                        </button>
+                    ) : (
+                        <Link
+                            href="/tasks/new"
+                            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-chilli-red px-4 py-2 text-sm font-medium text-white hover:bg-chilli-red-dark transition-colors"
+                        >
+                            New Task
+                        </Link>
+                    )}
+                </div>
             ) : (
-                <div className="flex-1 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 min-h-0">
-                    <div className="flex gap-4 md:gap-6 pb-4 h-full">
-                        {KANBAN_COLUMNS.map(column => (
-                            <KanbanColumnComponent
-                                key={column.id}
-                                column={column}
-                                tasks={tasksByStatus[column.id]}
-                            />
+                <>
+                    {hasFilters && (
+                        <p className="mb-4 text-sm text-neutral-500">
+                            Showing {filteredTasks.length} of {tasks.length} tasks
+                        </p>
+                    )}
+                    <div className="space-y-2">
+                        {filteredTasks.map(task => (
+                            <TaskRow key={task.task_id} task={task} />
                         ))}
                     </div>
-                </div>
+                </>
             )}
         </div>
     );

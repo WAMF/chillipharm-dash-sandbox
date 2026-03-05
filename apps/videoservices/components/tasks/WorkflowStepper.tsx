@@ -1,6 +1,6 @@
 'use client';
 
-const STEP_LABELS = ['Select Assets', 'Submit to QC', 'QC Review', 'Complete'];
+const STEP_LABELS = ['Submit to QC', 'QC Review', 'Complete'];
 
 interface WorkflowStepperProps {
     currentStep: number;

@@ -36,12 +36,6 @@ function WorkflowCard({ workflow }: { workflow: Workflow }) {
 
             <div className="mt-4 space-y-2">
                 <div className="flex items-center gap-2 text-sm">
-                    <span className="text-neutral-500">Source:</span>
-                    <span className="font-medium text-neutral-700">
-                        {workflow.source_site_name}
-                    </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
                     <span className="text-neutral-500">Destinations:</span>
                     <span className="font-medium text-neutral-700">
                         {workflow.destinations.length} site
@@ -72,10 +66,7 @@ export default function AdminPage() {
         return workflows.filter(workflow => {
             const matchesSearch =
                 searchQuery === '' ||
-                workflow.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                workflow.source_site_name
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase());
+                workflow.name.toLowerCase().includes(searchQuery.toLowerCase());
 
             return matchesSearch;
         });

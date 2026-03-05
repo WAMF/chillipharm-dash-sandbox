@@ -74,11 +74,11 @@ function CloseIcon() {
 function FieldMappingEditor({
     fieldMapping,
     onChange,
-    sourceSite,
+    site,
 }: {
     fieldMapping: { mode: FieldMappingMode; fields?: string[] };
     onChange: (mapping: { mode: FieldMappingMode; fields?: string[] }) => void;
-    sourceSite?: Site;
+    site?: Site;
 }) {
     return (
         <div>
@@ -100,13 +100,13 @@ function FieldMappingEditor({
             </select>
 
             {(fieldMapping.mode === 'include' || fieldMapping.mode === 'exclude') &&
-                sourceSite && (
+                site && (
                     <div className="mt-3">
                         <p className="text-xs text-neutral-500 mb-2">
-                            Available fields from source:
+                            Available fields:
                         </p>
                         <div className="flex flex-wrap gap-2">
-                            {sourceSite.available_fields.map(field => {
+                            {site.available_fields.map(field => {
                                 const isSelected =
                                     fieldMapping.fields?.includes(field);
                                 return (
@@ -151,7 +151,6 @@ export default function NewWorkflowPage() {
     const [loadingSites, setLoadingSites] = useState(true);
 
     const [name, setName] = useState('');
-    const [sourceSiteId, setSourceSiteId] = useState('');
     const [qaDestination, setQADestination] = useState<QADestinationConfig | null>(null);
     const [destinations, setDestinations] = useState<DestinationConfig[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -170,15 +169,12 @@ export default function NewWorkflowPage() {
         loadSites();
     }, [apiClient]);
 
-    const sourceSite = sites.find(s => s.site_id === sourceSiteId);
     const qaSiteId = qaDestination?.site_id;
     const availableDestinationSites = sites.filter(
-        s => s.site_id !== sourceSiteId && s.site_id !== qaSiteId
+        s => s.site_id !== qaSiteId
     );
     const availableQASites = sites.filter(
-        s =>
-            s.site_id !== sourceSiteId &&
-            !destinations.some(d => d.site_id === s.site_id)
+        s => !destinations.some(d => d.site_id === s.site_id)
     );
 
     const addQADestination = () => {
@@ -236,10 +232,6 @@ export default function NewWorkflowPage() {
             setError('Please enter a workflow name');
             return;
         }
-        if (!sourceSiteId) {
-            setError('Please select a source');
-            return;
-        }
         if (destinations.length === 0) {
             setError('Please add at least one final destination');
             return;
@@ -248,8 +240,7 @@ export default function NewWorkflowPage() {
         try {
             await createWorkflow({
                 name: name.trim(),
-                trial_id: sourceSite?.trial_id || 'trial-001',
-                source_site_id: sourceSiteId,
+                trial_id: 'trial-001',
                 qa_destination: qaDestination
                     ? {
                           site_id: qaDestination.site_id,
@@ -313,32 +304,6 @@ export default function NewWorkflowPage() {
                 </div>
 
                 <div>
-                    <label
-                        htmlFor="source"
-                        className="block text-sm font-medium text-neutral-700"
-                    >
-                        Source
-                    </label>
-                    <select
-                        id="source"
-                        value={sourceSiteId}
-                        onChange={e => {
-                            setSourceSiteId(e.target.value);
-                            setQADestination(null);
-                            setDestinations([]);
-                        }}
-                        className="mt-1 block w-full rounded-md border border-neutral-300 px-3 py-2 shadow-sm focus:border-chilli-red focus:outline-none focus:ring-1 focus:ring-chilli-red"
-                    >
-                        <option value="">Select source...</option>
-                        {sites.map(site => (
-                            <option key={site.site_id} value={site.site_id}>
-                                {site.name} ({site.type})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div>
                     <div className="flex items-center justify-between mb-3">
                         <div>
                             <label className="block text-sm font-medium text-neutral-700">
@@ -352,7 +317,7 @@ export default function NewWorkflowPage() {
                             <button
                                 type="button"
                                 onClick={addQADestination}
-                                disabled={!sourceSiteId || availableQASites.length === 0}
+                                disabled={availableQASites.length === 0}
                                 className="inline-flex items-center gap-1 text-sm font-medium text-chilli-red hover:text-chilli-red-dark disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <PlusIcon />
@@ -364,9 +329,7 @@ export default function NewWorkflowPage() {
                     {!qaDestination ? (
                         <div className="rounded-lg border-2 border-dashed border-neutral-200 p-6 text-center">
                             <p className="text-sm text-neutral-500">
-                                {sourceSiteId
-                                    ? 'Click "Add QC Destination" to configure a review step'
-                                    : 'Select a source first to add a QC destination'}
+                                Click &quot;Add QC Destination&quot; to configure a review step
                             </p>
                         </div>
                     ) : (
@@ -414,7 +377,7 @@ export default function NewWorkflowPage() {
                                         field_mapping: mapping,
                                     })
                                 }
-                                sourceSite={sourceSite}
+                                site={sites.find(s => s.site_id === qaDestination.site_id)}
                             />
                         </div>
                     )}
@@ -429,7 +392,6 @@ export default function NewWorkflowPage() {
                             type="button"
                             onClick={addDestination}
                             disabled={
-                                !sourceSiteId ||
                                 destinations.length >= availableDestinationSites.length
                             }
                             className="inline-flex items-center gap-1 text-sm font-medium text-chilli-red hover:text-chilli-red-dark disabled:opacity-50 disabled:cursor-not-allowed"
@@ -442,9 +404,7 @@ export default function NewWorkflowPage() {
                     {destinations.length === 0 ? (
                         <div className="rounded-lg border-2 border-dashed border-neutral-200 p-6 text-center">
                             <p className="text-sm text-neutral-500">
-                                {sourceSiteId
-                                    ? 'Click "Add Destination" to configure where approved files go'
-                                    : 'Select a source first to add destinations'}
+                                Click &quot;Add Destination&quot; to configure where approved files go
                             </p>
                         </div>
                     ) : (
@@ -535,7 +495,7 @@ export default function NewWorkflowPage() {
                                                 field_mapping: mapping,
                                             })
                                         }
-                                        sourceSite={sourceSite}
+                                        site={sites.find(s => s.site_id === destination.site_id)}
                                     />
                                 </div>
                             ))}

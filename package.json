@@ -16,7 +16,9 @@
         "affected:lint": "nx affected --target=lint",
         "graph": "nx graph",
         "functions:serve": "nx run functions:serve",
-        "functions:deploy": "nx run functions:deploy"
+        "functions:deploy": "nx run functions:deploy",
+        "videoservices:dev": "nx run videoservices:dev",
+        "videoservices:build": "nx run videoservices:build"
     },
     "devDependencies": {
         "@nx/eslint": "^22.1.3",

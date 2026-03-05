@@ -16,7 +16,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
     const body = await request.json();
 
-    if (!body.workflow_id || !body.name) {
+    if (!body.workflow_id || !body.name || !body.source_site_id) {
         return NextResponse.json(
             { error: 'Missing required fields' },
             { status: 400 }
@@ -27,6 +27,8 @@ export async function POST(request: Request) {
         workflow_id: body.workflow_id,
         name: body.name,
         description: body.description,
+        assigned_to: body.assigned_to,
+        source_site_id: body.source_site_id,
     });
 
     return NextResponse.json(task, { status: 201 });

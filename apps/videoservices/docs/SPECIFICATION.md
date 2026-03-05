@@ -13,13 +13,9 @@ The Video Services Workflow Tool automates manual video processing operations fo
 | **Admin Mode** | Administrators | Define and manage workflow configurations |
 | **Normal Mode** | Operators | Create, manage, and execute tasks using configured workflows |
 
-### 1.3 Workflow Types
+### 1.3 Workflow Model
 
-| Type | Description | Input | Output |
-|------|-------------|-------|--------|
-| **Transform** | One-to-one processing | Single video | Single video to one destination |
-| **Combine** | Many-to-one processing | Multiple videos | Single video to one destination |
-| **Distribute** | One-to-many distribution | Single video | Single video to multiple destinations |
+Workflows define a source site (where operators browse for input assets), one or more delivery destinations (where processed files get uploaded), and an optional QA destination (where files are reviewed before final delivery).
 
 ---
 
@@ -35,9 +31,9 @@ Administrators create workflows that serve as reusable templates for operators.
 |----------|------|----------|-------------|
 | `name` | String | Yes | Human-readable identifier |
 | `trial_id` | UUID | Yes | Associated trial |
-| `workflow_type` | Enum | Yes | transform, combine, or distribute |
 | `source_site_id` | UUID | Yes | Site where operators browse for input assets |
-| `status` | Enum | No | active (default) or inactive |
+| `qa_destination` | Destination | No | QA review site (file goes here before final delivery) |
+| `destinations` | Destination[] | Yes | Final delivery destinations |
 
 #### Destination Properties
 
@@ -96,28 +92,28 @@ Administrators create workflows that serve as reusable templates for operators.
 | `description` | Text | No | Freeform notes or context |
 | `reference_url` | String | No | URL to related ticket/email/request |
 | `status` | Enum | Auto | Current task state |
+| `assigned_to` | UUID | No | User assigned to work on the task |
+| `assigned_to_name` | String | Auto | Display name of the assigned user |
 | `created_by` | UUID | Auto | User who created the task |
 
 ### 3.2 Task Lifecycle
 
 ```
-┌──────────┐    ┌─────────────────┐    ┌──────────┐
-│  Created │ →  │ Assets Selected │ →  │ Complete │
-└──────────┘    └─────────────────┘    └──────────┘
-      │                 │                    
-      ↓                 ↓                    
-┌──────────┐    ┌─────────────────┐    ┌──────────┐
-│ Deleted  │    │     Deleted     │    │  Failed  │
-└──────────┘    └─────────────────┘    └──────────┘
+┌──────┐    ┌─────────────┐    ┌────┐    ┌──────────┐    ┌──────┐
+│ Todo │ →  │ In Progress │ →  │ QA │ →  │ Approved │ →  │ Done │
+└──────┘    └─────────────┘    └────┘    └──────────┘    └──────┘
+                   ↑              │
+                   └──────────────┘
+                    (QA rejected)
 ```
 
 | Status | Description |
 |--------|-------------|
-| `created` | Task created, no assets selected |
-| `assets_selected` | Input asset(s) chosen, ready for processing |
-| `complete` | Files uploaded, correlations recorded |
-| `failed` | Upload/distribution failed |
-| `deleted` | Task soft-deleted |
+| `todo` | Task created, awaiting work |
+| `in_progress` | Input asset(s) selected and being processed |
+| `qa` | Output submitted to QA destination for review |
+| `approved` | QA review passed, ready for final delivery |
+| `done` | Files delivered to all destinations, correlations recorded |
 
 ### 3.3 Task Membership
 
@@ -126,22 +122,31 @@ Administrators create workflows that serve as reusable templates for operators.
 - Only members can view and work on a task
 - Any member can complete or delete the task
 
-### 3.4 Completion Flow
+### 3.4 Task Assignment
 
-The completion process is explicit and atomic:
+- Tasks can optionally be assigned to a single user during creation or later from the task detail page
+- The assignee is stored as `assigned_to` (user ID) and `assigned_to_name` (display name)
+- Setting `assigned_to` to `null` removes the assignment
+- The assigned user is displayed on kanban cards and the task detail page
 
-1. User selects input assets → persisted to database
+### 3.5 Completion Flow
+
+The completion process includes an optional QA review step:
+
+1. User selects input assets → task status moves to `in_progress`
 2. User downloads source files and processes externally
 3. User drags processed file into drop zone → **staged in browser memory only**
-4. User reviews staged files and destination summary
-5. User clicks **Complete** → triggers:
-   - Upload to all destinations
+4. User clicks **Submit to QA** → file uploaded to QA destination, status becomes `qa`
+5. QA reviewer approves → status becomes `approved`; or rejects → status returns to `in_progress`
+6. Once approved, user clicks **Complete** → triggers:
+   - Upload to all delivery destinations
    - Field copying per destination rules
    - Correlation record creation
-6. Success → task status becomes `complete`
-7. Failure → task status becomes `failed` with error details
+7. Success → task status becomes `done`
 
-**Important:** Staged files are held in browser memory. If the user navigates away or closes the browser before clicking Complete, the staged files are lost but the task persists.
+If a workflow has no QA destination, step 4-5 are skipped and the user completes directly.
+
+**Important:** Staged files are held in browser memory. If the user navigates away or closes the browser before submitting/completing, the staged files are lost but the task persists.
 
 ---
 
@@ -154,19 +159,18 @@ CREATE TABLE vs_workflows (
     workflow_id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name                VARCHAR(255) NOT NULL,
     trial_id            UUID NOT NULL REFERENCES trials(trial_id),
-    workflow_type       VARCHAR(20) NOT NULL CHECK (workflow_type IN ('transform', 'combine', 'distribute')),
     source_site_id      UUID NOT NULL REFERENCES sites(site_id),
-    status              VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
     created_by          UUID NOT NULL REFERENCES users(user_id),
     created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_vs_workflows_trial ON vs_workflows(trial_id);
-CREATE INDEX idx_vs_workflows_status ON vs_workflows(status);
 ```
 
 ### 4.2 Workflow Destinations Table
+
+Destinations are used for both QA review and final delivery. A workflow's `qa_destination` references a single destination for QA review; `destinations` lists the final delivery targets.
 
 ```sql
 CREATE TABLE vs_workflow_destinations (
@@ -177,7 +181,7 @@ CREATE TABLE vs_workflow_destinations (
     field_mapping       JSONB NOT NULL,
     display_order       INTEGER NOT NULL DEFAULT 0,
     created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
-    
+
     UNIQUE(workflow_id, site_id)
 );
 
@@ -193,12 +197,22 @@ CREATE TABLE vs_tasks (
     name                VARCHAR(255) NOT NULL,
     description         TEXT,
     reference_url       VARCHAR(500),
-    status              VARCHAR(20) NOT NULL DEFAULT 'created' 
-                        CHECK (status IN ('created', 'assets_selected', 'complete', 'failed', 'deleted')),
+    status              VARCHAR(20) NOT NULL DEFAULT 'todo'
+                        CHECK (status IN ('todo', 'in_progress', 'qa', 'approved', 'done')),
     error_message       TEXT,
+    assigned_to         UUID REFERENCES users(user_id),
+    assigned_to_name    VARCHAR(255),
     created_by          UUID NOT NULL REFERENCES users(user_id),
     created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    output_file_name    VARCHAR(500),
+    output_file_size    BIGINT,
+    qa_submitted_at     TIMESTAMP,
+    qa_submitted_by     UUID REFERENCES users(user_id),
+    qa_approved_at      TIMESTAMP,
+    qa_approved_by      UUID REFERENCES users(user_id),
+    qa_rejected_at      TIMESTAMP,
+    qa_rejected_by      UUID REFERENCES users(user_id),
     completed_at        TIMESTAMP,
     completed_by        UUID REFERENCES users(user_id),
     deleted_at          TIMESTAMP,
@@ -208,6 +222,7 @@ CREATE TABLE vs_tasks (
 CREATE INDEX idx_vs_tasks_workflow ON vs_tasks(workflow_id);
 CREATE INDEX idx_vs_tasks_status ON vs_tasks(status);
 CREATE INDEX idx_vs_tasks_created_by ON vs_tasks(created_by);
+CREATE INDEX idx_vs_tasks_assigned_to ON vs_tasks(assigned_to);
 ```
 
 ### 4.4 Task Members Table
@@ -288,14 +303,17 @@ CREATE INDEX idx_vs_correlations_processed_at ON vs_asset_correlations(processed
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/tasks` | List tasks where user is member |
-| POST | `/api/v1/tasks` | Create task |
+| GET | `/api/v1/tasks` | List tasks (optional `workflow_id` filter) |
+| POST | `/api/v1/tasks` | Create task (accepts `assigned_to`) |
 | GET | `/api/v1/tasks/{id}` | Get task details |
-| PUT | `/api/v1/tasks/{id}` | Update task |
+| PUT | `/api/v1/tasks/{id}` | Update task (name, description, status, assigned_to) |
 | DELETE | `/api/v1/tasks/{id}` | Soft delete task |
 | POST | `/api/v1/tasks/{id}/inputs` | Add input asset(s) |
 | DELETE | `/api/v1/tasks/{id}/inputs/{inputId}` | Remove input asset |
-| POST | `/api/v1/tasks/{id}/complete` | Upload output and complete |
+| POST | `/api/v1/tasks/{id}/submit-qa` | Upload output to QA destination |
+| POST | `/api/v1/tasks/{id}/approve-qa` | Approve QA review |
+| POST | `/api/v1/tasks/{id}/reject-qa` | Reject QA review (returns to in_progress) |
+| POST | `/api/v1/tasks/{id}/complete` | Deliver to all destinations |
 
 ### 5.3 Task Members
 
@@ -305,14 +323,33 @@ CREATE INDEX idx_vs_correlations_processed_at ON vs_asset_correlations(processed
 | POST | `/api/v1/tasks/{id}/members` | Add member |
 | DELETE | `/api/v1/tasks/{id}/members/{userId}` | Remove member |
 
-### 5.4 Asset Operations
+### 5.4 Users
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/v1/sites/{siteId}/assets` | Browse assets |
+| GET | `/api/v1/users` | List users (optional `search` query param) |
+
+### 5.5 Asset Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/sites/{siteId}/assets` | Browse and filter assets |
 | GET | `/api/v1/assets/{id}/download-url` | Get secure download URL |
 
-### 5.5 Correlations
+Asset query parameters for `GET /api/v1/sites/{siteId}/assets`:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `search` | String | Full-text search on asset name |
+| `visit_type` | String | Filter by visit type metadata |
+| `assessment` | String | Filter by assessment metadata |
+| `subject_id` | String | Filter by subject ID metadata |
+| `visit_date_from` | Date | Filter assets on or after this date |
+| `visit_date_to` | Date | Filter assets on or before this date |
+| `sort_by` | Enum | Sort field: `name`, `created_at`, `file_size`, `duration` |
+| `sort_dir` | Enum | Sort direction: `asc` or `desc` (default: `desc`) |
+
+### 5.6 Correlations
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -334,8 +371,14 @@ Content-Type: application/json
 {
   "name": "Scholar Rock VHOT Redaction",
   "trial_id": "550e8400-e29b-41d4-a716-446655440000",
-  "workflow_type": "distribute",
   "source_site_id": "660e8400-e29b-41d4-a716-446655440001",
+  "qa_destination": {
+    "site_id": "990e8400-e29b-41d4-a716-446655440010",
+    "field_mapping": {
+      "mode": "include",
+      "fields": ["subject_id", "visit_date", "visit_type", "Assessment"]
+    }
+  },
   "destinations": [
     {
       "site_id": "770e8400-e29b-41d4-a716-446655440002",
@@ -366,9 +409,18 @@ Content-Type: application/json
   "workflow_id": "990e8400-e29b-41d4-a716-446655440004",
   "name": "Scholar Rock VHOT Redaction",
   "trial_id": "550e8400-e29b-41d4-a716-446655440000",
-  "workflow_type": "distribute",
   "source_site_id": "660e8400-e29b-41d4-a716-446655440001",
-  "status": "active",
+  "qa_destination": {
+    "destination_id": "cc0e8400-e29b-41d4-a716-446655440020",
+    "site_id": "990e8400-e29b-41d4-a716-446655440010",
+    "site_name": "Sponsor QC Library",
+    "is_primary": false,
+    "field_mapping": {
+      "mode": "include",
+      "fields": ["subject_id", "visit_date", "visit_type", "Assessment"]
+    },
+    "display_order": 0
+  },
   "destinations": [
     {
       "destination_id": "aa0e8400-e29b-41d4-a716-446655440005",
@@ -408,8 +460,8 @@ Content-Type: application/json
 {
   "workflow_id": "990e8400-e29b-41d4-a716-446655440004",
   "name": "SUB001 Visit 3 Redaction",
-  "reference_url": "https://jira.chillipharm.com/browse/VS-1234",
-  "description": "Redaction requested by Dr Smith. Patient face visible at 2:30-3:15."
+  "description": "Redaction requested by Dr Smith. Patient face visible at 2:30-3:15.",
+  "assigned_to": "cc0e8400-e29b-41d4-a716-446655440012"
 }
 ```
 
@@ -424,13 +476,14 @@ Content-Type: application/json
   "workflow_id": "990e8400-e29b-41d4-a716-446655440004",
   "workflow_name": "Scholar Rock VHOT Redaction",
   "name": "SUB001 Visit 3 Redaction",
-  "reference_url": "https://jira.chillipharm.com/browse/VS-1234",
   "description": "Redaction requested by Dr Smith. Patient face visible at 2:30-3:15.",
-  "status": "created",
+  "status": "todo",
+  "assigned_to": "cc0e8400-e29b-41d4-a716-446655440012",
+  "assigned_to_name": "Stevie Hall",
   "members": [
     {
       "user_id": "cc0e8400-e29b-41d4-a716-446655440007",
-      "name": "Stevie Jones",
+      "name": "Sarah Jenkins",
       "is_creator": true
     }
   ],
@@ -458,7 +511,7 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 {
-  "status": "complete",
+  "status": "done",
   "job_id": "ee0e8400-e29b-41d4-a716-446655440009",
   "completed_at": "2025-05-27T14:32:00Z",
   "completed_by": {
@@ -536,53 +589,47 @@ Content-Type: application/json
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 Normal Mode - Task Dashboard
+### 7.2 Normal Mode - Task Dashboard (Kanban Board)
+
+Tasks are displayed as a kanban board with columns for each status. Users can search by name/description and filter by workflow.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Video Services                                  [User ▾]   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ Search tasks...                            [Search] │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-│  Filter: [All Statuses ▾]  [All Workflows ▾]  [+ New Task] │
-│                                                             │
-│  My Tasks                                                   │
-│  ─────────────────────────────────────────────────────────  │
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │ SUB001 Visit 3 Redaction                            │   │
-│  │ Workflow: Scholar Rock VHOT Redaction               │   │
-│  │ Status: Assets Selected                 ● Ready     │   │
-│  │ Members: You, Sarah M.                              │   │
-│  │ Created: 2 hours ago                                │   │
-│  │                                         [Open →]    │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Tasks (5 total)                                      [+ New Task]   │
+│  [Search tasks...]  [All Workflows ▾]  [Clear]                       │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  LIVE (1)    WITH VIDEO     IN QC (1)   PASSED QC (1)  DELIVERED(1) │
+│              SOLUTIONS (1)                                           │
+│  ┌────────┐ ┌────────────┐ ┌─────────┐ ┌───────────┐ ┌───────────┐│
+│  │Redact. │ │Redaction   │ │Redact.  │ │Redaction  │ │Redaction  ││
+│  │Sub 312 │ │Sub 308     │ │Sub 309  │ │Sub 310    │ │Sub 311    ││
+│  │        │ │            │ │         │ │           │ │           ││
+│  │1/29    │ │1/28        │ │1/30     │ │1/21       │ │1/20       ││
+│  │Unassig.│ │● Stevie    │ │● Jaq    │ │Unassigned │ │● Pavlos   ││
+│  └────────┘ └────────────┘ └─────────┘ └───────────┘ └───────────┘│
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-### 7.3 Normal Mode - Task Detail (File Staged)
+### 7.3 Normal Mode - Task Detail
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  ← Tasks    SUB001 Visit 3 Redaction              [Delete]  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
+│  Status: In Progress                                        │
 │  Workflow: Scholar Rock VHOT Redaction                      │
-│  Reference: https://jira.chillipharm.com/VS-1234   [Open]   │
 │  Description: Redaction requested by Dr Smith.              │
-│                                                             │
-│  Members: You, Sarah M.                    [Manage Members] │
+│  Assigned to: ● Stevie Hall                    [Change]     │
 │                                                             │
 │  ─────────────────────────────────────────────────────────  │
 │                                                             │
-│  Input Assets                                               │
+│  Source Assets                                               │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │ ✓ SUB001_VHOT_V3_20250527.mp4                       │   │
-│  │   Duration: 4:32 | Size: 1.2GB                      │   │
+│  │ SUB001_VHOT_V3_20250527.mp4                         │   │
+│  │ Duration: 4:32 | Size: 1.2GB                        │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
 │  ─────────────────────────────────────────────────────────  │
@@ -593,19 +640,16 @@ Content-Type: application/json
 │  │   Size: 1.1GB | Staged in browser                   │   │
 │  │                                                     │   │
 │  │   ⚠ File is in memory. Do not close browser        │   │
-│  │     before clicking Complete.                       │   │
+│  │     before clicking Submit/Complete.                │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
-│  On Complete, this file will be uploaded to:                │
+│  Destinations:                                              │
 │  ┌─────────────────────────────────────────────────────┐   │
-│  │ • Reviewer Site Alpha                               │   │
-│  │   Copy fields: subject_id, assessment_type          │   │
-│  │                                                     │   │
-│  │ • Reviewer Site Beta                                │   │
-│  │   Copy fields: none                                 │   │
+│  │ QA: Sponsor QC Library                              │   │
+│  │ Final: Sponsor/Review Library (all fields)          │   │
 │  └─────────────────────────────────────────────────────┘   │
 │                                                             │
-│                                                [Complete]   │
+│                               [Submit to QA] [Complete]     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -614,9 +658,9 @@ Content-Type: application/json
 
 ## 8. Authentication and Authorization
 
-### 8.1 Auth0 Integration
+### 8.1 Firebase Authentication
 
-The application uses Auth0 for authentication. Users must authenticate before accessing any functionality.
+The application uses Firebase Authentication for user login. Users must authenticate before accessing any functionality.
 
 ### 8.2 Permissions
 
@@ -711,7 +755,6 @@ The application uses Auth0 for authentication. Users must authenticate before ac
 
 ### 10.1 Potential Enhancements
 
-- Task assignment (assign to specific team member)
 - Priority/due date tracking
 - Task templates (pre-fill common configurations)
 - Bulk task creation

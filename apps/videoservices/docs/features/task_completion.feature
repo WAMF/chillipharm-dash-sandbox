@@ -6,25 +6,25 @@ Feature: Task Completion
 
   Background:
     Given I am logged in as an operator
-    And I am a member of task "SUB001 Visit 3 Redaction"
-    And the task has assets selected
-    And the task uses workflow "Scholar Rock VHOT Redaction"
+    And I am on the detail page for task "Subject 20308 Refill Week 36"
+    And the task has input assets selected
+    And the task uses workflow "Redaction"
 
   # --- File Staging ---
 
   @staging @smoke
   Scenario: Stage a file by dragging into drop zone
-    Given I am on the task detail page
-    When I drag "SUB001_VHOT_V3_REDACTED.mp4" into the drop zone
+    Given the task status is "In Progress"
+    When I drag "Subject 20308 Refill Week 36 — Redacted.mp4" into the drop zone
     Then the file should be staged in browser memory
     And I should see the staged file name and size
     And I should see a warning "File is in memory. Do not close browser before clicking Complete."
 
   @staging
   Scenario: Stage a file by clicking to browse
-    Given I am on the task detail page
+    Given the task status is "In Progress"
     When I click on the drop zone
-    And I select "SUB001_VHOT_V3_REDACTED.mp4" from the file picker
+    And I select "Subject 20308 Refill Week 36 — Redacted.mp4" from the file picker
     Then the file should be staged in browser memory
     And I should see the staged file details
 
@@ -50,116 +50,102 @@ Feature: Task Completion
     Then no file should be staged
     And I should need to stage the file again
 
+  # --- QA Submission ---
+
+  @qa @submit
+  Scenario: Submit output to QA
+    Given the workflow has a QA destination "Velodrome Sponsor QC Library"
+    And I have staged file "Subject 20308 Refill Week 36 — Redacted.mp4"
+    And the task status is "In Progress"
+    When I click "Submit to QA"
+    Then the file should be uploaded to the QA destination
+    And the task status should change to "QA"
+    And the qa_submitted_at and qa_submitted_by fields should be recorded
+
+  @qa @approve
+  Scenario: Approve QA review
+    Given the task status is "QA"
+    And the file has been submitted to QA
+    When I click "Approve QA"
+    Then the task status should change to "Approved"
+    And the qa_approved_at and qa_approved_by fields should be recorded
+
+  @qa @reject
+  Scenario: Reject QA review
+    Given the task status is "QA"
+    And the file has been submitted to QA
+    When I click "Reject QA"
+    Then the task status should return to "In Progress"
+    And the qa_rejected_at and qa_rejected_by fields should be recorded
+    And the QA submission fields should be cleared
+
+  @qa @reject @resubmit
+  Scenario: Resubmit after QA rejection
+    Given the task was rejected from QA and status is "In Progress"
+    When I stage a revised file
+    And I click "Submit to QA"
+    Then the file should be uploaded to the QA destination
+    And the task status should change to "QA"
+    And the rejection fields should be cleared
+
   # --- Complete Button State ---
 
   @button-state
-  Scenario: Complete button is disabled without staged file
-    Given no file is staged
-    When I view the task detail page
-    Then the "Complete" button should be disabled
+  Scenario: Submit to QA is disabled without staged file
+    Given the workflow has a QA destination
+    And no file is staged
+    Then the "Submit to QA" button should be disabled
 
   @button-state
-  Scenario: Complete button is enabled with staged file
-    Given I have staged a file
-    When I view the task detail page
+  Scenario: Complete button is enabled when approved
+    Given the task status is "Approved"
     Then the "Complete" button should be enabled
 
   @button-state
-  Scenario: Complete button is disabled without assets selected
-    Given the task status is "Created"
+  Scenario: Complete button is disabled without inputs
+    Given the task status is "Todo"
     And no assets are selected
-    When I view the task detail page
     Then the "Complete" button should be disabled
-    And I should not be able to stage a file
+    And the "Submit to QA" button should be disabled
 
   # --- Completion Process ---
 
-  @complete @single-destination
-  Scenario: Complete a task with single destination
-    Given the workflow has 1 destination "Reviewer Site Alpha"
-    And the destination copies fields "subject_id, assessment_type"
-    And I have staged file "SUB001_VHOT_V3_REDACTED.mp4"
+  @complete @smoke
+  Scenario: Complete a task after QA approval
+    Given the task status is "Approved"
+    And the workflow has destination "Velodrome Sponsor/Review Library" with field mapping "all"
     When I click "Complete"
-    Then I should see a progress indicator
-    And the file should be uploaded to "Reviewer Site Alpha"
-    And the fields "subject_id, assessment_type" should be copied to the new asset
+    Then the file should be uploaded to "Velodrome Sponsor/Review Library"
+    And the fields should be copied per the destination rules
     And a correlation record should be created
-    And the task status should change to "Complete"
+    And the task status should change to "Done"
+    And the completed_at and completed_by fields should be recorded
 
-  @complete @distribute @smoke
-  Scenario: Complete a task with multiple destinations (Distribute)
-    Given the workflow has the following destinations:
-      | Site                 | Field Mapping                   |
-      | Reviewer Site Alpha  | Include: subject_id, assessment |
-      | Reviewer Site Beta   | None                            |
-      | Archive Site         | All                             |
-    And I have staged file "SUB001_VHOT_V3_REDACTED.mp4"
+  @complete @no-qa
+  Scenario: Complete a task without QA (workflow has no QA destination)
+    Given the workflow has no QA destination
+    And the task status is "In Progress"
+    And I have staged a file
     When I click "Complete"
-    Then the file should be uploaded to all 3 destinations
-    And "Reviewer Site Alpha" should have fields "subject_id, assessment_type" copied
-    And "Reviewer Site Beta" should have no fields copied
-    And "Archive Site" should have all fields copied
-    And 3 correlation records should be created with the same job_id
-    And the task status should change to "Complete"
+    Then the file should be uploaded to all destinations
+    And the task status should change to "Done"
 
   @complete @progress
   Scenario: View completion progress
     Given I have clicked "Complete"
     And uploads are in progress
     Then I should see the overall progress percentage
-    And I should see the status of each destination:
-      | Destination          | Status     |
-      | Reviewer Site Alpha  | Uploaded   |
-      | Reviewer Site Beta   | Uploading  |
-      | Archive Site         | Pending    |
+    And I should see the status of each destination
     And I should see a message "Do not close this window"
 
   # --- Completion Success ---
 
   @complete @success
   Scenario: View completed task details
-    Given the task has been completed successfully
+    Given the task status is "Done"
     When I view the task detail page
-    Then I should see the task status as "Complete"
+    Then I should see the task status as "Done"
     And I should see who completed the task
     And I should see when the task was completed
+    And I should see the QA submission and approval history
     And I should see links to view each output asset
-    And I should see which fields were copied to each destination
-    And I should see the correlation job ID
-
-  # --- Completion Failure ---
-
-  @complete @failure
-  Scenario: Handle partial upload failure
-    Given the workflow has 3 destinations
-    And I have staged a file and clicked "Complete"
-    And the upload to "Reviewer Site Beta" fails
-    But the uploads to other destinations succeed
-    Then the task status should change to "Failed"
-    And I should see an error message indicating which destination failed
-    And I should see the partial success status:
-      | Destination          | Status  |
-      | Reviewer Site Alpha  | Success |
-      | Reviewer Site Beta   | Failed  |
-      | Archive Site         | Success |
-
-  @complete @retry
-  Scenario: Retry failed task
-    Given the task status is "Failed"
-    And the error was "Connection timeout to Reviewer Site Beta"
-    When I stage a file again
-    And I click "Complete"
-    Then the system should attempt to upload to all destinations again
-
-  # --- Combine Workflow Completion ---
-
-  @complete @combine
-  Scenario: Complete a Combine workflow task
-    Given the workflow type is "Combine"
-    And the task has 3 input assets selected
-    And I have staged the combined output file
-    When I click "Complete"
-    Then the output file should be uploaded to the destination
-    And 3 correlation records should be created
-    And each correlation should link one input asset to the output
-    And all correlations should share the same job_id
