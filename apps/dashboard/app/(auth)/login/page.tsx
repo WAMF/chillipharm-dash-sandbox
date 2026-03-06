@@ -42,7 +42,7 @@ function LoginForm() {
 
     if (authLoading) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-chilli-red to-chilli-red-dark">
+            <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-secondary to-neutral-900">
                 <div className="text-white text-center">
                     <div className="h-8 w-8 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4" />
                     <p>Loading...</p>
@@ -52,7 +52,7 @@ function LoginForm() {
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-chilli-red to-chilli-red-dark p-4">
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-secondary to-neutral-900 p-4">
             <div className="w-full max-w-md bg-white rounded-xl shadow-2xl p-8">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-chilli-red">
