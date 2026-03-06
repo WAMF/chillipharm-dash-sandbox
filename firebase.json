@@ -1,20 +1,4 @@
 {
-  "hosting": {
-    "public": "dist/apps/dashboard/out",
-    "cleanUrls": true,
-    "trailingSlash": true,
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/**",
-        "function": "getAssets"
-      }
-    ]
-  },
   "functions": [
     {
       "source": "apps/functions",

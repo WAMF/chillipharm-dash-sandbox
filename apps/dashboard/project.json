@@ -10,12 +10,10 @@
             "outputs": ["{options.outputPath}"],
             "defaultConfiguration": "production",
             "options": {
-                "outputPath": "dist/apps/dashboard"
+                "outputPath": "apps/dashboard"
             },
             "configurations": {
-                "development": {
-                    "outputPath": "apps/dashboard"
-                },
+                "development": {},
                 "production": {}
             }
         },
