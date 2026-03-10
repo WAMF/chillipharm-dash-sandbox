@@ -19,5 +19,9 @@
         "firebase-functions": "^5.0.0",
         "pg": "^8.11.0",
         "swagger-ui-express": "^5.0.1"
+    },
+    "overrides": {
+        "fast-xml-parser": "^4.5.4",
+        "@tootallnate/once": "^3.0.1"
     }
 }
