@@ -9,7 +9,7 @@ test.describe('Reports (unauthenticated)', () => {
 
 test.describe('Reports Section', () => {
     test.skip(
-        !process.env.TEST_USER_EMAIL,
+        !(process.env.TEST_USER_EMAIL && process.env.TEST_USER_PASSWORD),
         'Skipping authenticated tests — set TEST_USER_EMAIL and TEST_USER_PASSWORD to run',
     );
 
