@@ -28,7 +28,8 @@
     "next-env.d.ts",
     ".next/types/**/*.ts",
     "../../dist/apps/videoservices/.next/types/**/*.ts",
-    "out/types/**/*.ts"
+    "out/types/**/*.ts",
+    "../../apps/videoservices/.next/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",
