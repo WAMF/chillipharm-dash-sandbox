@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useReports } from '../../../../contexts/ReportContext';
 import { ColumnPicker } from '../../../../components/ColumnPicker';
+import { ReportPreviewTable } from '../../../../components/ReportPreviewTable';
 import {
     REPORT_TEMPLATES,
     type ReportTemplate,
@@ -173,8 +174,13 @@ interface CreateTemplateModalProps {
 }
 
 function CreateTemplateModal({ existingTemplate, onClose, onSave }: CreateTemplateModalProps) {
+    const { fetchPreviewData } = useReports();
     const [step, setStep] = useState(1);
     const [saving, setSaving] = useState(false);
+    const [previewData, setPreviewData] = useState<Record<string, unknown>[]>([]);
+    const [previewTotalRows, setPreviewTotalRows] = useState(0);
+    const [previewLoading, setPreviewLoading] = useState(false);
+    const [previewError, setPreviewError] = useState<string | null>(null);
 
     const [baseTemplate, setBaseTemplate] = useState<ReportTemplate | null>(
         existingTemplate?.baseTemplateId
@@ -242,12 +248,35 @@ function CreateTemplateModal({ existingTemplate, onClose, onSave }: CreateTempla
         setTaskStatusFilters(taskStatusFilters.filter((_, i) => i !== index));
     };
 
+    const loadPreview = useCallback(async () => {
+        setPreviewLoading(true);
+        setPreviewError(null);
+        try {
+            const result = await fetchPreviewData(rowEntity, { ...filters, taskStatusFilters });
+            setPreviewData(result.data as Record<string, unknown>[]);
+            setPreviewTotalRows(result.totalRows);
+        } catch {
+            setPreviewError('Failed to load preview data.');
+            setPreviewData([]);
+            setPreviewTotalRows(0);
+        } finally {
+            setPreviewLoading(false);
+        }
+    }, [fetchPreviewData, rowEntity, filters, taskStatusFilters]);
+
+    useEffect(() => {
+        if (step === 5) {
+            loadPreview();
+        }
+    }, [step, loadPreview]);
+
     const canProceed = () => {
         switch (step) {
             case 1: return baseTemplate !== null || existingTemplate !== null;
             case 2: return name.trim().length > 0;
             case 3: return selectedColumns.size > 0;
             case 4: return true;
+            case 5: return true;
             default: return false;
         }
     };
@@ -276,7 +305,7 @@ function CreateTemplateModal({ existingTemplate, onClose, onSave }: CreateTempla
                 {/* Progress */}
                 <div className="border-b border-neutral-100 px-6 py-3">
                     <div className="flex gap-2 text-xs">
-                        {['Base Type', 'Details', 'Columns', 'Filters'].map((label, i) => (
+                        {['Base Type', 'Details', 'Columns', 'Filters', 'Preview'].map((label, i) => (
                             <button
                                 key={label}
                                 onClick={() => setStep(i + 1)}
@@ -492,6 +521,58 @@ function CreateTemplateModal({ existingTemplate, onClose, onSave }: CreateTempla
                             </div>
                         </div>
                     )}
+
+                    {step === 5 && (
+                        <div className="space-y-6">
+                            <p className="text-sm text-neutral-500">
+                                Preview how data will look with this template configuration.
+                            </p>
+
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="rounded-md bg-neutral-50 p-4 text-center">
+                                    <div className="text-xl font-semibold text-chilli-red">
+                                        {previewLoading ? '...' : previewTotalRows.toLocaleString()}
+                                    </div>
+                                    <div className="text-xs text-neutral-500">Total Records</div>
+                                </div>
+                                <div className="rounded-md bg-neutral-50 p-4 text-center">
+                                    <div className="text-xl font-semibold text-chilli-red">
+                                        {selectedColumns.size}
+                                    </div>
+                                    <div className="text-xs text-neutral-500">Columns</div>
+                                </div>
+                                <div className="rounded-md bg-neutral-50 p-4 text-center">
+                                    <div className="text-xl font-semibold text-chilli-red">
+                                        {ROW_ENTITY_LABELS[rowEntity]}
+                                    </div>
+                                    <div className="text-xs text-neutral-500">Report Type</div>
+                                </div>
+                            </div>
+
+                            {previewLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-chilli-red border-t-transparent" />
+                                </div>
+                            ) : previewError ? (
+                                <div className="rounded-md border border-red-200 bg-red-50 p-4 text-center">
+                                    <p className="text-sm text-red-600">{previewError}</p>
+                                    <button
+                                        onClick={loadPreview}
+                                        className="mt-2 text-xs text-chilli-red hover:text-chilli-red-dark"
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            ) : (
+                                <ReportPreviewTable
+                                    rows={previewData}
+                                    columns={columnDefs.columns}
+                                    selectedColumnKeys={selectedColumns}
+                                    totalRows={previewTotalRows}
+                                />
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* Footer */}
@@ -502,7 +583,7 @@ function CreateTemplateModal({ existingTemplate, onClose, onSave }: CreateTempla
                     >
                         {step > 1 ? 'Back' : 'Cancel'}
                     </button>
-                    {step < 4 ? (
+                    {step < 5 ? (
                         <button
                             onClick={() => setStep(step + 1)}
                             disabled={!canProceed()}

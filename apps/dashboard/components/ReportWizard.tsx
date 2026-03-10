@@ -11,10 +11,11 @@ import {
     COLUMN_CATEGORIES,
     DEFAULT_COLUMNS,
     getFileTypes,
-    getColumnsByCategory,
     filterRecordsForReport,
     generateExcel,
 } from '@cp/data-processing';
+import { ColumnPicker } from './ColumnPicker';
+import { FilterGroup } from './FilterGroup';
 
 interface ReportWizardProps {
     records: AssetRecord[];
@@ -58,8 +59,6 @@ export function ReportWizard({
     const [generating, setGenerating] = useState(false);
 
     const fileTypes = useMemo(() => getFileTypes(records), [records]);
-    const columnsByCategory = useMemo(() => getColumnsByCategory(), []);
-
     const allTemplates = useMemo(() => [...REPORT_TEMPLATES, CUSTOM_REPORT_TEMPLATE], []);
 
     const handleTemplateSelect = useCallback((template: ReportTemplate) => {
@@ -158,37 +157,9 @@ export function ReportWizard({
         }
     }, []);
 
-    const toggleColumn = useCallback((key: ColumnKey) => {
-        setSelectedColumns(previous => {
-            const next = new Set(previous);
-            if (next.has(key)) {
-                next.delete(key);
-            } else {
-                next.add(key);
-            }
-            return next;
-        });
+    const handleColumnSelectionChange = useCallback((selected: Set<string>) => {
+        setSelectedColumns(selected as Set<ColumnKey>);
     }, []);
-
-    const selectAllColumns = useCallback(() => {
-        setSelectedColumns(new Set(COLUMN_DEFINITIONS.map(col => col.key)));
-    }, []);
-
-    const deselectAllColumns = useCallback(() => {
-        setSelectedColumns(new Set());
-    }, []);
-
-    const selectCategoryColumns = useCallback(
-        (category: string) => {
-            const cols = columnsByCategory.get(category) || [];
-            setSelectedColumns(previous => {
-                const next = new Set(previous);
-                cols.forEach(col => next.add(col.key));
-                return next;
-            });
-        },
-        [columnsByCategory]
-    );
 
     const nextStep = useCallback(() => {
         if (currentStep < TOTAL_STEPS) {
@@ -544,247 +515,55 @@ export function ReportWizard({
                             </p>
 
                             <div className="space-y-6">
-                                <div className="bg-neutral-50 rounded-md p-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-sm font-medium text-neutral-800">
-                                            Trial
-                                        </h4>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="trialFilter"
-                                                    checked={
-                                                        trialFilter === 'all'
-                                                    }
-                                                    onChange={() =>
-                                                        setTrialFilter('all')
-                                                    }
-                                                />
-                                                All Trials
-                                            </label>
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="trialFilter"
-                                                    checked={
-                                                        trialFilter ===
-                                                        'specific'
-                                                    }
-                                                    onChange={() =>
-                                                        setTrialFilter(
-                                                            'specific'
-                                                        )
-                                                    }
-                                                />
-                                                Specific Trials
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {trialFilter === 'specific' && (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-white p-2 rounded">
-                                            {trials.map(trial => (
-                                                <label
-                                                    key={trial}
-                                                    className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedTrials.includes(
-                                                            trial
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleTrial(trial)
-                                                        }
-                                                    />
-                                                    {trial}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <FilterGroup
+                                    label="Trial"
+                                    filterName="trialFilter"
+                                    mode={trialFilter}
+                                    onModeChange={setTrialFilter}
+                                    allLabel="All Trials"
+                                    specificLabel="Specific Trials"
+                                    items={trials}
+                                    selectedItems={selectedTrials}
+                                    onToggle={toggleTrial}
+                                />
 
-                                <div className="bg-neutral-50 rounded-md p-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-sm font-medium text-neutral-800">
-                                            Site
-                                        </h4>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="siteFilter"
-                                                    checked={
-                                                        siteFilter === 'all'
-                                                    }
-                                                    onChange={() =>
-                                                        setSiteFilter('all')
-                                                    }
-                                                />
-                                                All Sites
-                                            </label>
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="siteFilter"
-                                                    checked={
-                                                        siteFilter ===
-                                                        'specific'
-                                                    }
-                                                    onChange={() =>
-                                                        setSiteFilter(
-                                                            'specific'
-                                                        )
-                                                    }
-                                                />
-                                                Specific Sites
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {siteFilter === 'specific' && (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-white p-2 rounded">
-                                            {sites.map(site => (
-                                                <label
-                                                    key={site}
-                                                    className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedSites.includes(
-                                                            site
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleSite(site)
-                                                        }
-                                                    />
-                                                    {site}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <FilterGroup
+                                    label="Site"
+                                    filterName="siteFilter"
+                                    mode={siteFilter}
+                                    onModeChange={setSiteFilter}
+                                    allLabel="All Sites"
+                                    specificLabel="Specific Sites"
+                                    items={sites}
+                                    selectedItems={selectedSites}
+                                    onToggle={toggleSite}
+                                />
 
-                                <div className="bg-neutral-50 rounded-md p-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-sm font-medium text-neutral-800">
-                                            Country
-                                        </h4>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="countryFilter"
-                                                    checked={
-                                                        countryFilter === 'all'
-                                                    }
-                                                    onChange={() =>
-                                                        setCountryFilter('all')
-                                                    }
-                                                />
-                                                All Countries
-                                            </label>
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="countryFilter"
-                                                    checked={
-                                                        countryFilter ===
-                                                        'specific'
-                                                    }
-                                                    onChange={() =>
-                                                        setCountryFilter(
-                                                            'specific'
-                                                        )
-                                                    }
-                                                />
-                                                Specific Countries
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {countryFilter === 'specific' && (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-white p-2 rounded">
-                                            {countries.map(country => (
-                                                <label
-                                                    key={country}
-                                                    className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedCountries.includes(
-                                                            country
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleCountry(
-                                                                country
-                                                            )
-                                                        }
-                                                    />
-                                                    {country}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <FilterGroup
+                                    label="Country"
+                                    filterName="countryFilter"
+                                    mode={countryFilter}
+                                    onModeChange={setCountryFilter}
+                                    allLabel="All Countries"
+                                    specificLabel="Specific Countries"
+                                    items={countries}
+                                    selectedItems={selectedCountries}
+                                    onToggle={toggleCountry}
+                                />
 
-                                <div className="bg-neutral-50 rounded-md p-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <h4 className="text-sm font-medium text-neutral-800">
-                                            File Type
-                                        </h4>
-                                        <div className="flex gap-4">
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="fileTypeFilter"
-                                                    checked={
-                                                        fileTypeFilter === 'all'
-                                                    }
-                                                    onChange={() =>
-                                                        setFileTypeFilter('all')
-                                                    }
-                                                />
-                                                All Types
-                                            </label>
-                                            <label className="flex items-center gap-1.5 text-xs text-neutral-600 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="fileTypeFilter"
-                                                    checked={
-                                                        fileTypeFilter ===
-                                                        'specific'
-                                                    }
-                                                    onChange={() =>
-                                                        setFileTypeFilter(
-                                                            'specific'
-                                                        )
-                                                    }
-                                                />
-                                                Specific Types
-                                            </label>
-                                        </div>
-                                    </div>
-                                    {fileTypeFilter === 'specific' && (
-                                        <div className="grid grid-cols-3 md:grid-cols-4 gap-2 max-h-32 overflow-y-auto bg-white p-2 rounded">
-                                            {fileTypes.map(ext => (
-                                                <label
-                                                    key={ext}
-                                                    className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedFileTypes.includes(
-                                                            ext
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleFileType(ext)
-                                                        }
-                                                    />
-                                                    .{ext}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <FilterGroup
+                                    label="File Type"
+                                    filterName="fileTypeFilter"
+                                    mode={fileTypeFilter}
+                                    onModeChange={setFileTypeFilter}
+                                    allLabel="All Types"
+                                    specificLabel="Specific Types"
+                                    items={fileTypes}
+                                    selectedItems={selectedFileTypes}
+                                    onToggle={toggleFileType}
+                                    formatItem={item => `.${item}`}
+                                    gridCols="grid-cols-3 md:grid-cols-4"
+                                />
                             </div>
                         </div>
                     )}
@@ -803,73 +582,12 @@ export function ReportWizard({
                                 )}
                             </p>
 
-                            <div className="flex items-center gap-3 mb-4">
-                                <button
-                                    className="px-3 py-1.5 bg-white border border-neutral-300 rounded text-xs text-neutral-700 hover:bg-neutral-100"
-                                    onClick={selectAllColumns}
-                                >
-                                    Select All
-                                </button>
-                                <button
-                                    className="px-3 py-1.5 bg-white border border-neutral-300 rounded text-xs text-neutral-700 hover:bg-neutral-100"
-                                    onClick={deselectAllColumns}
-                                >
-                                    Deselect All
-                                </button>
-                                <span className="text-xs text-neutral-500 ml-auto">
-                                    {selectedColumns.size} columns selected
-                                </span>
-                            </div>
-
-                            <div className="space-y-4">
-                                {COLUMN_CATEGORIES.map(category => (
-                                    <div
-                                        key={category}
-                                        className="bg-neutral-50 rounded-md p-4"
-                                    >
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h4 className="text-sm font-medium text-neutral-700">
-                                                {category}
-                                            </h4>
-                                            <button
-                                                className="text-xs text-chilli-red hover:underline"
-                                                onClick={() =>
-                                                    selectCategoryColumns(
-                                                        category
-                                                    )
-                                                }
-                                            >
-                                                Select all
-                                            </button>
-                                        </div>
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                            {(
-                                                columnsByCategory.get(
-                                                    category
-                                                ) || []
-                                            ).map(col => (
-                                                <label
-                                                    key={col.key}
-                                                    className="flex items-center gap-2 text-xs text-neutral-700 cursor-pointer"
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedColumns.has(
-                                                            col.key
-                                                        )}
-                                                        onChange={() =>
-                                                            toggleColumn(
-                                                                col.key
-                                                            )
-                                                        }
-                                                    />
-                                                    {col.label}
-                                                </label>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <ColumnPicker
+                                columns={COLUMN_DEFINITIONS}
+                                categories={COLUMN_CATEGORIES}
+                                selectedColumns={selectedColumns}
+                                onSelectionChange={handleColumnSelectionChange}
+                            />
                         </div>
                     )}
 

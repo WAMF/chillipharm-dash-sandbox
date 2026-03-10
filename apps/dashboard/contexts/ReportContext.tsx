@@ -67,6 +67,7 @@ interface ReportContextValue {
     runSchedule: (id: string) => Promise<void>;
     runReport: (template: SavedReportTemplate) => Promise<void>;
     isRunning: boolean;
+    fetchPreviewData: (rowEntity: ReportRowEntity, filters: SavedReportFilters) => Promise<{ data: unknown[]; totalRows: number }>;
 }
 
 const ReportContext = createContext<ReportContextValue | null>(null);
@@ -226,6 +227,12 @@ export function ReportProvider({ children }: { children: ReactNode }) {
         await refreshSchedules();
     }, [getLoader, refreshSchedules]);
 
+    const fetchPreviewData = useCallback(async (rowEntity: ReportRowEntity, filters: SavedReportFilters) => {
+        const loader = getLoader();
+        if (!loader) return { data: [], totalRows: 0 };
+        return loader.fetchReportData(rowEntity, filters);
+    }, [getLoader]);
+
     const runReport = useCallback(async (template: SavedReportTemplate) => {
         const loader = getLoader();
         if (!loader) return;
@@ -264,6 +271,7 @@ export function ReportProvider({ children }: { children: ReactNode }) {
                 runSchedule,
                 runReport,
                 isRunning,
+                fetchPreviewData,
             }}
         >
             {children}
